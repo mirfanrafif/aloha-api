@@ -6,6 +6,7 @@ import { DatabaseModule } from './core/database/database.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CustomerModule } from './customer/customer.module';
+import { ChatModule } from './core/repository/chat/chat.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CustomerModule } from './customer/customer.module';
     }),
     AuthModule,
     CustomerModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
