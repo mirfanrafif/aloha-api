@@ -23,6 +23,9 @@ export class User {
 
   @Column({ type: 'datetime' })
   created_at: string;
+
+  @Column({ nullable: true })
+  profile_photo_url: string;
 }
 
 export enum Role {

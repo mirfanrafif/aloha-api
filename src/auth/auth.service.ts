@@ -1,4 +1,4 @@
-import { Inject, Injectable, UseFilters } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
@@ -35,6 +35,6 @@ export class AuthService {
       user: userData,
       token: this.jwtService.sign(userData),
     };
-    return user;
+    return result;
   }
 }
