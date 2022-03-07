@@ -20,7 +20,7 @@ export class AuthService {
     });
     if (user && user.password === loginRequest.password) {
       const { password, ...payload } = user;
-      return this.jwtService.sign(payload);
+      return { ...payload, token: this.jwtService.sign(payload) };
     }
     return null;
   }
@@ -32,7 +32,7 @@ export class AuthService {
     });
     const { password, ...userData } = user;
     const result = {
-      ...userData,
+      user: userData,
       token: this.jwtService.sign(userData),
     };
     return user;
