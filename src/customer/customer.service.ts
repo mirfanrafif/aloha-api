@@ -5,8 +5,8 @@ import { CUSTOMER_SALES_REPOSITORY } from 'src/core/repository/customer-sales/cu
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { Repository } from 'typeorm';
-import { Customer } from './customer.dto';
 
+const pageSize = 20;
 @Injectable()
 export class CustomerService {
   constructor(
@@ -33,5 +33,15 @@ export class CustomerService {
     customerSales.customerNumber = customerNumber;
     customerSales.created_at = Date();
     return await this.customerRepository.save(customerSales);
+  }
+
+  async getCustomerBySales(sales: UserEntity, page: number) {
+    return this.customerRepository.find({
+      where: {
+        sales: sales,
+      },
+      take: pageSize,
+      skip: page * pageSize,
+    });
   }
 }

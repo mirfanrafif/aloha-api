@@ -1,18 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
-import { MessageEntity } from 'src/core/repository/chat/message.entity';
+import { CustomerSales } from 'src/core/repository/customer-sales/customer-sales.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 
-const pageSize = 20;
 @Injectable()
 export class UserService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
-    @Inject(CHAT_REPOSITORY)
-    private messageRepository: Repository<MessageEntity>,
+    private customerService: CustomerService,
   ) {}
 
   getCurrentUser() {
@@ -20,11 +18,9 @@ export class UserService {
   }
 
   async getCustomerBySalesId(id: number, page: number) {
-    const messages = this.messageRepository.find({
-      take: pageSize,
-      skip: page * pageSize,
-    });
-    const result: ApiResponse<any> = {
+    const sales = await this.userRepository.findOneOrFail(id);
+    const messages = await this.customerService.getCustomerBySales(sales, page);
+    const result: ApiResponse<CustomerSales[]> = {
       success: true,
       data: messages,
       message: `Success getting customer list by sales id ${id}`,
