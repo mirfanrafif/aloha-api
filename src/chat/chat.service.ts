@@ -41,31 +41,35 @@ export class ChatService {
         },
       })
       .pipe(
-        map(async (value) => {
-          const messageResponse: MessageResponse[] =
-            value.data.data.message.map((message) => ({
-              consumerNumber: message.phone,
-              senderId: salesId.toString(),
-              message: message.message,
-              messageId: message.id,
-              status: message.status,
-            }));
-          const messages = await this.saveChat(
-            messageResponse,
-            salesId,
-            MessageType.outgoing,
-          );
-          messages.forEach((message: MessageEntity) => {
-            this.gateway.sendMessage(message);
-          });
-          const result: ApiResponse<MessageEntity[]> = {
-            success: true,
-            data: messages,
-            message: 'Success sending chat to Wablas API',
-          };
-          return result;
-        }),
-        catchError((value) => {
+        map(
+          async (
+            value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+          ) => {
+            const messageResponse: MessageResponse[] =
+              value.data.data.message.map((message) => ({
+                consumerNumber: message.phone,
+                senderId: salesId.toString(),
+                message: message.message,
+                messageId: message.id,
+                status: message.status,
+              }));
+            const messages = await this.saveChat(
+              messageResponse,
+              salesId,
+              MessageType.outgoing,
+            );
+            messages.forEach((message: MessageEntity) => {
+              this.gateway.sendMessage(message);
+            });
+            const result: ApiResponse<MessageEntity[]> = {
+              success: true,
+              data: messages,
+              message: 'Success sending chat to Wablas API',
+            };
+            return result;
+          },
+        ),
+        catchError((value: AxiosError<WablasApiResponse<null>>) => {
           const result: ApiResponse<MessageEntity[]> = {
             success: false,
             data: [],
