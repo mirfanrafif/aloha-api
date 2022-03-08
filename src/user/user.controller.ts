@@ -1,18 +1,22 @@
 import {
+  Body,
   Controller,
   Get,
-  Param,
-  ParseIntPipe,
+  Post,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { Customer } from 'src/customer/customer.dto';
 import { CustomerService } from 'src/customer/customer.service';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { AddCustomerRequest } from './user.dto';
+import { UserService } from './user.service';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
 export class UserController {
-  constructor(private customerService: CustomerService) {}
+  constructor(private userService: UserService) {}
 
   @Get('profile')
   getCurrentUser(@Request() request) {
@@ -20,7 +24,11 @@ export class UserController {
   }
 
   @Get('customer')
-  getCustomerBySalesId(@Request() request) {
-    return this.customerService.getCustomerByIdSalesId(request.user.id);
+  async getCustomerBySalesId(@Request() request): Promise<ApiResponse<any>> {
+    const result = await this.userService.getCustomerBySalesId(request.user.id);
+    return result;
   }
+
+  // @Post('customer')
+  // addCustomer(@Body() addCustomerRequest: AddCustomerRequest) {}
 }

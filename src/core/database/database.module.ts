@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { createConnection } from 'typeorm';
 import { MessageEntity } from '../repository/chat/chat.entity';
-import { User } from '../repository/user/user.entity';
+import { CustomerSales } from '../repository/customer-sales/customer-sales.entity';
+import { UserEntity } from '../repository/user/user.entity';
 
 export const DATABASE_CONNECTION = 'database_connection';
 
@@ -16,7 +17,7 @@ export const DATABASE_CONNECTION = 'database_connection';
           username: process.env.DB_USERNAME,
           password: process.env.DB_PASSWORD,
           host: process.env.DB_HOST,
-          entities: [User, MessageEntity],
+          entities: [UserEntity, MessageEntity, CustomerSales],
           synchronize: true,
         }),
     },

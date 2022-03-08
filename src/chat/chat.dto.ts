@@ -55,9 +55,6 @@ export class MessageRequestData {
 
 export class MessageRequest {
   @ApiProperty()
-  salesId: number;
-
-  @ApiProperty()
   data: MessageRequestData[];
 }
 

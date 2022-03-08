@@ -1,5 +1,19 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { DocumentMessage, ImageMessage, TextMessage } from './chat.dto';
+import {
+  Body,
+  Controller,
+  Post,
+  Request,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { DbexceptionFilter } from 'src/utils/dbexception.filter';
+import {
+  DocumentMessage,
+  ImageMessage,
+  MessageRequest,
+  TextMessage,
+} from './chat.dto';
 import { ChatService } from './chat.service';
 
 @Controller('chat')
@@ -11,5 +25,12 @@ export class ChatController {
     @Body() message: DocumentMessage | ImageMessage | TextMessage,
   ) {
     this.service.handleIncomingMessage(message);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @UseFilters(DbexceptionFilter)
+  handleSalesMessage(@Request() request, @Body() data: MessageRequest) {
+    this.service.sendMessage(data, request.user.id);
   }
 }

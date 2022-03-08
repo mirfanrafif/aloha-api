@@ -7,6 +7,7 @@ import {
   MessageType,
 } from 'src/core/repository/chat/chat.entity';
 import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
+import { CustomerService } from 'src/customer/customer.service';
 import { Repository } from 'typeorm';
 import {
   ApiResponse,
@@ -26,15 +27,16 @@ export class ChatService {
     private gateway: ChatGateway,
     @Inject(CHAT_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
+    private customerService: CustomerService,
   ) {}
 
   sendMessage(
     messageRequest: MessageRequest,
+    salesId: number,
   ): ApiResponse<SendMessageResponseData | null> {
     let result: ApiResponse<SendMessageResponseData | null>;
-    const { salesId, ...data } = messageRequest;
     this.http
-      .post('/api/v2/send-bulk/text', data, {
+      .post('/api/v2/send-bulk/text', messageRequest, {
         headers: {
           Authorization:
             'f7b8lBzoaGXSvX2JkZwycD8ZT1Yk6bIrRXQ1E7h1sEIk2pq0WFdwUhcQvedZ7pkb',
@@ -84,11 +86,23 @@ export class ChatService {
   async handleIncomingMessage(
     message: DocumentMessage | ImageMessage | TextMessage,
   ) {
+    console.log(message);
+
+    const sales = await this.customerService.findSalesByCostumerNumber(
+      message.phone,
+    );
+
+    console.log(sales);
+
+    if (sales == null) {
+      this.customerService.assignCustomerToSales(message.phone, 1);
+    }
+
     const data: MessageEntity = await this.messageRepository.save({
       customerNumber: message.phone,
       message: message.message,
       messageId: message.id,
-      salesId: 1,
+      salesId: sales.sales.id,
       status: MessageStatus.received,
       type: MessageType.incoming,
     });

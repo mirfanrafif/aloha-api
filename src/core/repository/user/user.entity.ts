@@ -1,8 +1,9 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { CustomerSales } from '../customer-sales/customer-sales.entity';
 
 @Entity()
-export class User {
+export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -26,6 +27,9 @@ export class User {
 
   @Column({ nullable: true })
   profile_photo_url: string;
+
+  @OneToMany(() => CustomerSales, (customer) => customer.sales)
+  customer: CustomerSales;
 }
 
 export enum Role {

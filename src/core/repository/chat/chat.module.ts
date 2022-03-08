@@ -20,4 +20,4 @@ export const CHAT_REPOSITORY = 'chat_repository';
   ],
   exports: [CHAT_REPOSITORY],
 })
-export class ChatModule {}
+export class ChatRepositoryModule {}

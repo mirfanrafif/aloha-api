@@ -4,20 +4,20 @@ import {
   DATABASE_CONNECTION,
 } from 'src/core/database/database.module';
 import { Connection } from 'typeorm';
-import { UserEntity } from './user.entity';
+import { CustomerSales } from './customer-sales.entity';
 
-export const USER_REPOSITORY = 'user_repository';
+export const CUSTOMER_SALES_REPOSITORY = 'customer_sales_repository';
 
 @Module({
   imports: [DatabaseModule],
   providers: [
     {
-      provide: USER_REPOSITORY,
+      provide: CUSTOMER_SALES_REPOSITORY,
       useFactory: (connection: Connection) =>
-        connection.getRepository(UserEntity),
+        connection.getRepository(CustomerSales),
       inject: [DATABASE_CONNECTION],
     },
   ],
-  exports: [USER_REPOSITORY],
+  exports: [CUSTOMER_SALES_REPOSITORY],
 })
-export class UserRepositoryModule {}
+export class CustomerSalesRepositoryModule {}
