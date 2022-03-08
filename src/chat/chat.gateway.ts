@@ -13,13 +13,6 @@ import { MessageResponse } from './chat.dto';
   namespace: 'chats',
 })
 export class ChatGateway {
-  @SubscribeMessage('chat')
-  handleChat(@MessageBody() data: string) {
-    console.log(data);
-    this.server.emit('chat', data);
-    return data;
-  }
-
   sendMessage(data: MessageEntity) {
     this.server.emit('chat', data);
   }

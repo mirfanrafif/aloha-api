@@ -18,7 +18,6 @@ export class UserService {
     const user = await this.userRepository.findOne(id, {
       relations: ['customer'],
     });
-    console.log(user);
     const result: ApiResponse<any> = {
       success: true,
       data: user.customer,

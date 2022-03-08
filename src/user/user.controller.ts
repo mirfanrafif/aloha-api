@@ -28,7 +28,4 @@ export class UserController {
     const result = await this.userService.getCustomerBySalesId(request.user.id);
     return result;
   }
-
-  // @Post('customer')
-  // addCustomer(@Body() addCustomerRequest: AddCustomerRequest) {}
 }
