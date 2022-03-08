@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { createConnection } from 'typeorm';
-import { MessageEntity } from '../repository/chat/chat.entity';
+import { MessageEntity } from '../repository/chat/message.entity';
 import { CustomerSales } from '../repository/customer-sales/customer-sales.entity';
 import { UserEntity } from '../repository/user/user.entity';
 

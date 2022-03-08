@@ -2,7 +2,9 @@ import { Exclude } from 'class-transformer';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { CustomerSales } from '../customer-sales/customer-sales.entity';
 
-@Entity()
+@Entity({
+  name: 'users',
+})
 export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;

@@ -6,7 +6,7 @@ import {
   MessageEntity,
   MessageStatus,
   MessageType,
-} from 'src/core/repository/chat/chat.entity';
+} from 'src/core/repository/chat/message.entity';
 import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -23,6 +23,8 @@ import {
 } from './chat.dto';
 import { ChatGateway } from './chat.gateway';
 
+const pageSize = 20;
+
 @Injectable()
 export class ChatService {
   constructor(
@@ -37,7 +39,10 @@ export class ChatService {
     return this.http
       .post('/api/v2/send-bulk/text', messageRequest, {
         headers: {
-          Authorization: process.env.WABLAS_TOKEN,
+          Authorization:
+            process.env.WABLAS_TOKEN !== undefined
+              ? process.env.WABLAS_TOKEN
+              : '',
         },
       })
       .pipe(
@@ -70,54 +75,22 @@ export class ChatService {
           },
         ),
         catchError((value: AxiosError<WablasApiResponse<null>>) => {
-          const result: ApiResponse<MessageEntity[]> = {
+          if (value.response !== undefined) {
+            const result: ApiResponse<MessageEntity[]> = {
+              success: false,
+              data: [],
+              message:
+                'Failed to send chat to Wablas API. Message : ' +
+                value.response.data.message,
+            };
+            throw new WablasAPIException(result);
+          }
+          throw new WablasAPIException({
             success: false,
-            data: [],
-            message:
-              'Failed to send chat to Wablas API. Message : ' +
-              value.response.data.message,
-          };
-          throw new WablasAPIException(result);
+            message: 'Failed to send chat to Wablas API.',
+          });
         }),
       );
-    // .subscribe({
-    //   next: async (
-    //     value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
-    //   ) => {
-    //     const messageResponse: MessageResponse[] =
-    //       value.data.data.message.map((message) => ({
-    //         consumerNumber: message.phone,
-    //         senderId: salesId.toString(),
-    //         message: message.message,
-    //         messageId: message.id,
-    //         status: message.status,
-    //       }));
-    //     const messages = await this.saveChat(
-    //       messageResponse,
-    //       salesId,
-    //       MessageType.outgoing,
-    //     );
-    //     messages.forEach((message: MessageEntity) => {
-    //       this.gateway.sendMessage(message);
-    //     });
-    //     result = {
-    //       success: true,
-    //       data: messages,
-    //       message: 'Success sending chat to Wablas API',
-    //     };
-    //   },
-    //   error: (value: AxiosError<WablasApiResponse<null>>) => {
-    //     console.log(value.response.data);
-    //     result = {
-    //       success: false,
-    //       data: [],
-    //       message:
-    //         'Failed to send chat to Wablas API. Message : ' +
-    //         value.response.data.message,
-    //     };
-    //     console.log(result);
-    //   },
-    // });
   }
 
   async saveChat(
@@ -171,5 +144,26 @@ export class ChatService {
       message: 'Success catch data from Wablas API',
       data: data,
     };
+  }
+
+  async getPastMessageByCustomerNumber(
+    customerNumber: string,
+    pageNumber: number,
+    salesId: number,
+  ) {
+    const result: MessageEntity[] = await this.messageRepository.find({
+      where: {
+        customerNumber: customerNumber,
+        salesId: salesId,
+      },
+      take: pageSize,
+      skip: pageNumber * pageSize,
+    });
+    const response: ApiResponse<MessageEntity[]> = {
+      success: true,
+      data: result,
+      message: 'Success retrieving data from customer number ' + customerNumber,
+    };
+    return response;
   }
 }

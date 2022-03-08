@@ -4,7 +4,7 @@ import {
   DATABASE_CONNECTION,
 } from 'src/core/database/database.module';
 import { Connection } from 'typeorm';
-import { MessageEntity } from './chat.entity';
+import { MessageEntity } from './message.entity';
 
 export const CHAT_REPOSITORY = 'chat_repository';
 

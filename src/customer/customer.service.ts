@@ -28,7 +28,7 @@ export class CustomerService {
 
   async assignCustomerToSales(customerNumber: string, salesId: number) {
     const customerSales = this.customerRepository.create();
-    const sales = await this.userRepository.findOne(salesId);
+    const sales = await this.userRepository.findOneOrFail(salesId);
     customerSales.sales = sales;
     customerSales.customerNumber = customerNumber;
     customerSales.created_at = Date();

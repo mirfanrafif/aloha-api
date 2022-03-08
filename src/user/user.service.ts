@@ -15,7 +15,7 @@ export class UserService {
   }
 
   async getCustomerBySalesId(id: number) {
-    const user = await this.userRepository.findOne(id, {
+    const user = await this.userRepository.findOneOrFail(id, {
       relations: ['customer'],
     });
     const result: ApiResponse<any> = {
