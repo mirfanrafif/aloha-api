@@ -5,6 +5,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
+import { MessageEntity } from 'src/core/repository/chat/chat.entity';
 import { MessageResponse } from './chat.dto';
 @WebSocketGateway({
   cors: true,
@@ -19,7 +20,7 @@ export class ChatGateway {
     return data;
   }
 
-  sendMessage(data) {
+  sendMessage(data: MessageEntity) {
     this.server.emit('chat', data);
   }
 

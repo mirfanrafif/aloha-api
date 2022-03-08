@@ -31,6 +31,7 @@ export class CustomerService {
     const sales = await this.userRepository.findOne(salesId);
     customerSales.sales = sales;
     customerSales.customerNumber = customerNumber;
-    this.customerRepository.save(customerSales);
+    customerSales.created_at = Date();
+    return await this.customerRepository.save(customerSales);
   }
 }

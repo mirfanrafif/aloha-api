@@ -58,7 +58,7 @@ export class MessageRequest {
   data: MessageRequestData[];
 }
 
-export class ApiResponse<T> {
+export class WablasApiResponse<T> {
   status: boolean;
   message: string;
   data: T;

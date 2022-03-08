@@ -8,9 +8,10 @@ import {
 } from 'src/core/repository/chat/chat.entity';
 import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
 import { CustomerService } from 'src/customer/customer.service';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import {
-  ApiResponse,
+  WablasApiResponse,
   DocumentMessage,
   ImageMessage,
   MessageRequest,
@@ -33,19 +34,18 @@ export class ChatService {
   sendMessageToCustomer(
     messageRequest: MessageRequest,
     salesId: number,
-  ): ApiResponse<SendMessageResponseData | null> {
-    let result: ApiResponse<SendMessageResponseData | null>;
+  ): ApiResponse<MessageEntity[] | null> {
+    let result: ApiResponse<MessageEntity[] | null>;
     this.http
       .post('/api/v2/send-bulk/text', messageRequest, {
         headers: {
-          Authorization:
-            'f7b8lBzoaGXSvX2JkZwycD8ZT1Yk6bIrRXQ1E7h1sEIk2pq0WFdwUhcQvedZ7pkb',
+          Authorization: process.env.WABLAS_TOKEN,
         },
       })
       .subscribe({
-        next: (value: AxiosResponse<ApiResponse<SendMessageResponseData>>) => {
-          console.log(value.data.data);
-
+        next: async (
+          value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+        ) => {
           const messageResponse: MessageResponse[] =
             value.data.data.message.map((message) => ({
               consumerNumber: message.phone,
@@ -54,25 +54,42 @@ export class ChatService {
               messageId: message.id,
               status: message.status,
             }));
-          this.gateway.sendMessage(messageResponse);
-          this.saveChat(messageResponse, salesId, MessageType.outgoing);
-          result = value.data;
+          const messages = await this.saveChat(
+            messageResponse,
+            salesId,
+            MessageType.outgoing,
+          );
+          messages.forEach((message: MessageEntity) => {
+            this.gateway.sendMessage(message);
+          });
+          result = {
+            success: true,
+            data: messages,
+            message: 'Success sending chat to Wablas API',
+          };
         },
-        error: (value: AxiosError<ApiResponse<null>>) => {
+        error: (value: AxiosError<WablasApiResponse<null>>) => {
           console.log(value.response.data);
-          result = value.response.data;
+          result = {
+            success: false,
+            data: null,
+            message:
+              'Failed to send chat to Wablas API. Message : ' + value.message,
+          };
         },
       });
     return result;
   }
 
-  saveChat(
+  async saveChat(
     messageResponses: MessageResponse[],
     salesId: number,
     type: MessageType,
-  ) {
-    messageResponses.forEach((messageResponse) => {
-      this.messageRepository.save({
+  ): Promise<MessageEntity[]> {
+    const messages: MessageEntity[] = [];
+
+    messageResponses.forEach(async (messageResponse) => {
+      const message = await this.messageRepository.save({
         messageId: messageResponse.messageId,
         message: messageResponse.message,
         customerNumber: messageResponse.consumerNumber,
@@ -80,22 +97,24 @@ export class ChatService {
         status: messageResponse.status,
         type: type,
       });
+      messages.push(message);
     });
+
+    return messages;
   }
 
   async handleIncomingMessage(
     message: DocumentMessage | ImageMessage | TextMessage,
-  ) {
-    console.log(message);
-
-    const sales = await this.customerService.findSalesByCostumerNumber(
+  ): Promise<ApiResponse<MessageEntity>> {
+    let sales = await this.customerService.findSalesByCostumerNumber(
       message.phone,
     );
 
-    console.log(sales);
-
     if (sales == null) {
-      this.customerService.assignCustomerToSales(message.phone, 1);
+      sales = await this.customerService.assignCustomerToSales(
+        message.phone,
+        1,
+      );
     }
 
     const data: MessageEntity = await this.messageRepository.save({
@@ -105,7 +124,13 @@ export class ChatService {
       salesId: sales.sales.id,
       status: MessageStatus.received,
       type: MessageType.incoming,
+      created_at: Date(),
     });
     this.gateway.sendMessage(data);
+    return {
+      success: true,
+      message: 'Success catch data from Wablas API',
+      data: data,
+    };
   }
 }
