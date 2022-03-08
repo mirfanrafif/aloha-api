@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
+import { catchError, map, tap } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -9,6 +10,7 @@ import {
 import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { WablasAPIException } from 'src/utils/wablas.exception';
 import { Repository } from 'typeorm';
 import {
   WablasApiResponse,
@@ -31,21 +33,15 @@ export class ChatService {
     private customerService: CustomerService,
   ) {}
 
-  sendMessageToCustomer(
-    messageRequest: MessageRequest,
-    salesId: number,
-  ): ApiResponse<MessageEntity[] | null> {
-    let result: ApiResponse<MessageEntity[] | null>;
-    this.http
+  sendMessageToCustomer(messageRequest: MessageRequest, salesId: number) {
+    return this.http
       .post('/api/v2/send-bulk/text', messageRequest, {
         headers: {
           Authorization: process.env.WABLAS_TOKEN,
         },
       })
-      .subscribe({
-        next: async (
-          value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
-        ) => {
+      .pipe(
+        map(async (value) => {
           const messageResponse: MessageResponse[] =
             value.data.data.message.map((message) => ({
               consumerNumber: message.phone,
@@ -62,23 +58,62 @@ export class ChatService {
           messages.forEach((message: MessageEntity) => {
             this.gateway.sendMessage(message);
           });
-          result = {
+          const result: ApiResponse<MessageEntity[]> = {
             success: true,
             data: messages,
             message: 'Success sending chat to Wablas API',
           };
-        },
-        error: (value: AxiosError<WablasApiResponse<null>>) => {
-          console.log(value.response.data);
-          result = {
+          return result;
+        }),
+        catchError((value) => {
+          const result: ApiResponse<MessageEntity[]> = {
             success: false,
-            data: null,
+            data: [],
             message:
-              'Failed to send chat to Wablas API. Message : ' + value.message,
+              'Failed to send chat to Wablas API. Message : ' +
+              value.response.data.message,
           };
-        },
-      });
-    return result;
+          throw new WablasAPIException(result);
+        }),
+      );
+    // .subscribe({
+    //   next: async (
+    //     value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+    //   ) => {
+    //     const messageResponse: MessageResponse[] =
+    //       value.data.data.message.map((message) => ({
+    //         consumerNumber: message.phone,
+    //         senderId: salesId.toString(),
+    //         message: message.message,
+    //         messageId: message.id,
+    //         status: message.status,
+    //       }));
+    //     const messages = await this.saveChat(
+    //       messageResponse,
+    //       salesId,
+    //       MessageType.outgoing,
+    //     );
+    //     messages.forEach((message: MessageEntity) => {
+    //       this.gateway.sendMessage(message);
+    //     });
+    //     result = {
+    //       success: true,
+    //       data: messages,
+    //       message: 'Success sending chat to Wablas API',
+    //     };
+    //   },
+    //   error: (value: AxiosError<WablasApiResponse<null>>) => {
+    //     console.log(value.response.data);
+    //     result = {
+    //       success: false,
+    //       data: [],
+    //       message:
+    //         'Failed to send chat to Wablas API. Message : ' +
+    //         value.response.data.message,
+    //     };
+    //     console.log(result);
+    //   },
+    // });
   }
 
   async saveChat(
