@@ -1,16 +1,13 @@
 import {
-  Body,
   Controller,
   Get,
-  Post,
+  ParseIntPipe,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Customer } from 'src/customer/customer.dto';
-import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { AddCustomerRequest } from './user.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -24,8 +21,14 @@ export class UserController {
   }
 
   @Get('customer')
-  async getCustomerBySalesId(@Request() request): Promise<ApiResponse<any>> {
-    const result = await this.userService.getCustomerBySalesId(request.user.id);
+  async getCustomerBySalesId(
+    @Request() request,
+    @Query('page', ParseIntPipe) page?: number,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.userService.getCustomerBySalesId(
+      request.user.id,
+      page !== undefined ? page : 0,
+    );
     return result;
   }
 }

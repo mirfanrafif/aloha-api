@@ -20,8 +20,8 @@ import {
   MessageResponse,
   SendMessageResponseData,
   TextMessage,
-} from './chat.dto';
-import { ChatGateway } from './chat.gateway';
+} from './message.dto';
+import { ChatGateway } from './message.gateway';
 
 const pageSize = 20;
 
