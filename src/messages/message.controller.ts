@@ -10,6 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { MessageEntity } from 'src/core/repository/chat/message.entity';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import {
   DocumentMessage,
@@ -40,15 +42,23 @@ export class MessageController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  getPastMessages(
+  async getPastMessages(
     @Request() request,
     @Query('customer_number') customerNumber?: string,
     @Query('page') page?: number,
-  ) {
-    return this.service.getPastMessageByCustomerNumber(
-      customerNumber !== undefined ? customerNumber : '0',
-      page !== undefined ? page : 0,
-      request.user.id,
-    );
+  ): Promise<ApiResponse<MessageEntity[]>> {
+    if (customerNumber !== undefined) {
+      return this.service.getPastMessageByCustomerNumber(
+        customerNumber !== undefined ? customerNumber : '0',
+        page !== undefined ? page : 0,
+        request.user.id,
+      );
+    } else {
+      return {
+        success: false,
+        data: [],
+        message: 'Please provide customer_number',
+      };
+    }
   }
 }

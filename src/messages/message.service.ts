@@ -158,6 +158,9 @@ export class ChatService {
       },
       take: pageSize,
       skip: pageNumber * pageSize,
+      order: {
+        created_at: 'DESC',
+      },
     });
     const response: ApiResponse<MessageEntity[]> = {
       success: true,
