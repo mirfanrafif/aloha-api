@@ -31,6 +31,6 @@ export class ChatController {
   @UseGuards(JwtAuthGuard)
   @UseFilters(DbexceptionFilter)
   handleSalesMessage(@Request() request, @Body() data: MessageRequest) {
-    this.service.sendMessage(data, request.user.id);
+    this.service.sendMessageToCustomer(data, request.user.id);
   }
 }

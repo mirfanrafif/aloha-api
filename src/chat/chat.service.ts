@@ -30,7 +30,7 @@ export class ChatService {
     private customerService: CustomerService,
   ) {}
 
-  sendMessage(
+  sendMessageToCustomer(
     messageRequest: MessageRequest,
     salesId: number,
   ): ApiResponse<SendMessageResponseData | null> {
