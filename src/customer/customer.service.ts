@@ -4,7 +4,7 @@ import { CustomerSales } from 'src/core/repository/customer-sales/customer-sales
 import { CUSTOMER_SALES_REPOSITORY } from 'src/core/repository/customer-sales/customer-sales.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 
 const pageSize = 20;
 @Injectable()
@@ -35,13 +35,24 @@ export class CustomerService {
     return await this.customerRepository.save(customerSales);
   }
 
-  async getCustomerBySales(sales: UserEntity, page: number) {
-    return this.customerRepository.find({
-      where: {
-        sales: sales,
-      },
-      take: pageSize,
-      skip: page * pageSize,
-    });
+  async getCustomerBySales(sales: UserEntity, lastCustomerId?: number) {
+    let listCustomer: CustomerSales[];
+    if (lastCustomerId !== undefined) {
+      listCustomer = await this.customerRepository.find({
+        where: {
+          sales: sales,
+          id: MoreThan(lastCustomerId),
+        },
+        take: pageSize,
+      });
+    } else {
+      listCustomer = await this.customerRepository.find({
+        where: {
+          sales: sales,
+        },
+        take: pageSize,
+      });
+    }
+    return listCustomer;
   }
 }

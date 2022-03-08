@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, map, tap } from 'rxjs';
+import { catchError, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -11,7 +11,7 @@ import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import {
   WablasApiResponse,
   DocumentMessage,
@@ -148,20 +148,32 @@ export class ChatService {
 
   async getPastMessageByCustomerNumber(
     customerNumber: string,
-    pageNumber: number,
-    salesId: number,
+    lastMessageId?: number,
+    salesId?: number,
   ) {
-    const result: MessageEntity[] = await this.messageRepository.find({
-      where: {
-        customerNumber: customerNumber,
-        salesId: salesId,
-      },
-      take: pageSize,
-      skip: pageNumber * pageSize,
-      order: {
-        created_at: 'DESC',
-      },
-    });
+    const result: MessageEntity[] =
+      lastMessageId !== undefined
+        ? await this.messageRepository.find({
+            where: {
+              customerNumber: customerNumber,
+              salesId: salesId,
+              id: LessThan(lastMessageId),
+            },
+            take: pageSize,
+            order: {
+              created_at: 'DESC',
+            },
+          })
+        : await this.messageRepository.find({
+            where: {
+              customerNumber: customerNumber,
+              salesId: salesId,
+            },
+            take: pageSize,
+            order: {
+              created_at: 'DESC',
+            },
+          });
     const response: ApiResponse<MessageEntity[]> = {
       success: true,
       data: result,

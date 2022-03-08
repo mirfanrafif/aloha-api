@@ -17,9 +17,12 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async getCustomerBySalesId(id: number, page: number) {
+  async getCustomerBySalesId(id: number, lastCustomerId?: number) {
     const sales = await this.userRepository.findOneOrFail(id);
-    const messages = await this.customerService.getCustomerBySales(sales, page);
+    const messages = await this.customerService.getCustomerBySales(
+      sales,
+      lastCustomerId,
+    );
     const result: ApiResponse<CustomerSales[]> = {
       success: true,
       data: messages,

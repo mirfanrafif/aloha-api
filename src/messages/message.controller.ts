@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  ParseIntPipe,
   Post,
   Query,
   Request,
@@ -45,12 +44,12 @@ export class MessageController {
   async getPastMessages(
     @Request() request,
     @Query('customer_number') customerNumber?: string,
-    @Query('page') page?: number,
+    @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageEntity[]>> {
     if (customerNumber !== undefined) {
       return this.service.getPastMessageByCustomerNumber(
         customerNumber !== undefined ? customerNumber : '0',
-        page !== undefined ? page : 0,
+        lastMessageId,
         request.user.id,
       );
     } else {
