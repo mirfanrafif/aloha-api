@@ -22,6 +22,7 @@ import {
   TextMessage,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 
 const pageSize = 20;
 
@@ -148,32 +149,32 @@ export class MessageService {
 
   async getPastMessageByCustomerNumber(
     customerNumber: string,
-    lastMessageId?: number,
-    salesId?: number,
+    lastMessageId: number,
+    sales: UserEntity,
   ) {
-    const result: MessageEntity[] =
-      lastMessageId !== undefined
-        ? await this.messageRepository.find({
-            where: {
-              customerNumber: customerNumber,
-              salesId: salesId,
-              id: LessThan(lastMessageId),
-            },
-            take: pageSize,
-            order: {
-              created_at: 'DESC',
-            },
-          })
-        : await this.messageRepository.find({
-            where: {
-              customerNumber: customerNumber,
-              salesId: salesId,
-            },
-            take: pageSize,
-            order: {
-              created_at: 'DESC',
-            },
-          });
+    let condition = {};
+    if (sales.role !== 'admin') {
+      condition = {
+        ...condition,
+        salesId: sales.id,
+      };
+    }
+    if (lastMessageId > 0) {
+      condition = {
+        ...condition,
+        id: LessThan(lastMessageId),
+      };
+    }
+    const result: MessageEntity[] = await this.messageRepository.find({
+      where: {
+        customerNumber: customerNumber,
+        ...condition,
+      },
+      take: pageSize,
+      order: {
+        created_at: 'DESC',
+      },
+    });
     const response: ApiResponse<MessageEntity[]> = {
       success: true,
       data: result,

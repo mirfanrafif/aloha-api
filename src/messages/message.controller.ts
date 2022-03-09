@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { MessageEntity } from 'src/core/repository/chat/message.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import {
@@ -46,11 +47,12 @@ export class MessageController {
     @Query('customer_number') customerNumber?: string,
     @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageEntity[]>> {
+    const user: UserEntity = request.user;
     if (customerNumber !== undefined) {
       return this.service.getPastMessageByCustomerNumber(
         customerNumber !== undefined ? customerNumber : '0',
-        lastMessageId,
-        request.user.id,
+        lastMessageId !== undefined ? lastMessageId : 0,
+        user,
       );
     } else {
       return {
