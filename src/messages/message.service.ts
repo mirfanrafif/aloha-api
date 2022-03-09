@@ -7,7 +7,7 @@ import {
   MessageStatus,
   MessageType,
 } from 'src/core/repository/chat/message.entity';
-import { CHAT_REPOSITORY } from 'src/core/repository/chat/chat.module';
+import { CHAT_REPOSITORY as MESSAGE_REPOSITORY } from 'src/core/repository/chat/chat.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
@@ -21,16 +21,18 @@ import {
   SendMessageResponseData,
   TextMessage,
 } from './message.dto';
-import { ChatGateway } from './message.gateway';
+import { MessageGateway } from './message.gateway';
+import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 
 const pageSize = 20;
 
 @Injectable()
-export class ChatService {
+export class MessageService {
   constructor(
     private http: HttpService,
-    private gateway: ChatGateway,
-    @Inject(CHAT_REPOSITORY)
+    private gateway: MessageGateway,
+    @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
     private customerService: CustomerService,
   ) {}
@@ -64,7 +66,7 @@ export class ChatService {
               MessageType.outgoing,
             );
             messages.forEach((message: MessageEntity) => {
-              this.gateway.sendMessage(message);
+              this.sendMessage(message);
             });
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
@@ -138,7 +140,7 @@ export class ChatService {
       type: MessageType.incoming,
       created_at: Date(),
     });
-    this.gateway.sendMessage(data);
+    this.sendMessage(data);
     return {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -180,5 +182,12 @@ export class ChatService {
       message: 'Success retrieving data from customer number ' + customerNumber,
     };
     return response;
+  }
+
+  sendMessage(data: MessageEntity) {
+    this.gateway.server
+      .to('chat:' + data.salesId)
+      .to('chat:admin')
+      .emit('chat', data);
   }
 }

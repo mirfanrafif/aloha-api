@@ -10,7 +10,7 @@ export class UserController {
 
   @Get('profile')
   getCurrentUser(@Request() request) {
-    return request.user;
+    return this.userService.getCurrentUser(request.user.id);
   }
 
   @Get('customer')

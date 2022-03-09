@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseFilters } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Post,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import { LoginRequestDto, RegisterRequestDto } from './auth.dto';
 import { AuthService } from './auth.service';

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class TextMessage {
+export type TextMessage = {
   id: string;
   phone: string;
   message: string;
@@ -11,9 +11,9 @@ export class TextMessage {
   timestamp: number;
   category: string;
   receiver: number;
-}
+};
 
-export class ImageMessage extends TextMessage {
+export type ImageMessage = {
   id: string;
   phone: string;
   message: string;
@@ -26,9 +26,9 @@ export class ImageMessage extends TextMessage {
   receiver: number;
   image: string;
   url: string;
-}
+};
 
-export class DocumentMessage extends TextMessage {
+export type DocumentMessage = {
   id: string;
   phone: string;
   message: string;
@@ -41,7 +41,7 @@ export class DocumentMessage extends TextMessage {
   receiver: number;
   image: string;
   url: string;
-}
+};
 
 export class MessageRequestData {
   @ApiProperty()
@@ -49,7 +49,11 @@ export class MessageRequestData {
 
   @ApiProperty()
   message: string;
+
+  @ApiProperty({ required: false })
   secret: boolean;
+
+  @ApiProperty({ required: false })
   priority: boolean;
 }
 

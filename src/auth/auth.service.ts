@@ -20,10 +20,11 @@ export class AuthService {
       },
     });
     if (user && user.password === loginRequest.password) {
-      const { password, ...payload } = user;
+      const userData = this.getUserData(user);
+      const jwtPayload = this.getPayload(user);
       return {
         success: true,
-        data: { ...payload, token: this.jwtService.sign(payload) },
+        data: { user: userData, token: this.jwtService.sign(jwtPayload) },
         message: 'Login Success',
       };
     }
@@ -39,11 +40,33 @@ export class AuthService {
       ...registerRequest,
       created_at: Date(),
     });
-    const { password, ...userData } = user;
+    const userData = this.getUserData(user);
+    const jwtPayload = this.getPayload(user);
     const result = {
       user: userData,
-      token: this.jwtService.sign(userData),
+      token: this.jwtService.sign(jwtPayload),
     };
-    return result;
+    const response: ApiResponse<any> = {
+      success: true,
+      data: result,
+      message: 'Succesfully registered',
+    };
+    return response;
+  }
+
+  getUserData(user: UserEntity) {
+    return {
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+      profile_photo_url: user.profile_photo_url,
+    };
+  }
+
+  getPayload(user: UserEntity) {
+    return {
+      id: user.id,
+    };
   }
 }

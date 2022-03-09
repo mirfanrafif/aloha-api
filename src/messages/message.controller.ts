@@ -18,12 +18,12 @@ import {
   MessageRequest,
   TextMessage,
 } from './message.dto';
-import { ChatService } from './message.service';
+import { MessageService } from './message.service';
 
 @Controller('chat')
 @UseFilters(DbexceptionFilter)
 export class MessageController {
-  constructor(private service: ChatService) {}
+  constructor(private service: MessageService) {}
 
   @Post('webhook')
   handleIncomingMessage(

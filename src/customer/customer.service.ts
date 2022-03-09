@@ -4,7 +4,7 @@ import { CustomerSales } from 'src/core/repository/customer-sales/customer-sales
 import { CUSTOMER_SALES_REPOSITORY } from 'src/core/repository/customer-sales/customer-sales.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { LessThan, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 
 const pageSize = 20;
 @Injectable()

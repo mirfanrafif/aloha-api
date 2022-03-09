@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ChatGateway } from './message.gateway';
-import { ChatService } from './message.service';
+import { MessageGateway } from './message.gateway';
+import { MessageService } from './message.service';
 import { MessageController } from './message.controller';
 import { HttpModule } from '@nestjs/axios';
 import { MessageRepositoryModule } from 'src/core/repository/chat/chat.module';
 import { CustomerModule } from 'src/customer/customer.module';
+import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 
 @Module({
-  providers: [ChatService, ChatGateway],
+  providers: [MessageService, MessageGateway],
   controllers: [MessageController],
   imports: [
     HttpModule.register({
@@ -15,6 +16,7 @@ import { CustomerModule } from 'src/customer/customer.module';
     }),
     MessageRepositoryModule,
     CustomerModule,
+    UserRepositoryModule,
   ],
 })
 export class MessageModule {}
