@@ -5,6 +5,7 @@ import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import { LoginRequestDto, RegisterRequestDto } from './auth.dto';
+import { hash, compare } from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +20,7 @@ export class AuthService {
         email: loginRequest.email,
       },
     });
-    if (user && user.password === loginRequest.password) {
+    if (user && (await compare(loginRequest.password, user.password))) {
       const userData = this.getUserData(user);
       const jwtPayload = this.getPayload(user);
       return {
@@ -36,8 +37,10 @@ export class AuthService {
   }
 
   async register(registerRequest: RegisterRequestDto) {
+    const password = await hash(registerRequest.password, 10);
     const user = await this.userRepository.save({
       ...registerRequest,
+      password: password,
       created_at: Date(),
     });
     const userData = this.getUserData(user);
