@@ -21,7 +21,7 @@ import {
 } from './message.dto';
 import { MessageService } from './message.service';
 
-@Controller('chat')
+@Controller('message')
 @UseFilters(DbexceptionFilter)
 export class MessageController {
   constructor(private service: MessageService) {}
