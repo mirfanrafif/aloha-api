@@ -36,23 +36,27 @@ export class CustomerService {
   }
 
   async getCustomerBySales(sales: UserEntity, lastCustomerId?: number) {
-    let listCustomer: CustomerSales[];
-    if (lastCustomerId !== undefined) {
-      listCustomer = await this.customerRepository.find({
-        where: {
-          sales: sales,
-          id: MoreThan(lastCustomerId),
-        },
-        take: pageSize,
-      });
-    } else {
-      listCustomer = await this.customerRepository.find({
-        where: {
-          sales: sales,
-        },
-        take: pageSize,
-      });
+    let condition = {};
+
+    if (sales.role !== 'admin') {
+      condition = {
+        ...condition,
+        sales: sales,
+      };
     }
+    if (lastCustomerId !== undefined) {
+      condition = {
+        ...condition,
+        id: MoreThan(lastCustomerId),
+      };
+    }
+
+    const listCustomer = await this.customerRepository.find({
+      where: {
+        ...condition,
+      },
+      take: pageSize,
+    });
     return listCustomer;
   }
 }

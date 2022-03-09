@@ -22,8 +22,6 @@ import {
   TextMessage,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { UserEntity } from 'src/core/repository/user/user.entity';
 
 const pageSize = 20;
 
@@ -127,7 +125,7 @@ export class MessageService {
     if (sales == null) {
       sales = await this.customerService.assignCustomerToSales(
         message.phone,
-        1,
+        7,
       );
     }
 

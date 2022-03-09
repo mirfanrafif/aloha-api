@@ -27,10 +27,5 @@ export class RegisterRequestDto {
 }
 
 export class UserJwtPayload {
-  id: string;
-  full_name: string;
-  email: string;
-  password: string;
-  role: Role;
-  created_at: string;
+  id: number;
 }

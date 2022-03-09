@@ -69,4 +69,8 @@ export class AuthService {
       id: user.id,
     };
   }
+
+  findUser(id: number) {
+    return this.userRepository.findOne(id);
+  }
 }

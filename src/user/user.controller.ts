@@ -19,7 +19,7 @@ export class UserController {
     @Query('last_customer_id') lastCustomerId?: number,
   ): Promise<ApiResponse<any>> {
     const result = await this.userService.getCustomerBySalesId(
-      request.user.id,
+      request.user,
       lastCustomerId,
     );
     return result;

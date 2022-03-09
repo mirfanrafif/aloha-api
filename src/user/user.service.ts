@@ -22,16 +22,15 @@ export class UserService {
     };
   }
 
-  async getCustomerBySalesId(id: number, lastCustomerId?: number) {
-    const sales = await this.userRepository.findOneOrFail(id);
+  async getCustomerBySalesId(user: UserEntity, lastCustomerId?: number) {
     const messages = await this.customerService.getCustomerBySales(
-      sales,
+      user,
       lastCustomerId,
     );
     const result: ApiResponse<CustomerSales[]> = {
       success: true,
       data: messages,
-      message: `Success getting customer list by sales id ${id}`,
+      message: `Success getting customer list by sales id ${user.id}`,
     };
     return result;
   }
