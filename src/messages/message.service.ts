@@ -20,6 +20,7 @@ import {
   MessageResponse,
   SendMessageResponseData,
   TextMessage,
+  Message,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { UserEntity } from 'src/core/repository/user/user.entity';
@@ -54,18 +55,17 @@ export class MessageService {
           async (
             value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
-            const messageResponse: MessageResponse[] =
-              value.data.data.message.map((message) => ({
-                consumerNumber: message.phone,
-                senderId: agentId.toString(),
-                message: message.message,
-                messageId: message.id,
-                status: message.status,
-              }));
-            const messages = await this.saveMessage(
-              messageResponse,
+            // const messageResponse: MessageResponse[] =
+            //   value.data.data.message.map((message: Message) => ({
+            //     consumerNumber: message.phone,
+            //     senderId: agentId.toString(),
+            //     message: message.message,
+            //     messageId: message.id,
+            //     status: message.status,
+            //   }));
+            const messages = await this.saveOutgoingMessage(
+              value.data.data,
               agentId,
-              MessageType.outgoing,
             );
             messages.forEach((message: MessageEntity) => {
               this.sendMessage(message);
@@ -97,23 +97,22 @@ export class MessageService {
       );
   }
 
-  async saveMessage(
-    messageResponses: MessageResponse[],
+  async saveOutgoingMessage(
+    messageResponses: SendMessageResponseData,
     agentId: number,
-    type: MessageType,
   ): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
     const agent = await this.userRepository.findOneOrFail(agentId);
 
-    messageResponses.forEach(async (messageResponse) => {
+    messageResponses.message.forEach(async (messageItem: Message) => {
       const message = await this.messageRepository.save({
-        messageId: messageResponse.messageId,
-        message: messageResponse.message,
-        customerNumber: messageResponse.consumerNumber,
+        messageId: messageItem.id,
+        message: messageItem.message,
+        customerNumber: messageItem.phone,
         agent: agent,
-        status: messageResponse.status,
-        type: type,
+        status: messageItem.status,
+        type: MessageType.outgoing,
       });
       messages.push(message);
     });
@@ -124,14 +123,14 @@ export class MessageService {
   async handleIncomingMessage(
     message: DocumentMessage | ImageMessage | TextMessage,
   ): Promise<ApiResponse<MessageEntity>> {
-    let agent = await this.customerService.findAgentByCostumerNumber(
+    let customerAgent = await this.customerService.findAgentByCostumerNumber(
       message.phone,
     );
 
-    if (agent == null) {
-      agent = await this.customerService.assignCustomerToAgent(
+    if (customerAgent == null) {
+      customerAgent = await this.customerService.assignCustomerToAgent(
         message.phone,
-        7,
+        2,
       );
     }
 
@@ -139,7 +138,7 @@ export class MessageService {
       customerNumber: message.phone,
       message: message.message,
       messageId: message.id,
-      agent: agent,
+      agent: customerAgent.agent,
       status: MessageStatus.received,
       type: MessageType.incoming,
       created_at: Date(),
@@ -177,7 +176,7 @@ export class MessageService {
       },
       take: pageSize,
       order: {
-        created_at: 'DESC',
+        id: 'DESC',
       },
     });
     const response: ApiResponse<MessageEntity[]> = {
