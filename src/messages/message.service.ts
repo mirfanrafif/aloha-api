@@ -17,7 +17,6 @@ import {
   DocumentMessage,
   ImageMessage,
   MessageRequest,
-  MessageResponse,
   SendMessageResponseData,
   TextMessage,
   Message,
@@ -55,14 +54,6 @@ export class MessageService {
           async (
             value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
-            // const messageResponse: MessageResponse[] =
-            //   value.data.data.message.map((message: Message) => ({
-            //     consumerNumber: message.phone,
-            //     senderId: agentId.toString(),
-            //     message: message.message,
-            //     messageId: message.id,
-            //     status: message.status,
-            //   }));
             const messages = await this.saveOutgoingMessage(
               value.data.data,
               agentId,
