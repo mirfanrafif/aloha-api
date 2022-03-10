@@ -6,8 +6,8 @@ import {
   MessageEntity,
   MessageStatus,
   MessageType,
-} from 'src/core/repository/chat/message.entity';
-import { CHAT_REPOSITORY as MESSAGE_REPOSITORY } from 'src/core/repository/chat/chat.module';
+} from 'src/core/repository/message/message.entity';
+import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
@@ -23,6 +23,7 @@ import {
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { UserEntity } from 'src/core/repository/user/user.entity';
+import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 
 const pageSize = 20;
 
@@ -34,9 +35,11 @@ export class MessageService {
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
     private customerService: CustomerService,
+    @Inject(USER_REPOSITORY)
+    private userRepository: Repository<UserEntity>,
   ) {}
 
-  sendMessageToCustomer(messageRequest: MessageRequest, salesId: number) {
+  sendMessageToCustomer(messageRequest: MessageRequest, agentId: number) {
     return this.http
       .post('/api/v2/send-bulk/text', messageRequest, {
         headers: {
@@ -54,14 +57,14 @@ export class MessageService {
             const messageResponse: MessageResponse[] =
               value.data.data.message.map((message) => ({
                 consumerNumber: message.phone,
-                senderId: salesId.toString(),
+                senderId: agentId.toString(),
                 message: message.message,
                 messageId: message.id,
                 status: message.status,
               }));
-            const messages = await this.saveChat(
+            const messages = await this.saveMessage(
               messageResponse,
-              salesId,
+              agentId,
               MessageType.outgoing,
             );
             messages.forEach((message: MessageEntity) => {
@@ -70,7 +73,7 @@ export class MessageService {
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
               data: messages,
-              message: 'Success sending chat to Wablas API',
+              message: 'Success sending message to Wablas API',
             };
             return result;
           },
@@ -81,32 +84,34 @@ export class MessageService {
               success: false,
               data: [],
               message:
-                'Failed to send chat to Wablas API. Message : ' +
+                'Failed to send message to Wablas API. Message : ' +
                 value.response.data.message,
             };
             throw new WablasAPIException(result);
           }
           throw new WablasAPIException({
             success: false,
-            message: 'Failed to send chat to Wablas API.',
+            message: 'Failed to send message to Wablas API.',
           });
         }),
       );
   }
 
-  async saveChat(
+  async saveMessage(
     messageResponses: MessageResponse[],
-    salesId: number,
+    agentId: number,
     type: MessageType,
   ): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
+
+    const agent = await this.userRepository.findOneOrFail(agentId);
 
     messageResponses.forEach(async (messageResponse) => {
       const message = await this.messageRepository.save({
         messageId: messageResponse.messageId,
         message: messageResponse.message,
         customerNumber: messageResponse.consumerNumber,
-        salesId: salesId,
+        agent: agent,
         status: messageResponse.status,
         type: type,
       });
@@ -119,12 +124,12 @@ export class MessageService {
   async handleIncomingMessage(
     message: DocumentMessage | ImageMessage | TextMessage,
   ): Promise<ApiResponse<MessageEntity>> {
-    let sales = await this.customerService.findSalesByCostumerNumber(
+    let agent = await this.customerService.findAgentByCostumerNumber(
       message.phone,
     );
 
-    if (sales == null) {
-      sales = await this.customerService.assignCustomerToSales(
+    if (agent == null) {
+      agent = await this.customerService.assignCustomerToAgent(
         message.phone,
         7,
       );
@@ -134,7 +139,7 @@ export class MessageService {
       customerNumber: message.phone,
       message: message.message,
       messageId: message.id,
-      salesId: sales.sales.id,
+      agent: agent,
       status: MessageStatus.received,
       type: MessageType.incoming,
       created_at: Date(),
@@ -150,13 +155,13 @@ export class MessageService {
   async getPastMessageByCustomerNumber(
     customerNumber: string,
     lastMessageId: number,
-    sales: UserEntity,
+    agent: UserEntity,
   ) {
     let condition = {};
-    if (sales.role !== 'admin') {
+    if (agent.role !== 'admin') {
       condition = {
         ...condition,
-        salesId: sales.id,
+        agent: agent,
       };
     }
     if (lastMessageId > 0) {
@@ -185,8 +190,8 @@ export class MessageService {
 
   sendMessage(data: MessageEntity) {
     this.gateway.server
-      .to('chat:' + data.salesId)
-      .to('chat:admin')
-      .emit('chat', data);
+      .to('message:' + data.agent)
+      .to('message:admin')
+      .emit('message', data);
   }
 }

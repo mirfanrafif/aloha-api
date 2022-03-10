@@ -1,4 +1,4 @@
-import { ParseIntPipe } from '@nestjs/common';
+import { Inject, ParseIntPipe, UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,32 +7,50 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { MessageEntity } from 'src/core/repository/chat/message.entity';
+import { UserJwtPayload } from 'src/auth/auth.dto';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
+import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+import { UserService } from 'src/user/user.service';
+import { DbexceptionFilter } from 'src/utils/dbexception.filter';
+import { SocketDBException } from 'src/utils/socketdbexception.filter';
+import { Repository } from 'typeorm';
 @WebSocketGateway({
   cors: true,
   transports: ['websocket'],
-  namespace: 'chats',
+  namespace: 'messages',
 })
 export class MessageGateway {
+  constructor(
+    @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
+  ) {}
+
   sendMessage(data: MessageEntity) {
     this.server
-      .to('chat:' + data.salesId)
-      .to('chat:admin')
-      .emit('chat', data);
+      .to('message:' + data.agent)
+      .to('message:admin')
+      .emit('message', data);
   }
 
+  @UseFilters(new SocketDBException())
   @SubscribeMessage('join')
-  handleUserJoin(
+  async handleUserJoin(
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: string,
   ) {
-    const user = JSON.parse(data);
-    if (user.role == 'admin') {
-      socket.join('chat:admin');
+    const payload: UserJwtPayload = JSON.parse(data);
+    const user = await this.userRepository.findOne(payload.id);
+    if (user !== undefined) {
+      if (user.role == 'admin') {
+        socket.join('message:admin');
+        return 'Admin joined the message';
+      } else {
+        socket.join('message:' + user.id);
+        return 'Agent ' + user.full_name + ' joined the message';
+      }
     } else {
-      socket.join('chat:' + user.id);
+      return 'User not found';
     }
-    return 'success';
   }
 
   @WebSocketServer()

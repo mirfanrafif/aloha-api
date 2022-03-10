@@ -2,9 +2,9 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 
 @Entity({
-  name: 'customer_sales',
+  name: 'customer_agent',
 })
-export class CustomerSales {
+export class CustomerAgent {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -12,7 +12,7 @@ export class CustomerSales {
   customerNumber: string;
 
   @ManyToOne(() => UserEntity, (user) => user.customer)
-  sales: UserEntity;
+  agent: UserEntity;
 
   @Column({ type: 'datetime' })
   created_at: string;

@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { MessageEntity } from 'src/core/repository/chat/message.entity';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
@@ -36,7 +36,7 @@ export class MessageController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseFilters(DbexceptionFilter)
-  handleSalesMessage(@Request() request, @Body() data: MessageRequest) {
+  handleAgentMessage(@Request() request, @Body() data: MessageRequest) {
     return this.service.sendMessageToCustomer(data, request.user.id);
   }
 

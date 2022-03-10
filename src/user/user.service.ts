@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CustomerSales } from 'src/core/repository/customer-sales/customer-sales.entity';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { CustomerService } from 'src/customer/customer.service';
@@ -22,15 +22,15 @@ export class UserService {
     };
   }
 
-  async getCustomerBySalesId(user: UserEntity, lastCustomerId?: number) {
-    const messages = await this.customerService.getCustomerBySales(
+  async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
+    const messages = await this.customerService.getCustomerByAgent(
       user,
       lastCustomerId,
     );
-    const result: ApiResponse<CustomerSales[]> = {
+    const result: ApiResponse<CustomerAgent[]> = {
       success: true,
       data: messages,
-      message: `Success getting customer list by sales id ${user.id}`,
+      message: `Success getting customer list by agent id ${user.id}`,
     };
     return result;
   }

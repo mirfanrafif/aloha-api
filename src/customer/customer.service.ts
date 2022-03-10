@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
-import { CustomerSales } from 'src/core/repository/customer-sales/customer-sales.entity';
-import { CUSTOMER_SALES_REPOSITORY } from 'src/core/repository/customer-sales/customer-sales.module';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { MoreThan, Repository } from 'typeorm';
@@ -11,37 +11,37 @@ const pageSize = 20;
 export class CustomerService {
   constructor(
     private httpService: HttpService,
-    @Inject(CUSTOMER_SALES_REPOSITORY)
-    private customerRepository: Repository<CustomerSales>,
+    @Inject(CUSTOMER_AGENT_REPOSITORY)
+    private customerRepository: Repository<CustomerAgent>,
     @Inject(USER_REPOSITORY)
     private userRepository: Repository<UserEntity>,
   ) {}
-  async findSalesByCostumerNumber(customerNumber: string) {
+  async findAgentByCostumerNumber(customerNumber: string) {
     const customer = await this.customerRepository.findOne({
       where: {
         customerNumber: customerNumber,
       },
-      relations: ['sales'],
+      relations: ['agent'],
     });
     return customer;
   }
 
-  async assignCustomerToSales(customerNumber: string, salesId: number) {
-    const customerSales = this.customerRepository.create();
-    const sales = await this.userRepository.findOneOrFail(salesId);
-    customerSales.sales = sales;
-    customerSales.customerNumber = customerNumber;
-    customerSales.created_at = Date();
-    return await this.customerRepository.save(customerSales);
+  async assignCustomerToAgent(customerNumber: string, agentId: number) {
+    const customerAgent = this.customerRepository.create();
+    const agent = await this.userRepository.findOneOrFail(agentId);
+    customerAgent.agent = agent;
+    customerAgent.customerNumber = customerNumber;
+    customerAgent.created_at = Date();
+    return await this.customerRepository.save(customerAgent);
   }
 
-  async getCustomerBySales(sales: UserEntity, lastCustomerId?: number) {
+  async getCustomerByAgent(agent: UserEntity, lastCustomerId?: number) {
     let condition = {};
 
-    if (sales.role !== 'admin') {
+    if (agent.role !== 'admin') {
       condition = {
         ...condition,
-        sales: sales,
+        agent: agent,
       };
     }
     if (lastCustomerId !== undefined) {

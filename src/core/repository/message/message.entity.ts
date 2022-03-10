@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { UserEntity } from '../user/user.entity';
 
 @Entity({
   name: 'message',
@@ -13,8 +14,8 @@ export class MessageEntity {
   @Column()
   message: string;
 
-  @Column()
-  salesId: number;
+  @ManyToOne(() => UserEntity, (user) => user.messages)
+  agent: UserEntity;
 
   @Column()
   customerNumber: string;

@@ -4,20 +4,20 @@ import {
   DATABASE_CONNECTION,
 } from 'src/core/database/database.module';
 import { Connection } from 'typeorm';
-import { MessageEntity } from './message.entity';
+import { CustomerAgent } from './customer-agent.entity';
 
-export const CHAT_REPOSITORY = 'chat_repository';
+export const CUSTOMER_AGENT_REPOSITORY = 'customer_agent_repository';
 
 @Module({
   imports: [DatabaseModule],
   providers: [
     {
-      provide: CHAT_REPOSITORY,
+      provide: CUSTOMER_AGENT_REPOSITORY,
       useFactory: (connection: Connection) =>
-        connection.getRepository(MessageEntity),
+        connection.getRepository(CustomerAgent),
       inject: [DATABASE_CONNECTION],
     },
   ],
-  exports: [CHAT_REPOSITORY],
+  exports: [CUSTOMER_AGENT_REPOSITORY],
 })
-export class MessageRepositoryModule {}
+export class CustomerAgentRepositoryModule {}

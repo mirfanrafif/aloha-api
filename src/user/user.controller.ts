@@ -14,11 +14,11 @@ export class UserController {
   }
 
   @Get('customer')
-  async getCustomerBySalesId(
+  async getCustomerByAgentId(
     @Request() request,
     @Query('last_customer_id') lastCustomerId?: number,
   ): Promise<ApiResponse<any>> {
-    const result = await this.userService.getCustomerBySalesId(
+    const result = await this.userService.getCustomerByAgentId(
       request.user,
       lastCustomerId,
     );

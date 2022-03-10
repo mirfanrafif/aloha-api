@@ -1,6 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CustomerSalesRepositoryModule } from 'src/core/repository/customer-sales/customer-sales.module';
+import { CustomerAgentRepositoryModule } from 'src/core/repository/customer-agent/customer-agent.module';
 import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 import { CustomerService } from './customer.service';
 
@@ -10,7 +10,7 @@ import { CustomerService } from './customer.service';
     HttpModule.register({
       baseURL: 'http://anggapajainiurlcustomer.com',
     }),
-    CustomerSalesRepositoryModule,
+    CustomerAgentRepositoryModule,
     UserRepositoryModule,
   ],
   exports: [CustomerService],
