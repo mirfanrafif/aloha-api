@@ -21,11 +21,11 @@ export class AuthService {
       },
     });
     if (user && (await compare(loginRequest.password, user.password))) {
-      const userData = this.getUserData(user);
+      // const userData = this.getUserData(user);
       const jwtPayload = this.getPayload(user);
       return {
         success: true,
-        data: { user: userData, token: this.jwtService.sign(jwtPayload) },
+        data: { user: user, token: this.jwtService.sign(jwtPayload) },
         message: 'Login Success',
       };
     }
@@ -43,10 +43,10 @@ export class AuthService {
       password: password,
       created_at: Date(),
     });
-    const userData = this.getUserData(user);
+    // const userData = this.getUserData(user);
     const jwtPayload = this.getPayload(user);
     const result = {
-      user: userData,
+      user: user,
       token: this.jwtService.sign(jwtPayload),
     };
     const response: ApiResponse<any> = {
@@ -57,15 +57,15 @@ export class AuthService {
     return response;
   }
 
-  getUserData(user: UserEntity) {
-    return {
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      role: user.role,
-      profile_photo_url: user.profile_photo_url,
-    };
-  }
+  // getUserData(user: UserEntity) {
+  //   return {
+  //     id: user.id,
+  //     full_name: user.full_name,
+  //     email: user.email,
+  //     role: user.role,
+  //     profile_photo_url: user.profile_photo_url,
+  //   };
+  // }
 
   getPayload(user: UserEntity) {
     return {

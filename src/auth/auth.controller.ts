@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 
 @Controller('auth')
 @UseFilters(DbexceptionFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private service: AuthService) {}
 

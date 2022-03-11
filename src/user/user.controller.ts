@@ -1,10 +1,19 @@
-import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Query,
+  Request,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
 @UseGuards(JwtAuthGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(private userService: UserService) {}
 
