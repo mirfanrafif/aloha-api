@@ -21,6 +21,7 @@ import {
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 
 const pageSize = 20;
 
@@ -223,5 +224,18 @@ export class MessageService {
       message: 'Success retrieving data from customer number ' + customerNumber,
     };
     return response;
+  }
+
+  async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
+    const messages = await this.customerService.getCustomerByAgent(
+      user,
+      lastCustomerId,
+    );
+    const result: ApiResponse<CustomerAgent[]> = {
+      success: true,
+      data: messages,
+      message: `Success getting customer list by agent id ${user.id}`,
+    };
+    return result;
   }
 }

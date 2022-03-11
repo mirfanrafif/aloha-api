@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Request,
@@ -37,11 +38,11 @@ export class MessageController {
     return this.service.sendMessageToCustomer(data, user);
   }
 
-  @Get()
+  @Get(':customer_number')
   @UseGuards(JwtAuthGuard)
   async getPastMessages(
     @Request() request,
-    @Query('customer_number') customerNumber?: string,
+    @Param('customer_number') customerNumber?: string,
     @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageEntity[]>> {
     const user: UserEntity = request.user;
@@ -62,5 +63,18 @@ export class MessageController {
   @Post('tracking')
   trackMessageStatus(@Body() body) {
     console.log(body);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async getCustomerByAgentId(
+    @Request() request,
+    @Query('last_customer_id') lastCustomerId?: number,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.service.getCustomerByAgentId(
+      request.user,
+      lastCustomerId,
+    );
+    return result;
   }
 }

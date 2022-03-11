@@ -38,11 +38,14 @@ export class AuthService {
 
   async register(registerRequest: RegisterRequestDto) {
     const password = await hash(registerRequest.password, 10);
-    const user = await this.userRepository.save({
-      ...registerRequest,
+    const userData = this.userRepository.create({
+      full_name: registerRequest.full_name,
+      email: registerRequest.email,
+      role: registerRequest.role,
       password: password,
       created_at: Date(),
     });
+    const user = await this.userRepository.save(userData);
     // const userData = this.getUserData(user);
     const jwtPayload = this.getPayload(user);
     const result = {
@@ -56,16 +59,6 @@ export class AuthService {
     };
     return response;
   }
-
-  // getUserData(user: UserEntity) {
-  //   return {
-  //     id: user.id,
-  //     full_name: user.full_name,
-  //     email: user.email,
-  //     role: user.role,
-  //     profile_photo_url: user.profile_photo_url,
-  //   };
-  // }
 
   getPayload(user: UserEntity) {
     return {
