@@ -53,10 +53,10 @@ export class WablasApiResponse<T> {
 }
 
 export class SendMessageResponseData {
-  messages: Message[];
+  messages: MessageResponseItem[];
 }
 
-export class Message {
+export class MessageResponseItem {
   id: string;
   phone: string;
   message: string;

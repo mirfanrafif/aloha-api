@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -16,13 +16,11 @@ import {
   MessageRequestDto,
   SendMessageResponseData,
   TextMessage,
-  Message,
   MessageType,
   WablasSendMessageRequest,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { compareSync } from 'bcrypt';
 
 const pageSize = 20;
 
@@ -40,12 +38,16 @@ export class MessageService {
     messageRequest: MessageRequestDto,
     agent: UserEntity,
   ) {
+    //jika role admin tidak perlu cek ini
     if (agent.role !== Role.admin) {
+      //cek apakah agent handle customer. jika tidak throw Httpexception
       await this.customerService.agentShouldHandleCustomer(
         messageRequest,
         agent,
       );
     }
+
+    //templating request
     const request: WablasSendMessageRequest = {
       data: [
         {
@@ -58,6 +60,7 @@ export class MessageService {
       ],
     };
 
+    //buat request ke WABLAS API
     return this.http
       .post('/api/v2/send-message', JSON.stringify(request), {
         headers: {
@@ -71,13 +74,18 @@ export class MessageService {
           async (
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
+            //save ke database
             const messages = await this.saveOutgoingMessage(
               response.data.data,
               agent,
             );
+
+            //kirim ke frontend lewat websocket
             messages.forEach((message: MessageEntity) => {
               this.gateway.sendMessage(message);
             });
+
+            //return result
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
               data: messages,
@@ -107,6 +115,7 @@ export class MessageService {
   ): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
+    //for loop insert data
     for (const messageItem of messageResponses.messages) {
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
@@ -127,10 +136,7 @@ export class MessageService {
   async handleIncomingMessage(
     message: TextMessage,
   ): Promise<ApiResponse<MessageEntity | null>> {
-    let customerAgent = await this.customerService.findAgentByCostumerNumber(
-      message.phone,
-    );
-
+    //message from group
     if (message.isGroup) {
       throw new HttpException(
         'Failed to handle incoming message. Message is from group',
@@ -138,6 +144,12 @@ export class MessageService {
       );
     }
 
+    //find agent by customer
+    let customerAgent = await this.customerService.findAgentByCostumerNumber(
+      message.phone,
+    );
+
+    //assign customer to agent
     if (customerAgent == null) {
       customerAgent = await this.customerService.assignCustomerToAgent(
         message.phone,
@@ -145,7 +157,8 @@ export class MessageService {
       );
     }
 
-    const data: MessageEntity = await this.messageRepository.save({
+    //create entity
+    const messageEntity = this.messageRepository.create({
       customerNumber: message.phone,
       message: message.message,
       messageId: message.id,
@@ -156,6 +169,13 @@ export class MessageService {
       type: message.messageType,
       created_at: Date(),
     });
+
+    //save entity
+    const data: MessageEntity = await this.messageRepository.save(
+      messageEntity,
+    );
+
+    //send to frontend via websocket
     this.gateway.sendMessage(data);
     return {
       success: true,
@@ -170,18 +190,23 @@ export class MessageService {
     agent: UserEntity,
   ) {
     let condition = {};
+    //check role if not admin
     if (agent.role !== 'admin') {
       condition = {
         ...condition,
         agent: agent,
       };
     }
+
+    //check last message id for pagination
     if (lastMessageId > 0) {
       condition = {
         ...condition,
         id: LessThan(lastMessageId),
       };
     }
+
+    //select
     const result: MessageEntity[] = await this.messageRepository.find({
       where: {
         customerNumber: customerNumber,
