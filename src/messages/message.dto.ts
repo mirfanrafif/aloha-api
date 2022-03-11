@@ -1,66 +1,51 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
 
 export type TextMessage = {
   id: string;
-  phone: string;
-  message: string;
   pushName: string;
-  thumbProfile: string;
-  groupId: string;
-  groupSubject: string;
+  isGroup: boolean;
+  group: Group;
+  message: string;
+  phone: string;
+  messageType: MessageType;
+  file: string;
+  mimeType: string;
+  // thumbProfile: string;
+  sender: number;
   timestamp: number;
-  category: string;
-  receiver: number;
 };
 
-export type ImageMessage = {
-  id: string;
-  phone: string;
+export enum MessageType {
+  text = 'text',
+  document = 'document',
+  image = 'image',
+}
+
+export type Group = {
+  subject: string;
+  owner: string;
+  desc: string;
+};
+export class MessageRequestDto {
+  @IsNotEmpty()
+  customerNumber: string;
+
+  @IsNotEmpty()
   message: string;
-  pushName: string;
-  thumbProfile: string;
-  groupId: string;
-  groupSubject: string;
-  timestamp: number;
-  category: string;
-  receiver: number;
-  image: string;
-  url: string;
+}
+
+export type WablasSendMessageRequest = {
+  data: WablasSendMessageRequestData[];
 };
 
-export type DocumentMessage = {
-  id: string;
+export type WablasSendMessageRequestData = {
   phone: string;
   message: string;
-  pushName: string;
-  thumbProfile: string;
-  groupId: string;
-  groupSubject: string;
-  timestamp: number;
-  category: string;
-  receiver: number;
-  image: string;
-  url: string;
-};
-
-export class MessageRequestData {
-  @ApiProperty()
-  phone: string;
-
-  @ApiProperty()
-  message: string;
-
-  @ApiProperty({ required: false })
   secret: boolean;
-
-  @ApiProperty({ required: false })
-  priority: boolean;
-}
-
-export class MessageRequest {
-  @ApiProperty()
-  data: MessageRequestData[];
-}
+  retry: boolean;
+  isGroup: boolean;
+};
 
 export class WablasApiResponse<T> {
   status: boolean;
@@ -69,8 +54,7 @@ export class WablasApiResponse<T> {
 }
 
 export class SendMessageResponseData {
-  quota: number;
-  message: Message[];
+  messages: Message[];
 }
 
 export class Message {
@@ -79,14 +63,6 @@ export class Message {
   message: string;
   status: MessageStatus;
 }
-
-export type MessageResponse = {
-  messageId: string;
-  senderId: string;
-  message: string;
-  consumerNumber: string;
-  status: MessageStatus;
-};
 
 enum MessageStatus {
   sent = 'sent',

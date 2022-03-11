@@ -1,3 +1,4 @@
+import { MessageType } from 'src/messages/message.dto';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { UserEntity } from '../user/user.entity';
 
@@ -14,20 +15,26 @@ export class MessageEntity {
   @Column()
   message: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.messages)
-  agent: UserEntity;
-
   @Column()
   customerNumber: string;
 
   @Column()
   status: MessageStatus;
 
-  @Column({ type: 'datetime' })
-  created_at: string;
+  @Column({ nullable: true })
+  file: string;
+
+  @ManyToOne(() => UserEntity, (user) => user.messages)
+  agent: UserEntity;
 
   @Column()
   type: MessageType;
+
+  @Column()
+  fromMe: boolean;
+
+  @Column({ type: 'datetime' })
+  created_at: string;
 }
 
 export enum MessageStatus {
@@ -37,9 +44,4 @@ export enum MessageStatus {
   received = 'received',
   reject = 'reject',
   pending = 'pending',
-}
-
-export enum MessageType {
-  incoming = 'incoming',
-  outgoing = 'outgoing',
 }

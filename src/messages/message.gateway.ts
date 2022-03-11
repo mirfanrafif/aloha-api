@@ -1,4 +1,4 @@
-import { Inject, ParseIntPipe, UseFilters } from '@nestjs/common';
+import { Inject, UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -11,8 +11,6 @@ import { UserJwtPayload } from 'src/auth/auth.dto';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { UserService } from 'src/user/user.service';
-import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import { SocketDBException } from 'src/utils/socketdbexception.filter';
 import { Repository } from 'typeorm';
 @WebSocketGateway({
@@ -40,17 +38,17 @@ export class MessageGateway {
   ) {
     const payload: UserJwtPayload = JSON.parse(data);
     const user = await this.userRepository.findOne(payload.id);
-    if (user !== undefined) {
-      if (user.role == 'admin') {
-        socket.join('message:admin');
-        return 'Admin joined the message';
-      } else {
-        socket.join('message:' + user.id);
-        return 'Agent ' + user.full_name + ' joined the message';
-      }
-    } else {
+    if (user === undefined) {
       return 'User not found';
     }
+
+    if (user.role == 'admin') {
+      socket.join('message:admin');
+      return 'Admin joined the message';
+    }
+
+    socket.join('message:' + user.id);
+    return 'Agent ' + user.full_name + ' joined the message';
   }
 
   @WebSocketServer()

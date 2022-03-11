@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Get,
   Post,
@@ -7,37 +8,33 @@ import {
   Request,
   UseFilters,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
-import {
-  DocumentMessage,
-  ImageMessage,
-  MessageRequest,
-  TextMessage,
-} from './message.dto';
+import { MessageRequestDto, TextMessage } from './message.dto';
 import { MessageService } from './message.service';
 
 @Controller('message')
 @UseFilters(DbexceptionFilter)
+@UseInterceptors(ClassSerializerInterceptor)
 export class MessageController {
   constructor(private service: MessageService) {}
 
   @Post('webhook')
-  handleIncomingMessage(
-    @Body() message: DocumentMessage | ImageMessage | TextMessage,
-  ) {
+  handleIncomingMessage(@Body() message: TextMessage) {
     return this.service.handleIncomingMessage(message);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseFilters(DbexceptionFilter)
-  handleAgentMessage(@Request() request, @Body() data: MessageRequest) {
-    return this.service.sendMessageToCustomer(data, request.user.id);
+  handleAgentMessage(@Request() request, @Body() data: MessageRequestDto) {
+    const user: UserEntity = request.user;
+    return this.service.sendMessageToCustomer(data, user);
   }
 
   @Get()

@@ -40,3 +40,4 @@ const image = {
   sender: '6282338819564',
   timestamp: '2022-03-10T15: 26: 52Z',
 };
+console.log(JSON.stringify(text));

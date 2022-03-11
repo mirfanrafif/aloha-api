@@ -18,7 +18,6 @@ export const DATABASE_CONNECTION = 'database_connection';
           password: process.env.DB_PASSWORD,
           host: process.env.DB_HOST,
           entities: [UserEntity, CustomerAgent, MessageEntity],
-          synchronize: true,
         }),
     },
   ],

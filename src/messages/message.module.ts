@@ -12,7 +12,8 @@ import { UserRepositoryModule } from 'src/core/repository/user/user.module';
   controllers: [MessageController],
   imports: [
     HttpModule.register({
-      baseURL: 'https://sambi.wablas.com',
+      withCredentials: true,
+      baseURL: 'https://solo.wablas.com',
     }),
     MessageRepositoryModule,
     CustomerModule,

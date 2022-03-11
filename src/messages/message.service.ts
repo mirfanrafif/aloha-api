@@ -1,11 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
 import { catchError, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
-  MessageType,
 } from 'src/core/repository/message/message.entity';
 import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { CustomerService } from 'src/customer/customer.service';
@@ -14,16 +13,16 @@ import { WablasAPIException } from 'src/utils/wablas.exception';
 import { LessThan, Repository } from 'typeorm';
 import {
   WablasApiResponse,
-  DocumentMessage,
-  ImageMessage,
-  MessageRequest,
+  MessageRequestDto,
   SendMessageResponseData,
   TextMessage,
   Message,
+  MessageType,
+  WablasSendMessageRequest,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+import { compareSync } from 'bcrypt';
 
 const pageSize = 20;
 
@@ -35,31 +34,39 @@ export class MessageService {
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
     private customerService: CustomerService,
-    @Inject(USER_REPOSITORY)
-    private userRepository: Repository<UserEntity>,
   ) {}
 
-  sendMessageToCustomer(messageRequest: MessageRequest, agentId: number) {
+  sendMessageToCustomer(messageRequest: MessageRequestDto, agent: UserEntity) {
+    const request: WablasSendMessageRequest = {
+      data: [
+        {
+          phone: messageRequest.customerNumber,
+          message: messageRequest.message,
+          secret: false,
+          retry: false,
+          isGroup: false,
+        },
+      ],
+    };
     return this.http
-      .post('/api/v2/send-bulk/text', messageRequest, {
+      .post('/api/v2/send-message', JSON.stringify(request), {
         headers: {
-          Authorization:
-            process.env.WABLAS_TOKEN !== undefined
-              ? process.env.WABLAS_TOKEN
-              : '',
+          Authorization: `${process.env.WABLAS_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
       })
       .pipe(
         map(
           async (
-            value: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
             const messages = await this.saveOutgoingMessage(
-              value.data.data,
-              agentId,
+              response.data.data,
+              agent,
             );
             messages.forEach((message: MessageEntity) => {
-              this.sendMessage(message);
+              this.gateway.sendMessage(message);
             });
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
@@ -71,14 +78,10 @@ export class MessageService {
         ),
         catchError((value: AxiosError<WablasApiResponse<null>>) => {
           if (value.response !== undefined) {
-            const result: ApiResponse<MessageEntity[]> = {
-              success: false,
-              data: [],
-              message:
-                'Failed to send message to Wablas API. Message : ' +
+            throw new WablasAPIException(
+              'Failed to send message to Wablas API. Message : ' +
                 value.response.data.message,
-            };
-            throw new WablasAPIException(result);
+            );
           }
           throw new WablasAPIException({
             success: false,
@@ -90,33 +93,40 @@ export class MessageService {
 
   async saveOutgoingMessage(
     messageResponses: SendMessageResponseData,
-    agentId: number,
+    agent: UserEntity,
   ): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
-    const agent = await this.userRepository.findOneOrFail(agentId);
-
-    messageResponses.message.forEach(async (messageItem: Message) => {
+    for (const messageItem of messageResponses.messages) {
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: messageItem.message,
         customerNumber: messageItem.phone,
         agent: agent,
         status: messageItem.status,
-        type: MessageType.outgoing,
+        fromMe: true,
+        type: MessageType.text,
+        created_at: Date(),
       });
       messages.push(message);
-    });
+    }
 
     return messages;
   }
 
   async handleIncomingMessage(
-    message: DocumentMessage | ImageMessage | TextMessage,
-  ): Promise<ApiResponse<MessageEntity>> {
+    message: TextMessage,
+  ): Promise<ApiResponse<MessageEntity | null>> {
     let customerAgent = await this.customerService.findAgentByCostumerNumber(
       message.phone,
     );
+
+    if (message.isGroup) {
+      throw new HttpException(
+        'Failed to handle incoming message. Message is from group',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     if (customerAgent == null) {
       customerAgent = await this.customerService.assignCustomerToAgent(
@@ -130,11 +140,13 @@ export class MessageService {
       message: message.message,
       messageId: message.id,
       agent: customerAgent.agent,
-      status: MessageStatus.received,
-      type: MessageType.incoming,
+      status: MessageStatus.read,
+      fromMe: false,
+      file: message.file,
+      type: message.messageType,
       created_at: Date(),
     });
-    this.sendMessage(data);
+    this.gateway.sendMessage(data);
     return {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -176,12 +188,5 @@ export class MessageService {
       message: 'Success retrieving data from customer number ' + customerNumber,
     };
     return response;
-  }
-
-  sendMessage(data: MessageEntity) {
-    this.gateway.server
-      .to('message:' + data.agent)
-      .to('message:admin')
-      .emit('message', data);
   }
 }
