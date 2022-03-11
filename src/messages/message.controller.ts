@@ -58,4 +58,9 @@ export class MessageController {
       message: 'Please provide customer_number',
     };
   }
+
+  @Post('tracking')
+  trackMessageStatus(@Body() body) {
+    console.log(body);
+  }
 }
