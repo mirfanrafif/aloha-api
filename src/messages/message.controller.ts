@@ -51,12 +51,11 @@ export class MessageController {
         lastMessageId !== undefined ? lastMessageId : 0,
         user,
       );
-    } else {
-      return {
-        success: false,
-        data: [],
-        message: 'Please provide customer_number',
-      };
     }
+    return {
+      success: false,
+      data: [],
+      message: 'Please provide customer_number',
+    };
   }
 }

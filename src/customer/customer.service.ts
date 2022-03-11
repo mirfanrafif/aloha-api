@@ -1,9 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+import { MessageRequestDto } from 'src/messages/message.dto';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { MoreThan, Repository } from 'typeorm';
 
 const pageSize = 20;
@@ -58,5 +60,37 @@ export class CustomerService {
       take: pageSize,
     });
     return listCustomer;
+  }
+
+  async agentShouldHandleCustomer(
+    messageRequest: MessageRequestDto,
+    agent: UserEntity,
+  ) {
+    const customer = await this.customerRepository.findOneOrFail({
+      where: {
+        customerNumber: messageRequest.customerNumber,
+      },
+      relations: ['agent'],
+    });
+
+    if (customer === undefined) {
+      const result = {
+        success: false,
+        data: null,
+        message: 'Customer not found',
+      };
+      throw new HttpException(result, HttpStatus.NOT_FOUND);
+    }
+
+    if (customer.agent.id !== agent.id) {
+      const result: ApiResponse<null> = {
+        success: false,
+        data: null,
+        message: 'Agent are not handling this customer',
+      };
+      throw new HttpException(result, HttpStatus.FORBIDDEN);
+    }
+
+    return true;
   }
 }

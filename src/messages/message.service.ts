@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, map } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -21,7 +21,7 @@ import {
   WablasSendMessageRequest,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { compareSync } from 'bcrypt';
 
 const pageSize = 20;
@@ -36,7 +36,16 @@ export class MessageService {
     private customerService: CustomerService,
   ) {}
 
-  sendMessageToCustomer(messageRequest: MessageRequestDto, agent: UserEntity) {
+  async sendMessageToCustomer(
+    messageRequest: MessageRequestDto,
+    agent: UserEntity,
+  ) {
+    if (agent.role !== Role.admin) {
+      await this.customerService.agentShouldHandleCustomer(
+        messageRequest,
+        agent,
+      );
+    }
     const request: WablasSendMessageRequest = {
       data: [
         {
@@ -48,6 +57,7 @@ export class MessageService {
         },
       ],
     };
+
     return this.http
       .post('/api/v2/send-message', JSON.stringify(request), {
         headers: {
@@ -131,7 +141,7 @@ export class MessageService {
     if (customerAgent == null) {
       customerAgent = await this.customerService.assignCustomerToAgent(
         message.phone,
-        2,
+        1,
       );
     }
 
