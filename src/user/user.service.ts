@@ -62,10 +62,7 @@ export class UserService {
     return await this.jobRepository.save(job);
   }
 
-  async getJobAgents(id: number, user: UserEntity) {
-    if (user.role !== Role.admin) {
-      throw new UnauthorizedException();
-    }
+  async getJobAgents(id: number) {
     const job = await this.jobRepository.findOneOrFail(id, {
       relations: ['agents'],
     });

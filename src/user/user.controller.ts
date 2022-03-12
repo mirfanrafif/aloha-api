@@ -13,7 +13,9 @@ import {
 } from '@nestjs/common';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { Roles } from 'src/auth/role.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 import { AddJobRequest } from './user.dto';
 import { UserService } from './user.service';
 
@@ -42,10 +44,11 @@ export class UserController {
   }
 
   @Get('job/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   getJobAgents(@Param('id', ParseIntPipe) id: number, @Request() request) {
     const user: UserEntity = request.user;
-    return this.userService.getJobAgents(id, user);
+    return this.userService.getJobAgents(id);
   }
 
   @Post('job')

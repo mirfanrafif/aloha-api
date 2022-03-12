@@ -7,6 +7,8 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CustomerModule } from './customer/customer.module';
 import { UserJobModule } from './core/repository/user-job/user-job.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './auth/roles.guard';
 @Module({
   imports: [
     DatabaseModule,

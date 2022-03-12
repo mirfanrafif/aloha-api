@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserJobEntity } from '../user-job/user-job.entity';
 import { UserEntity } from '../user/user.entity';
 
 @Entity({
