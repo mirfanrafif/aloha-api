@@ -26,5 +26,5 @@ export class UserJobEntity {
   updated_at: Date;
 
   @OneToMany(() => UserEntity, (user) => user.job)
-  users: UserEntity[];
+  agents: UserEntity[];
 }

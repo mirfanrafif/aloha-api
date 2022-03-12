@@ -23,6 +23,7 @@ export class AuthService {
       where: {
         email: loginRequest.email,
       },
+      relations: ['job'],
     });
     if (user && (await compare(loginRequest.password, user.password))) {
       // const userData = this.getUserData(user);

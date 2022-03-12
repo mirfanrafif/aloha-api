@@ -49,7 +49,7 @@ export class UserEntity {
   @OneToMany(() => MessageEntity, (message) => message.agent)
   messages: MessageEntity[];
 
-  @ManyToOne(() => UserJobEntity, (category) => category.users)
+  @ManyToOne(() => UserJobEntity, (category) => category.agents)
   job: UserJobEntity;
 }
 

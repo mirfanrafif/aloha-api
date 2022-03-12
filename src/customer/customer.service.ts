@@ -57,6 +57,7 @@ export class CustomerService {
       where: {
         ...condition,
       },
+      relations: ['agent'],
       take: pageSize,
     });
     return listCustomer;

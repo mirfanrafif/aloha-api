@@ -1,6 +1,20 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class AddCustomerRequest {
+export class AddJobRequest {
   @IsNotEmpty()
-  customerId: number;
+  name: string;
+
+  @IsNotEmpty()
+  description: string;
+}
+
+export class UpdateUserRequestDto {
+  @IsNotEmpty()
+  full_name: string;
+
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  password?: string;
 }
