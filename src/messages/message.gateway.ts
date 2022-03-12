@@ -1,4 +1,9 @@
-import { Inject, UseFilters } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Inject,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -18,6 +23,7 @@ import { Repository } from 'typeorm';
   transports: ['websocket'],
   namespace: 'messages',
 })
+@UseInterceptors(ClassSerializerInterceptor)
 export class MessageGateway {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
