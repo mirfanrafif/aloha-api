@@ -5,7 +5,7 @@ ENV NODE_ENV build
 
 WORKDIR /app/aloha-api
 
-COPY package*.json .
+COPY package*.json ./
 
 RUN npm ci
 
