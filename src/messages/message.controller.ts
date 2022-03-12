@@ -62,7 +62,7 @@ export class MessageController {
 
   @Post('tracking')
   trackMessageStatus(@Body() body) {
-    console.log(body);
+    console.log('tracking: ' + body);
   }
 
   @Get()

@@ -16,7 +16,6 @@ import { UserJwtPayload } from 'src/auth/auth.dto';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { SocketDBException } from 'src/utils/socketdbexception.filter';
 import { Repository } from 'typeorm';
 @WebSocketGateway({
   cors: true,
@@ -36,7 +35,6 @@ export class MessageGateway {
       .emit('message', data);
   }
 
-  @UseFilters(new SocketDBException())
   @SubscribeMessage('join')
   async handleUserJoin(
     @ConnectedSocket() socket: Socket,
