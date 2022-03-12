@@ -6,6 +6,7 @@ import { DatabaseModule } from './core/database/database.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CustomerModule } from './customer/customer.module';
+import { UserJobModule } from './core/repository/user-job/user-job.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -15,6 +16,7 @@ import { CustomerModule } from './customer/customer.module';
     }),
     AuthModule,
     CustomerModule,
+    UserJobModule,
   ],
   controllers: [AppController],
   providers: [AppService],

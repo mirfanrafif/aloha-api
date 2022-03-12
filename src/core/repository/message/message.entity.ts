@@ -1,5 +1,13 @@
 import { MessageType } from 'src/messages/message.dto';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { UserJobEntity } from '../user-job/user-job.entity';
 import { UserEntity } from '../user/user.entity';
 
 @Entity({
@@ -33,8 +41,11 @@ export class MessageEntity {
   @Column()
   fromMe: boolean;
 
-  @Column({ type: 'datetime' })
-  created_at: string;
+  @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  updated_at: Date;
 }
 
 export enum MessageStatus {

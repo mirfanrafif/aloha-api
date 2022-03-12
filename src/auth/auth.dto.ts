@@ -24,6 +24,9 @@ export class RegisterRequestDto {
   @IsNotEmpty()
   @IsEnum(Role)
   role: Role;
+
+  @IsNotEmpty()
+  jobId: number;
 }
 
 export class UserJwtPayload {

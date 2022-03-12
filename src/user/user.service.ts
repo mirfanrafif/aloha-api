@@ -14,10 +14,12 @@ export class UserService {
   ) {}
 
   async getCurrentUser(id: number): Promise<ApiResponse<any>> {
-    const user = await this.userRepository.findOneOrFail(id);
+    const user = await this.userRepository.findOneOrFail(id, {
+      relations: ['job'],
+    });
     return {
       success: true,
-      data: this.getUserData(user),
+      data: user,
       message: 'Success getting profile data with user id ' + id,
     };
   }
@@ -35,13 +37,13 @@ export class UserService {
     return result;
   }
 
-  getUserData(user: UserEntity) {
-    return {
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      role: user.role,
-      profile_photo_url: user.profile_photo_url,
-    };
-  }
+  // getUserData(user: UserEntity) {
+  //   return {
+  //     id: user.id,
+  //     full_name: user.full_name,
+  //     email: user.email,
+  //     role: user.role,
+  //     profile_photo_url: user.profile_photo_url,
+  //   };
+  // }
 }

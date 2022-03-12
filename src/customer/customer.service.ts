@@ -29,11 +29,11 @@ export class CustomerService {
   }
 
   async assignCustomerToAgent(customerNumber: string, agentId: number) {
-    const customerAgent = this.customerRepository.create();
     const agent = await this.userRepository.findOneOrFail(agentId);
-    customerAgent.agent = agent;
-    customerAgent.customerNumber = customerNumber;
-    customerAgent.created_at = Date();
+    const customerAgent = this.customerRepository.create({
+      agent: agent,
+      customerNumber: customerNumber,
+    });
     return await this.customerRepository.save(customerAgent);
   }
 
