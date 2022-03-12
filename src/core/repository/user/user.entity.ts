@@ -35,7 +35,7 @@ export class UserEntity {
   role: Role;
 
   @Column({ nullable: true })
-  profile_photo_url: string;
+  profile_photo: string;
 
   @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
   created_at: Date;

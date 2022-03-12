@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
@@ -84,5 +85,13 @@ export class UserService {
         : user.password;
     const finalUser = await this.userRepository.save(currentUser);
     return finalUser;
+  }
+
+  async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
+    if (!file.mimetype.match(/image/gi)) {
+      throw new BadRequestException();
+    }
+    user.profile_photo = file.filename;
+    return await this.userRepository.save(user);
   }
 }

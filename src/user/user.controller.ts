@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Request,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { AddJobRequest } from './user.dto';
 import { UserService } from './user.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -46,13 +48,23 @@ export class UserController {
   @Get('job/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  getJobAgents(@Param('id', ParseIntPipe) id: number, @Request() request) {
-    const user: UserEntity = request.user;
+  getJobAgents(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getJobAgents(id);
   }
 
   @Post('job')
   addJob(@Body() body: AddJobRequest) {
     return this.userService.addJob(body);
+  }
+
+  @Put('profile_image')
+  @UseInterceptors(FileInterceptor('image'))
+  @UseGuards(JwtAuthGuard)
+  updateProfilePhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.userService.updateProfilePhoto(file, user);
   }
 }
