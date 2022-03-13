@@ -40,10 +40,10 @@ export class MessageEntity {
   @Column()
   fromMe: boolean;
 
-  @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', default: 'NOW()' })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', default: 'NOW()' })
   updated_at: Date;
 }
 

@@ -12,11 +12,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { Roles } from 'src/auth/role.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
-import { MessageRequestDto, TextMessage } from './message.dto';
+import {
+  BroadcastMessageRequest,
+  MessageRequestDto,
+  TextMessage,
+} from './message.dto';
 import { MessageService } from './message.service';
 
 @Controller('message')
@@ -76,5 +82,18 @@ export class MessageController {
       lastCustomerId,
     );
     return result;
+  }
+
+  @Post('broadcast')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  broadcastMessageToCustomer(
+    @Body() body: BroadcastMessageRequest,
+    @Request() request,
+  ) {
+    return this.service.broadcastMessageToCustomer(
+      body,
+      request.user as UserEntity,
+    );
   }
 }

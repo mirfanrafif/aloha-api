@@ -21,9 +21,9 @@ export class CustomerAgent {
   @ManyToOne(() => UserEntity, (user) => user.customer)
   agent: UserEntity;
 
-  @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', default: 'NOW()' })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', default: 'NOW()' })
   updated_at: Date;
 }

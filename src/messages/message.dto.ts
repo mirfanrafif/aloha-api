@@ -71,3 +71,7 @@ enum MessageStatus {
   reject = 'reject',
   pending = 'pending',
 }
+
+export class BroadcastMessageRequest {
+  messages: MessageRequestDto[];
+}

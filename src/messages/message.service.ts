@@ -18,6 +18,8 @@ import {
   TextMessage,
   MessageType,
   WablasSendMessageRequest,
+  BroadcastMessageRequest,
+  WablasSendMessageRequestData,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -59,7 +61,7 @@ export class MessageService {
       });
     } else {
       //find agent by customer
-      let customerAgent = await this.customerService.findAgentByCostumerNumber(
+      let customerAgent = await this.customerService.findAgentByCustomerNumber(
         message.phone,
       );
       //assign customer to agent
@@ -181,6 +183,72 @@ export class MessageService {
       );
   }
 
+  async broadcastMessageToCustomer(
+    body: BroadcastMessageRequest,
+    agent: UserEntity,
+  ) {
+    //templating request
+    const messages = body.messages.map<WablasSendMessageRequestData>(
+      (item) => ({
+        phone: item.customerNumber,
+        message: item.message,
+        isGroup: false,
+        retry: false,
+        secret: false,
+      }),
+    );
+    const request: WablasSendMessageRequest = {
+      data: messages,
+    };
+
+    //buat request ke WABLAS API
+    return this.http
+      .post('/api/v2/send-message', JSON.stringify(request), {
+        headers: {
+          Authorization: `${process.env.WABLAS_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      })
+      .pipe(
+        map(
+          async (
+            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+          ) => {
+            //save ke database
+            const messages = await this.saveOutgoingMessage(
+              response.data.data,
+              agent,
+            );
+
+            //kirim ke frontend lewat websocket
+            messages.forEach((message: MessageEntity) => {
+              this.gateway.sendMessage(message);
+            });
+
+            //return result
+            const result: ApiResponse<MessageEntity[]> = {
+              success: true,
+              data: messages,
+              message: 'Success sending message to Wablas API',
+            };
+            return result;
+          },
+        ),
+        catchError((value: AxiosError<WablasApiResponse<null>>) => {
+          if (value.response !== undefined) {
+            throw new WablasAPIException(
+              'Failed to send message to Wablas API. Message : ' +
+                value.response.data.message,
+            );
+          }
+          throw new WablasAPIException({
+            success: false,
+            message: 'Failed to send message to Wablas API.',
+          });
+        }),
+      );
+  }
   async saveOutgoingMessage(
     messageResponses: SendMessageResponseData,
     agent?: UserEntity,
