@@ -53,6 +53,8 @@ export class UserController {
   }
 
   @Post('job')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   addJob(@Body() body: AddJobRequest) {
     return this.userService.addJob(body);
   }

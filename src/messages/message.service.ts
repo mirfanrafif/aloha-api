@@ -37,17 +37,8 @@ export class MessageService {
 
   async sendMessageToCustomer(
     messageRequest: MessageRequestDto,
-    agent: UserEntity,
+    agent?: UserEntity,
   ) {
-    //jika role admin tidak perlu cek ini
-    if (agent.role !== Role.admin) {
-      //cek apakah agent handle customer. jika tidak throw Httpexception
-      await this.customerService.agentShouldHandleCustomer(
-        messageRequest,
-        agent,
-      );
-    }
-
     //templating request
     const request: WablasSendMessageRequest = {
       data: [
@@ -60,6 +51,17 @@ export class MessageService {
         },
       ],
     };
+
+    if (agent !== undefined) {
+      //jika role admin tidak perlu cek ini
+      if (agent.role !== Role.admin) {
+        //cek apakah agent handle customer. jika tidak throw Httpexception
+        await this.customerService.agentShouldHandleCustomer(
+          messageRequest,
+          agent,
+        );
+      }
+    }
 
     //buat request ke WABLAS API
     return this.http
@@ -112,7 +114,7 @@ export class MessageService {
 
   async saveOutgoingMessage(
     messageResponses: SendMessageResponseData,
-    agent: UserEntity,
+    agent?: UserEntity,
   ): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
@@ -142,6 +144,16 @@ export class MessageService {
       throw new HttpException(
         'Failed to handle incoming message. Message is from group',
         HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (message.message.match(/h[ae]lo|hallo|hai|sore|pagi|siang|malam/gi)) {
+      return this.sendMessageToCustomer(
+        {
+          customerNumber: message.phone,
+          message: 'Halo kak',
+        },
+        null,
       );
     }
 
