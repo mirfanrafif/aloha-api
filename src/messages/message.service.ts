@@ -46,20 +46,17 @@ export class MessageService {
 
     const data = await this.saveIncomingMessage(message);
 
+    console.log(data);
+
     if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|malam|tanya/gi)) {
-      await this.sendMessageToCustomer({
-        customerNumber: message.phone,
+      console.log('fungsi halo jalan');
+      this.sendMessageToCustomer({
+        customerNumber: data.customerNumber,
         message:
           'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?',
+      }).then((value) => {
+        value.subscribe();
       });
-
-      //send to frontend via websocket
-      this.gateway.sendMessage(data);
-      return {
-        success: true,
-        message: 'Success catch data from Wablas API',
-        data: data,
-      };
     } else {
       //find agent by customer
       let customerAgent = await this.customerService.findAgentByCostumerNumber(
@@ -73,6 +70,14 @@ export class MessageService {
         );
       }
     }
+
+    //send to frontend via websocket
+    this.gateway.sendMessage(data);
+    return {
+      success: true,
+      message: 'Success catch data from Wablas API',
+      data: data,
+    };
   }
 
   async saveIncomingMessage(message: TextMessage, agent?: UserEntity) {
