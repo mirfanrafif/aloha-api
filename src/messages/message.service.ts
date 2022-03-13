@@ -145,10 +145,12 @@ export class MessageService {
       );
     }
 
-    if (message.message.match(/h[ae]lo|hallo|hai|sore|pagi|siang|malam/gi)) {
+    if (
+      message.message.match(/h[ae]lo|hallo|hai|sore|pagi|siang|malam|tanya/gi)
+    ) {
       return this.sendMessageToCustomer({
         customerNumber: message.phone,
-        message: 'Halo kak',
+        message: 'Selamat datang di Indomaret. Selamat belanja.',
       });
     }
 
