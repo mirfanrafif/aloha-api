@@ -136,9 +136,7 @@ export class MessageService {
     return messages;
   }
 
-  async handleIncomingMessage(
-    message: TextMessage,
-  ): Promise<ApiResponse<MessageEntity | null>> {
+  async handleIncomingMessage(message: TextMessage) {
     //message from group
     if (message.isGroup) {
       throw new HttpException(
@@ -148,13 +146,10 @@ export class MessageService {
     }
 
     if (message.message.match(/h[ae]lo|hallo|hai|sore|pagi|siang|malam/gi)) {
-      return this.sendMessageToCustomer(
-        {
-          customerNumber: message.phone,
-          message: 'Halo kak',
-        },
-        null,
-      );
+      return this.sendMessageToCustomer({
+        customerNumber: message.phone,
+        message: 'Halo kak',
+      });
     }
 
     //find agent by customer
