@@ -35,6 +35,70 @@ export class MessageService {
     private customerService: CustomerService,
   ) {}
 
+  async handleIncomingMessage(message: TextMessage) {
+    //message from group
+    if (message.isGroup) {
+      throw new HttpException(
+        'Failed to handle incoming message. Message is from group',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const data = await this.saveIncomingMessage(message);
+
+    if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|malam|tanya/gi)) {
+      await this.sendMessageToCustomer({
+        customerNumber: message.phone,
+        message:
+          'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?',
+      });
+
+      //send to frontend via websocket
+      this.gateway.sendMessage(data);
+      return {
+        success: true,
+        message: 'Success catch data from Wablas API',
+        data: data,
+      };
+    } else {
+      //find agent by customer
+      let customerAgent = await this.customerService.findAgentByCostumerNumber(
+        message.phone,
+      );
+      //assign customer to agent
+      if (customerAgent === null) {
+        customerAgent = await this.customerService.assignCustomerToAgent(
+          message.phone,
+          1,
+        );
+      }
+    }
+  }
+
+  async saveIncomingMessage(message: TextMessage, agent?: UserEntity) {
+    const messageFiltered = /<~ (.*)/gi.exec(message.message);
+
+    //create entity
+    const messageEntity = this.messageRepository.create({
+      customerNumber: message.phone,
+      message: messageFiltered !== null ? messageFiltered[1] : message.message,
+      messageId: message.id,
+      agent: agent,
+      status: MessageStatus.read,
+      fromMe: false,
+      file: message.file,
+      type: message.messageType,
+      created_at: Date(),
+    });
+
+    //save entity
+    const data: MessageEntity = await this.messageRepository.save(
+      messageEntity,
+    );
+
+    return data;
+  }
+
   async sendMessageToCustomer(
     messageRequest: MessageRequestDto,
     agent?: UserEntity,
@@ -134,64 +198,6 @@ export class MessageService {
     }
 
     return messages;
-  }
-
-  async handleIncomingMessage(message: TextMessage) {
-    //message from group
-    if (message.isGroup) {
-      throw new HttpException(
-        'Failed to handle incoming message. Message is from group',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (
-      message.message.match(/h[ae]lo|hallo|hai|sore|pagi|siang|malam|tanya/gi)
-    ) {
-      return this.sendMessageToCustomer({
-        customerNumber: message.phone,
-        message: 'Selamat datang di Indomaret. Selamat belanja.',
-      });
-    }
-
-    //find agent by customer
-    let customerAgent = await this.customerService.findAgentByCostumerNumber(
-      message.phone,
-    );
-
-    //assign customer to agent
-    if (customerAgent == null) {
-      customerAgent = await this.customerService.assignCustomerToAgent(
-        message.phone,
-        1,
-      );
-    }
-
-    //create entity
-    const messageEntity = this.messageRepository.create({
-      customerNumber: message.phone,
-      message: message.message,
-      messageId: message.id,
-      agent: customerAgent.agent,
-      status: MessageStatus.read,
-      fromMe: false,
-      file: message.file,
-      type: message.messageType,
-      created_at: Date(),
-    });
-
-    //save entity
-    const data: MessageEntity = await this.messageRepository.save(
-      messageEntity,
-    );
-
-    //send to frontend via websocket
-    this.gateway.sendMessage(data);
-    return {
-      success: true,
-      message: 'Success catch data from Wablas API',
-      data: data,
-    };
   }
 
   async getPastMessageByCustomerNumber(
