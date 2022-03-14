@@ -62,28 +62,32 @@ export class MessageService {
 
     console.log(data);
 
-    //check current session
+    //cek apakah sudah ada percakapan sebelumnya
     const currentConversation =
       await this.conversationService.getCurrentConversationSession(
         data.customerNumber,
       );
 
+    // jika belum maka mulai percakapan
     if (currentConversation === undefined) {
+      //tampilkan menu
       const jobs = await this.showMenu();
       const helloMessage =
-        'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?\n' +
-        jobs;
+        'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' + jobs;
+      //kirim pesan pertama ke customer
       this.sendMessageToCustomer({
         customerNumber: data.customerNumber,
         message: helloMessage,
       }).then((value) => {
         value.subscribe();
       });
+      //mulai conversation
       await this.conversationService.startConversation(data.customerNumber);
     } else if (currentConversation.status === ConversationStatus.STARTED) {
       //cek apakah pilihan sudah benar
       const findPilihan = /\d/gi.exec(incomingMessage.message);
       if (findPilihan === null) {
+        //jika pilihan tidak benar, maka kirim mohon pilih menu diatas
         this.sendMessageToCustomer({
           customerNumber: data.customerNumber,
           message: 'Mohon pilih menu diatas',
@@ -91,19 +95,27 @@ export class MessageService {
           value.subscribe();
         });
       } else {
+        //dapatkan pilihan
         const pilihan = Number.parseInt(findPilihan[0]);
+
+        //cek apakah ada job yang sesuai
         const userJobs = await this.userJobRepository.find();
         const pilihanSesuai = userJobs.map((job) => job.id).includes(pilihan);
+
+        //jika sesuai maka arahkan customer ke agent yang sedia
         if (pilihanSesuai) {
+          //ubah status jadi connected
           await this.conversationService.connectConversation(
             currentConversation,
           );
+          //delegasikan customer ke agent yang sesuai
           const customerAgent =
             await this.customerService.assignCustomerToAgent({
               customerNumber: data.customerNumber,
               agentJob: pilihan,
             });
           data.agent = customerAgent.agent;
+          //kirim pesan bahwa akan terhubung
           await this.sendMessageToCustomer({
             customerNumber: data.customerNumber,
             message:
@@ -116,6 +128,7 @@ export class MessageService {
         }
       }
     } else if (currentConversation.status === ConversationStatus.CONNECTED) {
+      //jika sudah terhubung, maka langsung chat ke agent
       //find agent by customer
       const customerAgent =
         await this.customerService.findAgentByCustomerNumber({
@@ -129,27 +142,6 @@ export class MessageService {
       }
     }
 
-    // if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|mal[ae]m|tanya/gi)) {
-    //   const jobs = await this.showMenu();
-    //   const helloMessage =
-    //     'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?\n' +
-    //     jobs;
-    //   this.sendMessageToCustomer({
-    //     customerNumber: data.customerNumber,
-    //     message: helloMessage,
-    //   }).then((value) => {
-    //     value.subscribe();
-    //   });
-    // } else {
-    //   //assign customer to agent
-    //   if (customerAgent === null) {
-    //     customerAgent = await this.customerService.assignCustomerToAgent({
-    //       customerNumber: incomingMessage.phone,
-    //       agentId: 1,
-    //     });
-    //   }
-    // }
-
     //send to frontend via websocket
     this.gateway.sendMessage(data);
     return {
@@ -159,6 +151,7 @@ export class MessageService {
     };
   }
 
+  //save pesan ke database
   async saveIncomingMessage(message: TextMessage, agent?: UserEntity) {
     const messageFiltered = /<~ (.*)/gi.exec(message.message);
 
@@ -183,6 +176,7 @@ export class MessageService {
     return data;
   }
 
+  //kirim pesan ke customer
   async sendMessageToCustomer(
     messageRequest: MessageRequestDto,
     agent?: UserEntity,
@@ -260,6 +254,7 @@ export class MessageService {
       );
   }
 
+  //broadcast pesan ke customer
   async broadcastMessageToCustomer(
     body: BroadcastMessageRequest,
     agent: UserEntity,
@@ -326,6 +321,8 @@ export class MessageService {
         }),
       );
   }
+
+  //simpan pesan keluar
   async saveOutgoingMessage(
     messageResponses: SendMessageResponseData,
     agent?: UserEntity,
@@ -350,6 +347,7 @@ export class MessageService {
     return messages;
   }
 
+  //dapatkan pesan sebelumnya berdasarkan customer number
   async getPastMessageByCustomerNumber(
     customerNumber: string,
     lastMessageId: number,
@@ -391,6 +389,7 @@ export class MessageService {
     return response;
   }
 
+  //cari customer by user id / list pesan
   async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
     const messages = await this.customerService.getCustomerByAgent({
       agent: user,
@@ -404,6 +403,7 @@ export class MessageService {
     return result;
   }
 
+  //tampilkan menu
   async showMenu() {
     const userJobs = await this.userJobRepository.find();
     return userJobs
