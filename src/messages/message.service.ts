@@ -60,8 +60,6 @@ export class MessageService {
 
     const data = await this.saveIncomingMessage(incomingMessage);
 
-    console.log(data);
-
     //cek apakah sudah ada percakapan sebelumnya
     const currentConversation =
       await this.conversationService.getCurrentConversationSession(
