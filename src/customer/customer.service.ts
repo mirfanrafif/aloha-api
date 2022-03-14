@@ -55,21 +55,27 @@ export class CustomerService {
           id: agentJob,
         },
       },
+      relations: ['customer'],
     });
 
-    const existingCustomerAgent = await this.customerRepository.findOne({
-      where: {
-        customerNumber: customerNumber,
-        agent: agent[0],
-      },
-    });
+    //cari agent yang melayani customer paling sedikit agar seimbang
+    //mohon maaf algorithm nya jelek hehehe
+    const agentCustomersCount = agent.map(
+      (agentItem) => agentItem.customer.length,
+    );
 
-    if (existingCustomerAgent) {
-      throw new BadRequestException('Customer already assigned to this agent');
-    }
+    let agentWithMinimumCustomerIndex;
+    let agentWithMinimumCustomerCount = agentCustomersCount[0];
+
+    agentCustomersCount.forEach((item, index) => {
+      if (item < agentWithMinimumCustomerCount) {
+        agentWithMinimumCustomerIndex = index;
+        agentWithMinimumCustomerCount = item;
+      }
+    });
 
     const customerAgent = this.customerRepository.create({
-      agent: agent[0],
+      agent: agent[agentWithMinimumCustomerIndex],
       customerNumber: customerNumber,
     });
     return await this.customerRepository.save(customerAgent);
