@@ -44,6 +44,40 @@ export class CustomerService {
   //Mendelegasi agen dengan customer
   async assignCustomerToAgent({
     customerNumber,
+    agentJob,
+  }: {
+    customerNumber: string;
+    agentJob: number;
+  }) {
+    const agent = await this.userRepository.findOneOrFail({
+      where: {
+        job: {
+          id: agentJob,
+        },
+      },
+    });
+
+    const existingCustomerAgent = await this.customerRepository.findOne({
+      where: {
+        customerNumber: customerNumber,
+        agent: agent,
+      },
+    });
+
+    if (existingCustomerAgent) {
+      throw new BadRequestException('Customer already assigned to this agent');
+    }
+
+    const customerAgent = this.customerRepository.create({
+      agent: agent,
+      customerNumber: customerNumber,
+    });
+    return await this.customerRepository.save(customerAgent);
+  }
+
+  //Mendelegasi agen dengan customer
+  async delegateCustomerToAgent({
+    customerNumber,
     agentId,
   }: {
     customerNumber: string;

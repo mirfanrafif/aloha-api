@@ -7,9 +7,11 @@ import { MessageRepositoryModule } from 'src/core/repository/message/message.mod
 import { CustomerModule } from 'src/customer/customer.module';
 import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 import { UserJobModule } from 'src/core/repository/user-job/user-job.module';
+import { ConversationRepositoryModule } from 'src/core/repository/conversation/conversation-repository.module';
+import { ConversationService } from './conversation.service';
 
 @Module({
-  providers: [MessageService, MessageGateway],
+  providers: [MessageService, MessageGateway, ConversationService],
   controllers: [MessageController],
   imports: [
     HttpModule.register({
@@ -20,6 +22,7 @@ import { UserJobModule } from 'src/core/repository/user-job/user-job.module';
     CustomerModule,
     UserRepositoryModule,
     UserJobModule,
+    ConversationRepositoryModule,
   ],
 })
 export class MessageModule {}

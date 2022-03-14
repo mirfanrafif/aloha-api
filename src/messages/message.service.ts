@@ -10,7 +10,7 @@ import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
-import { LessThan, Repository } from 'typeorm';
+import { IsNull, LessThan, Not, Repository } from 'typeorm';
 import {
   WablasApiResponse,
   MessageRequestDto,
@@ -26,6 +26,12 @@ import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
 import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
+import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import {
+  ConversationEntity,
+  ConversationStatus,
+} from 'src/core/repository/conversation/conversation.entity';
+import { ConversationService } from './conversation.service';
 
 const pageSize = 20;
 
@@ -39,6 +45,8 @@ export class MessageService {
     private customerService: CustomerService,
     @Inject(USER_JOB_REPOSITORY)
     private userJobRepository: Repository<UserJobEntity>,
+
+    private conversationService: ConversationService,
   ) {}
 
   async handleIncomingMessage(incomingMessage: TextMessage) {
@@ -54,7 +62,13 @@ export class MessageService {
 
     console.log(data);
 
-    if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|mal[ae]m|tanya/gi)) {
+    //check current session
+    const currentConversation =
+      await this.conversationService.getCurrentConversationSession(
+        data.customerNumber,
+      );
+
+    if (currentConversation === undefined) {
       const jobs = await this.showMenu();
       const helloMessage =
         'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?\n' +
@@ -65,19 +79,76 @@ export class MessageService {
       }).then((value) => {
         value.subscribe();
       });
-    } else {
-      //find agent by customer
-      let customerAgent = await this.customerService.findAgentByCustomerNumber({
-        customerNumber: incomingMessage.phone,
-      });
-      //assign customer to agent
-      if (customerAgent === null) {
-        customerAgent = await this.customerService.assignCustomerToAgent({
-          customerNumber: incomingMessage.phone,
-          agentId: 1,
+      await this.conversationService.startConversation(data.customerNumber);
+    } else if (currentConversation.status === ConversationStatus.STARTED) {
+      //cek apakah pilihan sudah benar
+      const findPilihan = /\d/gi.exec(incomingMessage.message);
+      if (findPilihan === null) {
+        this.sendMessageToCustomer({
+          customerNumber: data.customerNumber,
+          message: 'Mohon pilih menu diatas',
+        }).then((value) => {
+          value.subscribe();
         });
+      } else {
+        const pilihan = Number.parseInt(findPilihan[0]);
+        const userJobs = await this.userJobRepository.find();
+        const pilihanSesuai = userJobs.map((job) => job.id).includes(pilihan);
+        if (pilihanSesuai) {
+          await this.conversationService.connectConversation(
+            currentConversation,
+          );
+          const customerAgent =
+            await this.customerService.assignCustomerToAgent({
+              customerNumber: data.customerNumber,
+              agentJob: pilihan,
+            });
+          data.agent = customerAgent.agent;
+          await this.sendMessageToCustomer({
+            customerNumber: data.customerNumber,
+            message:
+              'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
+              customerAgent.agent.full_name +
+              '. Mohon tunggu sebentar',
+          }).then((value) => {
+            value.subscribe();
+          });
+        }
+      }
+    } else if (currentConversation.status === ConversationStatus.CONNECTED) {
+      //find agent by customer
+      const customerAgent =
+        await this.customerService.findAgentByCustomerNumber({
+          customerNumber: incomingMessage.phone,
+        });
+
+      if (customerAgent !== undefined) {
+        //update message data
+        data.agent = customerAgent.agent;
+        await this.messageRepository.save(data);
       }
     }
+
+    // if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|mal[ae]m|tanya/gi)) {
+    //   const jobs = await this.showMenu();
+    //   const helloMessage =
+    //     'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?\n' +
+    //     jobs;
+    //   this.sendMessageToCustomer({
+    //     customerNumber: data.customerNumber,
+    //     message: helloMessage,
+    //   }).then((value) => {
+    //     value.subscribe();
+    //   });
+    // } else {
+    //   //assign customer to agent
+    //   if (customerAgent === null) {
+    //     customerAgent = await this.customerService.assignCustomerToAgent({
+    //       customerNumber: incomingMessage.phone,
+    //       agentId: 1,
+    //     });
+    //   }
+    // }
 
     //send to frontend via websocket
     this.gateway.sendMessage(data);
