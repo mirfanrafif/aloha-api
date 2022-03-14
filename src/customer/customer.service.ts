@@ -49,7 +49,7 @@ export class CustomerService {
     customerNumber: string;
     agentJob: number;
   }) {
-    const agent = await this.userRepository.findOneOrFail({
+    const agent = await this.userRepository.find({
       where: {
         job: {
           id: agentJob,
@@ -60,7 +60,7 @@ export class CustomerService {
     const existingCustomerAgent = await this.customerRepository.findOne({
       where: {
         customerNumber: customerNumber,
-        agent: agent,
+        agent: agent[0],
       },
     });
 
@@ -69,7 +69,7 @@ export class CustomerService {
     }
 
     const customerAgent = this.customerRepository.create({
-      agent: agent,
+      agent: agent[0],
       customerNumber: customerNumber,
     });
     return await this.customerRepository.save(customerAgent);

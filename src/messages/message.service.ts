@@ -97,32 +97,45 @@ export class MessageService {
         const pilihan = Number.parseInt(findPilihan[0]);
 
         //cek apakah ada job yang sesuai
-        const userJobs = await this.userJobRepository.find();
-        const pilihanSesuai = userJobs.map((job) => job.id).includes(pilihan);
+        const userJobs = await this.userJobRepository.find({
+          relations: ['agents'],
+        });
+        const pilihanSesuai = userJobs.find((job) => job.id === pilihan);
 
         //jika sesuai maka arahkan customer ke agent yang sedia
-        if (pilihanSesuai) {
-          //ubah status jadi connected
-          await this.conversationService.connectConversation(
-            currentConversation,
-          );
-          //delegasikan customer ke agent yang sesuai
-          const customerAgent =
-            await this.customerService.assignCustomerToAgent({
+        if (pilihanSesuai !== undefined) {
+          if (pilihanSesuai.agents.length == 0) {
+            await this.sendMessageToCustomer({
               customerNumber: data.customerNumber,
-              agentJob: pilihan,
+              message:
+                'Mohon maaf tidak ada customer service yang dapat melayani di bidang itu',
+            }).then((value) => {
+              value.subscribe();
             });
-          data.agent = customerAgent.agent;
-          //kirim pesan bahwa akan terhubung
-          await this.sendMessageToCustomer({
-            customerNumber: data.customerNumber,
-            message:
-              'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
-              customerAgent.agent.full_name +
-              '. Mohon tunggu sebentar',
-          }).then((value) => {
-            value.subscribe();
-          });
+          } else {
+            //delegasikan customer ke agent yang sesuai
+            const customerAgent =
+              await this.customerService.assignCustomerToAgent({
+                customerNumber: data.customerNumber,
+                agentJob: pilihan,
+              });
+            data.agent = customerAgent.agent;
+
+            //ubah status jadi connected
+            await this.conversationService.connectConversation(
+              currentConversation,
+            );
+            //kirim pesan bahwa akan terhubung
+            await this.sendMessageToCustomer({
+              customerNumber: data.customerNumber,
+              message:
+                'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
+                customerAgent.agent.full_name +
+                '. Mohon tunggu sebentar',
+            }).then((value) => {
+              value.subscribe();
+            });
+          }
         }
       }
     } else if (currentConversation.status === ConversationStatus.CONNECTED) {
