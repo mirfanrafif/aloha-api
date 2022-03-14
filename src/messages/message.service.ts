@@ -24,6 +24,8 @@ import {
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
+import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 
 const pageSize = 20;
 
@@ -35,41 +37,45 @@ export class MessageService {
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
     private customerService: CustomerService,
+    @Inject(USER_JOB_REPOSITORY)
+    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
-  async handleIncomingMessage(message: TextMessage) {
+  async handleIncomingMessage(incomingMessage: TextMessage) {
     //message from group
-    if (message.isGroup) {
+    if (incomingMessage.isGroup) {
       throw new HttpException(
         'Failed to handle incoming message. Message is from group',
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    const data = await this.saveIncomingMessage(message);
+    const data = await this.saveIncomingMessage(incomingMessage);
 
     console.log(data);
 
-    if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|malam|tanya/gi)) {
-      console.log('fungsi halo jalan');
+    if (data.message.match(/h[ae]l+o|ha?i|sore|pagi|siang|mal[ae]m|tanya/gi)) {
+      const jobs = await this.showMenu();
+      const helloMessage =
+        'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?\n' +
+        jobs;
       this.sendMessageToCustomer({
         customerNumber: data.customerNumber,
-        message:
-          'Selamat datang di Indomaret. Selamat belanja. Apakah ada yang bisa kami bantu?',
+        message: helloMessage,
       }).then((value) => {
         value.subscribe();
       });
     } else {
       //find agent by customer
-      let customerAgent = await this.customerService.findAgentByCustomerNumber(
-        message.phone,
-      );
+      let customerAgent = await this.customerService.findAgentByCustomerNumber({
+        customerNumber: incomingMessage.phone,
+      });
       //assign customer to agent
       if (customerAgent === null) {
-        customerAgent = await this.customerService.assignCustomerToAgent(
-          message.phone,
-          1,
-        );
+        customerAgent = await this.customerService.assignCustomerToAgent({
+          customerNumber: incomingMessage.phone,
+          agentId: 1,
+        });
       }
     }
 
@@ -127,10 +133,10 @@ export class MessageService {
       //jika role admin tidak perlu cek ini
       if (agent.role !== Role.admin) {
         //cek apakah agent handle customer. jika tidak throw Httpexception
-        await this.customerService.agentShouldHandleCustomer(
-          messageRequest,
-          agent,
-        );
+        await this.customerService.agentShouldHandleCustomer({
+          customerNumber: messageRequest.customerNumber,
+          agent: agent,
+        });
       }
     }
 
@@ -315,15 +321,24 @@ export class MessageService {
   }
 
   async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
-    const messages = await this.customerService.getCustomerByAgent(
-      user,
+    const messages = await this.customerService.getCustomerByAgent({
+      agent: user,
       lastCustomerId,
-    );
+    });
     const result: ApiResponse<CustomerAgent[]> = {
       success: true,
       data: messages,
       message: `Success getting customer list by agent id ${user.id}`,
     };
     return result;
+  }
+
+  async showMenu() {
+    const userJobs = await this.userJobRepository.find();
+    return userJobs
+      .map((job) => {
+        return `${job.id}. ${job.name}`;
+      })
+      .join('\n');
   }
 }

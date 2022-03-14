@@ -19,10 +19,10 @@ export class UserJobEntity {
   @Column()
   description: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: 'NOW()' })
+  @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: 'NOW()' })
+  @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 
   @OneToMany(() => UserEntity, (user) => user.job)

@@ -27,7 +27,11 @@ export class CustomerService {
   ) {}
 
   //Mencari agen yang menangani customer tersebut
-  async findAgentByCustomerNumber(customerNumber: string) {
+  async findAgentByCustomerNumber({
+    customerNumber,
+  }: {
+    customerNumber: string;
+  }) {
     const customer = await this.customerRepository.findOne({
       where: {
         customerNumber: customerNumber,
@@ -38,7 +42,13 @@ export class CustomerService {
   }
 
   //Mendelegasi agen dengan customer
-  async assignCustomerToAgent(customerNumber: string, agentId: number) {
+  async assignCustomerToAgent({
+    customerNumber,
+    agentId,
+  }: {
+    customerNumber: string;
+    agentId: number;
+  }) {
     const agent = await this.userRepository.findOneOrFail(agentId);
 
     const existingCustomerAgent = await this.customerRepository.findOne({
@@ -60,7 +70,13 @@ export class CustomerService {
   }
 
   //mengambil data customer berdasarkan agen (halaman list pesan)
-  async getCustomerByAgent(agent: UserEntity, lastCustomerId?: number) {
+  async getCustomerByAgent({
+    agent,
+    lastCustomerId,
+  }: {
+    agent: UserEntity;
+    lastCustomerId?: number;
+  }) {
     const conditions = {};
     const relations: string[] = [];
 
@@ -87,13 +103,16 @@ export class CustomerService {
   cek apakah agen mengurus customer tersebut. 
   jika tidak maka throw beberapa error yang berhubungan 
    */
-  async agentShouldHandleCustomer(
-    messageRequest: MessageRequestDto,
-    agent: UserEntity,
-  ) {
+  async agentShouldHandleCustomer({
+    customerNumber,
+    agent,
+  }: {
+    customerNumber: string;
+    agent: UserEntity;
+  }) {
     const customer = await this.customerRepository.findOneOrFail({
       where: {
-        customerNumber: messageRequest.customerNumber,
+        customerNumber: customerNumber,
         agent: agent,
       },
       relations: ['agent'],

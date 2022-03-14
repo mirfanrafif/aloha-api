@@ -3,7 +3,7 @@ const text = {
   pushName: 'Dharma Yudistira',
   isGroup: false,
   group: { subject: '', owner: '', desc: '' },
-  message: 'diceluk dikon opo by ambe bapak <~ ngedukno jeruk teko motor',
+  message: 'ngedukno jeruk teko motor',
   phone: '6282228868960',
   messageType: 'text',
   file: '',
@@ -43,4 +43,4 @@ const image = {
 
 const chat = /<~ (.*)/gi.exec(text.message);
 
-console.log(chat[1]);
+console.log(chat);

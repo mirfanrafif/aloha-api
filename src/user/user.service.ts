@@ -39,10 +39,10 @@ export class UserService {
   }
 
   async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
-    const messages = await this.customerService.getCustomerByAgent(
-      user,
+    const messages = await this.customerService.getCustomerByAgent({
+      agent: user,
       lastCustomerId,
-    );
+    });
     const result: ApiResponse<CustomerAgent[]> = {
       success: true,
       data: messages,
@@ -88,7 +88,8 @@ export class UserService {
   }
 
   async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
-    if (!file.mimetype.match(/image/gi)) {
+    const fileType = /image\/(.*)/gi.exec(file.mimetype);
+    if (fileType === null) {
       throw new BadRequestException();
     }
     user.profile_photo = file.filename;

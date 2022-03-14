@@ -29,14 +29,13 @@ export class CustomerController {
     @Request() request,
     @Query('last_customer_id') lastCustomerId?: number,
   ) {
-    return this.service.getCustomerByAgent(request.user, lastCustomerId);
+    return this.service.getCustomerByAgent({ agent: request.user, lastCustomerId });
   }
 
   @Post('delegate')
   delegateCustomerToAgent(@Body() body: DelegateCustomerRequestDto) {
     return this.service.assignCustomerToAgent(
-      body.customerNumber,
-      body.agentId,
+      { customerNumber: body.customerNumber, agentId: body.agentId },
     );
   }
 }

@@ -6,6 +6,7 @@ import { HttpModule } from '@nestjs/axios';
 import { MessageRepositoryModule } from 'src/core/repository/message/message.module';
 import { CustomerModule } from 'src/customer/customer.module';
 import { UserRepositoryModule } from 'src/core/repository/user/user.module';
+import { UserJobModule } from 'src/core/repository/user-job/user-job.module';
 
 @Module({
   providers: [MessageService, MessageGateway],
@@ -18,6 +19,7 @@ import { UserRepositoryModule } from 'src/core/repository/user/user.module';
     MessageRepositoryModule,
     CustomerModule,
     UserRepositoryModule,
+    UserJobModule,
   ],
 })
 export class MessageModule {}

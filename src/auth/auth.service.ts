@@ -49,7 +49,6 @@ export class AuthService {
       role: registerRequest.role,
       password: password,
       job: job,
-      created_at: Date(),
     });
     const user = await this.userRepository.save(userData);
     // const userData = this.getUserData(user);
