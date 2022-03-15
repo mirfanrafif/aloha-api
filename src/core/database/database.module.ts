@@ -5,6 +5,7 @@ import { CustomerAgent } from '../repository/customer-agent/customer-agent.entit
 import { UserEntity } from '../repository/user/user.entity';
 import { UserJobEntity } from '../repository/user-job/user-job.entity';
 import { ConversationEntity } from '../repository/conversation/conversation.entity';
+import { CustomerEntity } from '../repository/customer/customer.entity';
 
 export const DATABASE_CONNECTION = 'database_connection';
 
@@ -25,7 +26,9 @@ export const DATABASE_CONNECTION = 'database_connection';
             MessageEntity,
             UserJobEntity,
             ConversationEntity,
+            CustomerEntity,
           ],
+          synchronize: true,
         }),
     },
   ],

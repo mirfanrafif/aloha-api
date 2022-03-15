@@ -17,6 +17,7 @@ import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { Repository } from 'typeorm';
+import { MessageResponseDto } from './message.dto';
 @WebSocketGateway({
   cors: true,
   transports: ['websocket'],
@@ -28,9 +29,10 @@ export class MessageGateway {
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
   ) {}
 
-  sendMessage(data: MessageEntity) {
+  sendMessage(data: MessageResponseDto) {
+    const agentId = data.agent !== undefined ? data.agent.id.toString() : '0';
     this.server
-      .to('message:' + data.agent.id)
+      .to(`message:${agentId}`)
       .to('message:admin')
       .emit('message', data);
   }

@@ -21,6 +21,7 @@ import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import {
   BroadcastMessageRequest,
   MessageRequestDto,
+  MessageResponseDto,
   TextMessage,
 } from './message.dto';
 import { MessageService } from './message.service';
@@ -55,7 +56,7 @@ export class MessageController {
     @Request() request,
     @Param('customer_number') customerNumber?: string,
     @Query('last_message_id') lastMessageId?: number,
-  ): Promise<ApiResponse<MessageEntity[]>> {
+  ): Promise<ApiResponse<MessageResponseDto[]>> {
     const user: UserEntity = request.user;
     if (customerNumber !== undefined) {
       return this.service.getPastMessageByCustomerNumber(

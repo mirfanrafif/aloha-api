@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CustomerEntity } from '../customer/customer.entity';
 import { UserEntity } from '../user/user.entity';
 
 @Entity({
@@ -21,9 +22,6 @@ export class MessageEntity {
 
   @Column()
   message: string;
-
-  @Column()
-  customerNumber: string;
 
   @Column()
   status: MessageStatus;
@@ -45,13 +43,16 @@ export class MessageEntity {
 
   @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
   updated_at: Date;
+
+  @ManyToOne(() => CustomerEntity, (customer) => customer.messages)
+  customer: CustomerEntity;
 }
 
 export enum MessageStatus {
-  sent = 'sent',
-  read = 'read',
-  cancel = 'cancel',
-  received = 'received',
-  reject = 'reject',
-  pending = 'pending',
+  SENT = 'sent',
+  READ = 'read',
+  CANCEL = 'cancel',
+  RECEIVED = 'received',
+  REJECT = 'reject',
+  PENDING = 'pending',
 }

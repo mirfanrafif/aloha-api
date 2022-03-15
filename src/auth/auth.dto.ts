@@ -3,8 +3,7 @@ import { Role } from 'src/core/repository/user/user.entity';
 
 export class LoginRequestDto {
   @IsNotEmpty()
-  @IsEmail()
-  email: string;
+  username: string;
 
   @IsNotEmpty()
   password: string;

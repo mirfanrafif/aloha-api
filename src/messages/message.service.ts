@@ -1,5 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
 import { catchError, map } from 'rxjs';
 import {
@@ -10,7 +16,7 @@ import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
-import { IsNull, LessThan, Not, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import {
   WablasApiResponse,
   MessageRequestDto,
@@ -20,17 +26,14 @@ import {
   WablasSendMessageRequest,
   BroadcastMessageRequest,
   WablasSendMessageRequestData,
+  MessageResponseDto,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
 import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
-import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
-import {
-  ConversationEntity,
-  ConversationStatus,
-} from 'src/core/repository/conversation/conversation.entity';
+import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
 import { ConversationService } from './conversation.service';
 
 const pageSize = 20;
@@ -81,7 +84,10 @@ export class MessageService {
       });
       //mulai conversation
       await this.conversationService.startConversation(data.customerNumber);
-    } else if (currentConversation.status === ConversationStatus.STARTED) {
+
+      return this.sendIncomingMessageResponse(data);
+    }
+    if (currentConversation.status === ConversationStatus.STARTED) {
       //cek apakah pilihan sudah benar
       const findPilihan = /\d/gi.exec(incomingMessage.message);
       if (findPilihan === null) {
@@ -92,53 +98,71 @@ export class MessageService {
         }).then((value) => {
           value.subscribe();
         });
-      } else {
-        //dapatkan pilihan
-        const pilihan = Number.parseInt(findPilihan[0]);
 
-        //cek apakah ada job yang sesuai
-        const userJobs = await this.userJobRepository.find({
-          relations: ['agents'],
-        });
-        const pilihanSesuai = userJobs.find((job) => job.id === pilihan);
-
-        //jika sesuai maka arahkan customer ke agent yang sedia
-        if (pilihanSesuai !== undefined) {
-          if (pilihanSesuai.agents.length == 0) {
-            await this.sendMessageToCustomer({
-              customerNumber: data.customerNumber,
-              message:
-                'Mohon maaf tidak ada customer service yang dapat melayani di bidang itu',
-            }).then((value) => {
-              value.subscribe();
-            });
-          } else {
-            //delegasikan customer ke agent yang sesuai
-            const customerAgent =
-              await this.customerService.assignCustomerToAgent({
-                customerNumber: data.customerNumber,
-                agentJob: pilihan,
-              });
-            data.agent = customerAgent.agent;
-
-            //ubah status jadi connected
-            await this.conversationService.connectConversation(
-              currentConversation,
-            );
-            //kirim pesan bahwa akan terhubung
-            await this.sendMessageToCustomer({
-              customerNumber: data.customerNumber,
-              message:
-                'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
-                customerAgent.agent.full_name +
-                '. Mohon tunggu sebentar',
-            }).then((value) => {
-              value.subscribe();
-            });
-          }
-        }
+        return this.sendIncomingMessageResponse(data);
       }
-    } else if (currentConversation.status === ConversationStatus.CONNECTED) {
+
+      //dapatkan pilihan
+      const pilihan = Number.parseInt(findPilihan[0]);
+
+      //cek apakah ada job yang sesuai
+      const userJobs = await this.userJobRepository.find({
+        relations: ['agents'],
+      });
+      const pilihanSesuai = userJobs.find((job) => job.id === pilihan);
+
+      //jika sesuai maka arahkan customer ke agent yang sedia
+      if (pilihanSesuai === undefined) {
+        this.sendMessageToCustomer({
+          customerNumber: data.customerNumber,
+          message: 'Mohon pilih menu diatas',
+        }).then((value) => {
+          value.subscribe();
+        });
+
+        return this.sendIncomingMessageResponse(data);
+      }
+
+      //cek apakah ada cs yang bekerja di layanan itu
+      if (pilihanSesuai.agents.length == 0) {
+        await this.sendMessageToCustomer({
+          customerNumber: data.customerNumber,
+          message:
+            'Mohon maaf tidak ada customer service yang dapat melayani di bidang itu',
+        }).then((value) => {
+          value.subscribe();
+        });
+
+        return this.sendIncomingMessageResponse(data);
+      }
+
+      //delegasikan customer ke agent yang sesuai
+      const customerAgent = await this.customerService.assignCustomerToAgent({
+        customerNumber: data.customerNumber,
+        agentJob: pilihan,
+      });
+      data.agent = customerAgent.agent;
+
+      //ubah status jadi connected
+      await this.conversationService.connectConversation(currentConversation);
+      //kirim pesan bahwa akan terhubung
+      await this.sendMessageToCustomer({
+        customerNumber: data.customerNumber,
+        message:
+          'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
+          customerAgent.agent.full_name +
+          '. Mohon tunggu sebentar',
+      }).then((value) => {
+        value.subscribe({
+          error: (err: WablasAPIException) => {
+            console.log(err);
+          },
+        });
+      });
+
+      return this.sendIncomingMessageResponse(data);
+    }
+    if (currentConversation.status === ConversationStatus.CONNECTED) {
       //jika sudah terhubung, maka langsung chat ke agent
       //find agent by customer
       const customerAgent =
@@ -151,15 +175,49 @@ export class MessageService {
         data.agent = customerAgent.agent;
         await this.messageRepository.save(data);
       }
+
+      return this.sendIncomingMessageResponse(data);
+    }
+  }
+
+  mapMessageEntityToResponse(data: MessageEntity) {
+    console.log(data);
+    let sender_name: string;
+    if (!data.fromMe) {
+      sender_name = data.customerNumber;
+    } else if (data.agent === undefined || data.agent === null) {
+      sender_name = 'Sistem';
+    } else {
+      sender_name = data.agent.full_name;
     }
 
     //send to frontend via websocket
-    this.gateway.sendMessage(data);
-    return {
+    const response: MessageResponseDto = {
+      id: data.id,
+      customerNumber: data.customerNumber,
+      fromMe: data.fromMe,
+      file: data.file,
+      message: data.message,
+      agent: data.agent,
+      sender_name: sender_name,
+      messageId: data.messageId,
+      status: data.status,
+      type: data.type,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+    return response;
+  }
+
+  sendIncomingMessageResponse(data: MessageEntity) {
+    const response = this.mapMessageEntityToResponse(data);
+    this.gateway.sendMessage(response);
+    const result: ApiResponse<MessageResponseDto> = {
       success: true,
       message: 'Success catch data from Wablas API',
-      data: data,
+      data: response,
     };
+    return result;
   }
 
   //save pesan ke database
@@ -172,7 +230,7 @@ export class MessageService {
       message: messageFiltered !== null ? messageFiltered[1] : message.message,
       messageId: message.id,
       agent: agent,
-      status: MessageStatus.read,
+      status: MessageStatus.RECEIVED,
       fromMe: false,
       file: message.file,
       type: message.messageType,
@@ -238,7 +296,8 @@ export class MessageService {
 
             //kirim ke frontend lewat websocket
             messages.forEach((message: MessageEntity) => {
-              this.gateway.sendMessage(message);
+              const response = this.mapMessageEntityToResponse(message);
+              this.gateway.sendMessage(response);
             });
 
             //return result
@@ -257,10 +316,7 @@ export class MessageService {
                 value.response.data.message,
             );
           }
-          throw new WablasAPIException({
-            success: false,
-            message: 'Failed to send message to Wablas API.',
-          });
+          throw new WablasAPIException('Failed to send message to Wablas API');
         }),
       );
   }
@@ -306,7 +362,8 @@ export class MessageService {
 
             //kirim ke frontend lewat websocket
             messages.forEach((message: MessageEntity) => {
-              this.gateway.sendMessage(message);
+              const response = this.mapMessageEntityToResponse(message);
+              this.gateway.sendMessage(response);
             });
 
             //return result
@@ -318,17 +375,14 @@ export class MessageService {
             return result;
           },
         ),
-        catchError((value: AxiosError<WablasApiResponse<null>>) => {
+        catchError((value: AxiosError<WablasApiResponse<any>>) => {
           if (value.response !== undefined) {
             throw new WablasAPIException(
               'Failed to send message to Wablas API. Message : ' +
                 value.response.data.message,
             );
           }
-          throw new WablasAPIException({
-            success: false,
-            message: 'Failed to send message to Wablas API.',
-          });
+          throw new WablasAPIException('Failed to send message to Wablas API.');
         }),
       );
   }
@@ -388,13 +442,19 @@ export class MessageService {
         ...condition,
       },
       take: pageSize,
+      relations: ['agent'],
       order: {
         id: 'DESC',
       },
     });
-    const response: ApiResponse<MessageEntity[]> = {
+
+    const messageResponse = result.map((messageItem) => {
+      return this.mapMessageEntityToResponse(messageItem);
+    });
+
+    const response: ApiResponse<MessageResponseDto[]> = {
       success: true,
-      data: result,
+      data: messageResponse,
       message: 'Success retrieving data from customer number ' + customerNumber,
     };
     return response;

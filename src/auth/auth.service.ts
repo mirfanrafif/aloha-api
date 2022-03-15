@@ -21,7 +21,7 @@ export class AuthService {
   async login(loginRequest: LoginRequestDto): Promise<ApiResponse<any>> {
     const user = await this.userRepository.findOneOrFail({
       where: {
-        email: loginRequest.email,
+        username: loginRequest.username,
       },
     });
     if (user && (await compare(loginRequest.password, user.password))) {

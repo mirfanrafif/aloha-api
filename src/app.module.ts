@@ -9,6 +9,7 @@ import { CustomerModule } from './customer/customer.module';
 import { UserJobModule } from './core/repository/user-job/user-job.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/roles.guard';
+import { CustomerModule } from './core/repository/customer/customer.module';
 @Module({
   imports: [
     DatabaseModule,

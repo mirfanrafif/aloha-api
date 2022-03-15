@@ -1,4 +1,6 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
+import { MessageStatus } from 'src/core/repository/message/message.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 
 export enum MessageType {
   text = 'text',
@@ -66,15 +68,21 @@ export class MessageResponseItem {
   status: MessageStatus;
 }
 
-enum MessageStatus {
-  sent = 'sent',
-  read = 'read',
-  cancel = 'cancel',
-  received = 'received',
-  reject = 'reject',
-  pending = 'pending',
-}
-
 export class BroadcastMessageRequest {
   messages: MessageRequestDto[];
+}
+
+export class MessageResponseDto {
+  id: number;
+  messageId: string;
+  message: string;
+  customerNumber: string;
+  status: MessageStatus;
+  agent: UserEntity;
+  file: string;
+  sender_name: string;
+  type: MessageType;
+  fromMe: boolean;
+  created_at: Date;
+  updated_at: Date;
 }

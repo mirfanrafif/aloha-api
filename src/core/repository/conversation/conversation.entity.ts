@@ -2,17 +2,19 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CustomerEntity } from '../customer/customer.entity';
 
 @Entity({ name: 'conversations' })
 export class ConversationEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  customerNumber: string;
+  @OneToOne(() => CustomerEntity, (customer) => customer.conversation)
+  customer: CustomerEntity;
 
   @Column()
   status: ConversationStatus;
