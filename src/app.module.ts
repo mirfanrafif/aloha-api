@@ -6,10 +6,8 @@ import { DatabaseModule } from './core/database/database.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CustomerModule } from './customer/customer.module';
-import { UserJobModule } from './core/repository/user-job/user-job.module';
-import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './auth/roles.guard';
-import { CustomerModule } from './core/repository/customer/customer.module';
+import { UserJobRepositoryModule } from './core/repository/user-job/user-job.module';
+import { UserJobModule } from './user-job/user-job.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -19,6 +17,7 @@ import { CustomerModule } from './core/repository/customer/customer.module';
     }),
     AuthModule,
     CustomerModule,
+    UserJobRepositoryModule,
     UserJobModule,
   ],
   controllers: [AppController],

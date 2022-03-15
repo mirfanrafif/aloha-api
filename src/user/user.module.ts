@@ -4,7 +4,7 @@ import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 import { CustomerModule } from 'src/customer/customer.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { UserJobModule } from 'src/core/repository/user-job/user-job.module';
+import { UserJobRepositoryModule } from 'src/core/repository/user-job/user-job.module';
 import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
@@ -12,7 +12,7 @@ import { MulterModule } from '@nestjs/platform-express';
     UserRepositoryModule,
     CustomerModule,
     MessageModule,
-    UserJobModule,
+    UserJobRepositoryModule,
     MulterModule.register({
       dest: './uploads',
     }),

@@ -1,4 +1,5 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 
@@ -76,7 +77,7 @@ export class MessageResponseDto {
   id: number;
   messageId: string;
   message: string;
-  customerNumber: string;
+  customer: CustomerEntity;
   status: MessageStatus;
   agent: UserEntity;
   file: string;

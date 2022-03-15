@@ -1,52 +1,93 @@
 import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { MessageRequestDto } from 'src/messages/message.dto';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { MoreThan, Repository } from 'typeorm';
+import {
+  CustomerAgentArrDto,
+  CustomerAgentResponseDto,
+  DelegateCustomerRequestDto,
+} from './customer.dto';
 
 const pageSize = 20;
 @Injectable()
 export class CustomerService {
   constructor(
     private httpService: HttpService,
-    @Inject(CUSTOMER_AGENT_REPOSITORY)
-    private customerRepository: Repository<CustomerAgent>,
+    // @Inject(CUSTOMER_AGENT_REPOSITORY)
+    // private customerRepository: Repository<CustomerAgent>,
     @Inject(USER_REPOSITORY)
     private userRepository: Repository<UserEntity>,
+    @Inject(CUSTOMER_REPOSITORY)
+    private customerRepository: Repository<CustomerEntity>,
+    @Inject(CUSTOMER_AGENT_REPOSITORY)
+    private customerAgentRepository: Repository<CustomerAgent>,
+    @Inject(MESSAGE_REPOSITORY)
+    private messageRepository: Repository<MessageEntity>,
   ) {}
 
-  //Mencari agen yang menangani customer tersebut
-  async findAgentByCustomerNumber({
-    customerNumber,
+  async findAndCreateCustomer({
+    phoneNumber,
+    name,
   }: {
-    customerNumber: string;
-  }) {
-    const customer = await this.customerRepository.findOne({
+    phoneNumber: string;
+    name?: string;
+  }): Promise<CustomerEntity> {
+    const findCustomer = await this.customerRepository.findOne({
       where: {
-        customerNumber: customerNumber,
+        phoneNumber: phoneNumber,
+      },
+    });
+
+    if (findCustomer !== undefined) {
+      return findCustomer;
+    }
+
+    const newCustomer = await this.customerRepository.save({
+      name: name,
+      phoneNumber: phoneNumber,
+    });
+
+    return newCustomer;
+  }
+
+  async findCustomer({ phoneNumber }: { phoneNumber: string }) {
+    return await this.customerRepository.findOneOrFail({
+      where: {
+        phoneNumber: phoneNumber,
+      },
+    });
+  }
+
+  //Mencari agen yang menangani customer tersebut
+  async findAgentByCustomerNumber({ customer }: { customer: CustomerEntity }) {
+    const agents = await this.customerAgentRepository.findOne({
+      where: {
+        customer: customer,
       },
       relations: ['agent'],
     });
-    return customer;
+    return agents;
   }
 
   //Mendelegasi agen dengan customer
   async assignCustomerToAgent({
-    customerNumber,
+    customer,
     agentJob,
   }: {
-    customerNumber: string;
+    customer: CustomerEntity;
     agentJob: number;
   }) {
     const agent = await this.userRepository.find({
@@ -64,7 +105,7 @@ export class CustomerService {
       (agentItem) => agentItem.customer.length,
     );
 
-    let agentWithMinimumCustomerIndex;
+    let agentWithMinimumCustomerIndex = 0;
     let agentWithMinimumCustomerCount = agentCustomersCount[0];
 
     agentCustomersCount.forEach((item, index) => {
@@ -74,26 +115,31 @@ export class CustomerService {
       }
     });
 
-    const customerAgent = this.customerRepository.create({
+    const customerAgent = this.customerAgentRepository.create({
       agent: agent[agentWithMinimumCustomerIndex],
-      customerNumber: customerNumber,
+      customer: customer,
     });
-    return await this.customerRepository.save(customerAgent);
+    const result = await this.customerAgentRepository.save(customerAgent);
+    return result;
   }
 
   //Mendelegasi agen dengan customer
-  async delegateCustomerToAgent({
-    customerNumber,
-    agentId,
-  }: {
-    customerNumber: string;
-    agentId: number;
-  }) {
-    const agent = await this.userRepository.findOneOrFail(agentId);
-
-    const existingCustomerAgent = await this.customerRepository.findOne({
+  async delegateCustomerToAgent(body: DelegateCustomerRequestDto) {
+    const customer = await this.customerRepository.findOneOrFail({
       where: {
-        customerNumber: customerNumber,
+        id: body.customerId,
+      },
+    });
+
+    const agent = await this.userRepository.findOneOrFail({
+      where: {
+        id: body.agentId,
+      },
+    });
+
+    const existingCustomerAgent = await this.customerAgentRepository.findOne({
+      where: {
+        customer: customer,
         agent: agent,
       },
     });
@@ -102,11 +148,18 @@ export class CustomerService {
       throw new BadRequestException('Customer already assigned to this agent');
     }
 
-    const customerAgent = this.customerRepository.create({
+    const customerAgent = this.customerAgentRepository.create({
       agent: agent,
-      customerNumber: customerNumber,
+      customer: customer,
     });
-    return await this.customerRepository.save(customerAgent);
+
+    const result = await this.customerAgentRepository.save(customerAgent);
+    const response: ApiResponse<CustomerAgent> = {
+      success: true,
+      message: `Succesfully assign customer ${customer.name} to agent ${agent.full_name}`,
+      data: result,
+    };
+    return response;
   }
 
   //mengambil data customer berdasarkan agen (halaman list pesan)
@@ -118,25 +171,80 @@ export class CustomerService {
     lastCustomerId?: number;
   }) {
     const conditions = {};
-    const relations: string[] = [];
 
     if (agent.role !== 'admin') {
       conditions['agent'] = agent;
-    } else {
-      relations.push('agent');
     }
     if (lastCustomerId !== undefined) {
       conditions['id'] = MoreThan(lastCustomerId);
     }
-
-    /* TODO: Untuk get customer by number ini route untuk pesan.
-    Jadi berikan pesan terakhir untuk display */
-    const listCustomer = await this.customerRepository.find({
+    const listCustomer = await this.customerAgentRepository.find({
       where: conditions,
-      relations: relations,
+      relations: ['agent', 'customer'],
       take: pageSize,
     });
-    return listCustomer;
+
+    const newListCustomer = this.mappingCustomerAgent(listCustomer);
+
+    return this.findLastMessage(newListCustomer);
+  }
+
+  /*
+  karena pada 1 customer terdapat beberapa sales, maka harus dimapping 
+  agar data customer tersebut tidak duplikat, tetapi salesnya disimpan
+  dalam sebuah array
+   */
+  mappingCustomerAgent(listCustomer: CustomerAgent[]) {
+    const newListCustomer: CustomerAgentArrDto[] = [];
+
+    listCustomer.forEach((customerItem) => {
+      const customerIndex = newListCustomer.findIndex(
+        (value) => value.customer.id == customerItem.customer.id,
+      );
+
+      if (customerIndex > -1) {
+        newListCustomer[customerIndex].agent.push(customerItem.agent);
+        return;
+      }
+      newListCustomer.push({
+        id: customerItem.id,
+        agent: [customerItem.agent],
+        customer: customerItem.customer,
+        created_at: customerItem.created_at,
+        updated_at: customerItem.updated_at,
+      });
+    });
+
+    return newListCustomer;
+  }
+
+  //cari pesan terakhir
+  async findLastMessage(
+    listCustomer: CustomerAgentArrDto[],
+  ): Promise<CustomerAgentResponseDto[]> {
+    const result = await Promise.all(
+      listCustomer.map(async (customerAgent) => {
+        const lastMessage = await this.messageRepository.findOne({
+          where: {
+            customer: customerAgent.customer,
+          },
+          order: {
+            id: 'DESC',
+          },
+        });
+
+        const newCustomer: CustomerAgentResponseDto = {
+          id: customerAgent.id,
+          customer: customerAgent.customer,
+          created_at: customerAgent.created_at,
+          agent: customerAgent.agent,
+          lastMessage: lastMessage,
+          updated_at: customerAgent.updated_at,
+        };
+        return newCustomer;
+      }),
+    );
+    return result;
   }
 
   /*
@@ -161,15 +269,6 @@ export class CustomerService {
     if (customer === undefined) {
       throw new UnauthorizedException();
     }
-
-    // if (customer.agent.id !== agent.id) {
-    //   const result: ApiResponse<null> = {
-    //     success: false,
-    //     data: null,
-    //     message: 'Agent are not handling this customer',
-    //   };
-    //   throw new HttpException(result, HttpStatus.FORBIDDEN);
-    // }
 
     return true;
   }

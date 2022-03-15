@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Request,
@@ -54,13 +55,13 @@ export class MessageController {
   @UseGuards(JwtAuthGuard)
   async getPastMessages(
     @Request() request,
-    @Param('customer_number') customerNumber?: string,
+    @Param('customer_number', ParseIntPipe) customerId: number,
     @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageResponseDto[]>> {
     const user: UserEntity = request.user;
-    if (customerNumber !== undefined) {
-      return this.service.getPastMessageByCustomerNumber(
-        customerNumber !== undefined ? customerNumber : '0',
+    if (customerId !== undefined) {
+      return this.service.getPastMessageByCustomerId(
+        customerId,
         lastMessageId !== undefined ? lastMessageId : 0,
         user,
       );

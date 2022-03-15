@@ -43,7 +43,7 @@ export class UserService {
       agent: user,
       lastCustomerId,
     });
-    const result: ApiResponse<CustomerAgent[]> = {
+    const result = {
       success: true,
       data: messages,
       message: `Success getting customer list by agent id ${user.id}`,
@@ -83,6 +83,7 @@ export class UserService {
       request.password !== undefined
         ? await hash(request.password, 10)
         : user.password;
+    currentUser.username = request.username;
     const finalUser = await this.userRepository.save(currentUser);
     return finalUser;
   }

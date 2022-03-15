@@ -1,11 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
 import { catchError, map } from 'rxjs';
 import {
@@ -30,11 +24,12 @@ import {
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
 import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
 import { ConversationService } from './conversation.service';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { UserJobService } from 'src/user-job/user-job.service';
 
 const pageSize = 20;
 
@@ -48,8 +43,8 @@ export class MessageService {
     private customerService: CustomerService,
     @Inject(USER_JOB_REPOSITORY)
     private userJobRepository: Repository<UserJobEntity>,
-
     private conversationService: ConversationService,
+    private userJobService: UserJobService,
   ) {}
 
   async handleIncomingMessage(incomingMessage: TextMessage) {
@@ -61,12 +56,23 @@ export class MessageService {
       );
     }
 
-    const data = await this.saveIncomingMessage(incomingMessage);
+    //cari customer, kalau tidak ada maka simpan baru di database
+    const customer: CustomerEntity =
+      await this.customerService.findAndCreateCustomer({
+        phoneNumber: incomingMessage.phone,
+        name: incomingMessage.pushName,
+      });
+
+    //simpan pesan ke database
+    const data = await this.saveIncomingMessage({
+      message: incomingMessage,
+      customer: customer,
+    });
 
     //cek apakah sudah ada percakapan sebelumnya
     const currentConversation =
       await this.conversationService.getCurrentConversationSession(
-        data.customerNumber,
+        data.customer,
       );
 
     // jika belum maka mulai percakapan
@@ -77,23 +83,24 @@ export class MessageService {
         'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' + jobs;
       //kirim pesan pertama ke customer
       this.sendMessageToCustomer({
-        customerNumber: data.customerNumber,
+        customerNumber: data.customer.phoneNumber,
         message: helloMessage,
       }).then((value) => {
         value.subscribe();
       });
       //mulai conversation
-      await this.conversationService.startConversation(data.customerNumber);
+      await this.conversationService.startConversation(data.customer);
 
       return this.sendIncomingMessageResponse(data);
     }
+    //jika sudah mulai percakapan maka pilih menu
     if (currentConversation.status === ConversationStatus.STARTED) {
       //cek apakah pilihan sudah benar
       const findPilihan = /\d/gi.exec(incomingMessage.message);
       if (findPilihan === null) {
         //jika pilihan tidak benar, maka kirim mohon pilih menu diatas
         this.sendMessageToCustomer({
-          customerNumber: data.customerNumber,
+          customerNumber: data.customer.phoneNumber,
           message: 'Mohon pilih menu diatas',
         }).then((value) => {
           value.subscribe();
@@ -106,15 +113,12 @@ export class MessageService {
       const pilihan = Number.parseInt(findPilihan[0]);
 
       //cek apakah ada job yang sesuai
-      const userJobs = await this.userJobRepository.find({
-        relations: ['agents'],
-      });
-      const pilihanSesuai = userJobs.find((job) => job.id === pilihan);
+      const pilihanSesuai = await this.userJobService.cekJobSesuai(pilihan);
 
       //jika sesuai maka arahkan customer ke agent yang sedia
       if (pilihanSesuai === undefined) {
         this.sendMessageToCustomer({
-          customerNumber: data.customerNumber,
+          customerNumber: data.customer.phoneNumber,
           message: 'Mohon pilih menu diatas',
         }).then((value) => {
           value.subscribe();
@@ -126,7 +130,7 @@ export class MessageService {
       //cek apakah ada cs yang bekerja di layanan itu
       if (pilihanSesuai.agents.length == 0) {
         await this.sendMessageToCustomer({
-          customerNumber: data.customerNumber,
+          customerNumber: data.customer.phoneNumber,
           message:
             'Mohon maaf tidak ada customer service yang dapat melayani di bidang itu',
         }).then((value) => {
@@ -138,16 +142,17 @@ export class MessageService {
 
       //delegasikan customer ke agent yang sesuai
       const customerAgent = await this.customerService.assignCustomerToAgent({
-        customerNumber: data.customerNumber,
+        customer: customer,
         agentJob: pilihan,
       });
-      data.agent = customerAgent.agent;
+
+      console.log(customerAgent);
 
       //ubah status jadi connected
       await this.conversationService.connectConversation(currentConversation);
       //kirim pesan bahwa akan terhubung
       await this.sendMessageToCustomer({
-        customerNumber: data.customerNumber,
+        customerNumber: data.customer.phoneNumber,
         message:
           'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
           customerAgent.agent.full_name +
@@ -167,7 +172,7 @@ export class MessageService {
       //find agent by customer
       const customerAgent =
         await this.customerService.findAgentByCustomerNumber({
-          customerNumber: incomingMessage.phone,
+          customer: customer,
         });
 
       if (customerAgent !== undefined) {
@@ -181,10 +186,9 @@ export class MessageService {
   }
 
   mapMessageEntityToResponse(data: MessageEntity) {
-    console.log(data);
     let sender_name: string;
     if (!data.fromMe) {
-      sender_name = data.customerNumber;
+      sender_name = data.customer.name;
     } else if (data.agent === undefined || data.agent === null) {
       sender_name = 'Sistem';
     } else {
@@ -194,7 +198,7 @@ export class MessageService {
     //send to frontend via websocket
     const response: MessageResponseDto = {
       id: data.id,
-      customerNumber: data.customerNumber,
+      customer: data.customer,
       fromMe: data.fromMe,
       file: data.file,
       message: data.message,
@@ -206,6 +210,7 @@ export class MessageService {
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
+    console.log(response);
     return response;
   }
 
@@ -221,12 +226,20 @@ export class MessageService {
   }
 
   //save pesan ke database
-  async saveIncomingMessage(message: TextMessage, agent?: UserEntity) {
+  async saveIncomingMessage({
+    message,
+    agent,
+    customer,
+  }: {
+    message: TextMessage;
+    agent?: UserEntity;
+    customer: CustomerEntity;
+  }) {
     const messageFiltered = /<~ (.*)/gi.exec(message.message);
 
     //create entity
     const messageEntity = this.messageRepository.create({
-      customerNumber: message.phone,
+      customer: customer,
       message: messageFiltered !== null ? messageFiltered[1] : message.message,
       messageId: message.id,
       agent: agent,
@@ -249,6 +262,7 @@ export class MessageService {
   async sendMessageToCustomer(
     messageRequest: MessageRequestDto,
     agent?: UserEntity,
+    customer?: CustomerEntity,
   ) {
     //templating request
     const request: WablasSendMessageRequest = {
@@ -289,21 +303,23 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingMessage(
-              response.data.data,
-              agent,
-            );
+            const messages = await this.saveOutgoingMessage({
+              messageResponses: response.data.data,
+              customer: customer,
+              agent: agent,
+            });
 
             //kirim ke frontend lewat websocket
-            messages.forEach((message: MessageEntity) => {
+            const messageResponses = messages.map((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
               this.gateway.sendMessage(response);
+              return response;
             });
 
             //return result
-            const result: ApiResponse<MessageEntity[]> = {
+            const result: ApiResponse<MessageResponseDto[]> = {
               success: true,
-              data: messages,
+              data: messageResponses,
               message: 'Success sending message to Wablas API',
             };
             return result;
@@ -355,10 +371,10 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingMessage(
-              response.data.data,
-              agent,
-            );
+            const messages = await this.saveOutgoingMessage({
+              messageResponses: response.data.data,
+              agent: agent,
+            });
 
             //kirim ke frontend lewat websocket
             messages.forEach((message: MessageEntity) => {
@@ -388,18 +404,29 @@ export class MessageService {
   }
 
   //simpan pesan keluar
-  async saveOutgoingMessage(
-    messageResponses: SendMessageResponseData,
-    agent?: UserEntity,
-  ): Promise<MessageEntity[]> {
+  async saveOutgoingMessage({
+    messageResponses,
+    customer,
+    agent,
+  }: {
+    messageResponses: SendMessageResponseData;
+    customer?: CustomerEntity;
+    agent?: UserEntity;
+  }): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
+      const newCustomer =
+        customer !== undefined
+          ? customer
+          : await this.customerService.findAndCreateCustomer({
+              phoneNumber: messageItem.phone,
+            });
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: messageItem.message,
-        customerNumber: messageItem.phone,
+        customer: newCustomer,
         agent: agent,
         status: messageItem.status,
         fromMe: true,
@@ -413,8 +440,8 @@ export class MessageService {
   }
 
   //dapatkan pesan sebelumnya berdasarkan customer number
-  async getPastMessageByCustomerNumber(
-    customerNumber: string,
+  async getPastMessageByCustomerId(
+    customerId: number,
     lastMessageId: number,
     agent: UserEntity,
   ) {
@@ -438,11 +465,13 @@ export class MessageService {
     //select
     const result: MessageEntity[] = await this.messageRepository.find({
       where: {
-        customerNumber: customerNumber,
+        customer: {
+          id: customerId,
+        },
         ...condition,
       },
       take: pageSize,
-      relations: ['agent'],
+      relations: ['agent', 'customer'],
       order: {
         id: 'DESC',
       },
@@ -455,7 +484,7 @@ export class MessageService {
     const response: ApiResponse<MessageResponseDto[]> = {
       success: true,
       data: messageResponse,
-      message: 'Success retrieving data from customer number ' + customerNumber,
+      message: 'Success retrieving data from customer id ' + customerId,
     };
     return response;
   }
@@ -466,7 +495,7 @@ export class MessageService {
       agent: user,
       lastCustomerId,
     });
-    const result: ApiResponse<CustomerAgent[]> = {
+    const result = {
       success: true,
       data: messages,
       message: `Success getting customer list by agent id ${user.id}`,

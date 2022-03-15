@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -13,16 +14,17 @@ export class ConversationEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => CustomerEntity, (customer) => customer.conversation)
+  @OneToOne(() => CustomerEntity)
+  @JoinColumn()
   customer: CustomerEntity;
 
   @Column()
   status: ConversationStatus;
 
-  @CreateDateColumn({ name: 'created_at', default: 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', nullable: true })
   created_at: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', default: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
 }
 

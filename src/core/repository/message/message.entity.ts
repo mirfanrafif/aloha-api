@@ -38,10 +38,10 @@ export class MessageEntity {
   @Column()
   fromMe: boolean;
 
-  @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', nullable: true })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
 
   @ManyToOne(() => CustomerEntity, (customer) => customer.messages)

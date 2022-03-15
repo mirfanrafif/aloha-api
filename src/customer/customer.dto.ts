@@ -1,4 +1,7 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 
 export type Customer = {
   id: number;
@@ -7,9 +10,36 @@ export type Customer = {
 
 export class DelegateCustomerRequestDto {
   @IsNotEmpty()
-  customerNumber: string;
+  @IsNumber()
+  customerId: number;
 
   @IsNotEmpty()
   @IsNumber()
   agentId: number;
+}
+
+export class CustomerAgentArrDto {
+  id: number;
+
+  customer: CustomerEntity;
+
+  agent: UserEntity[];
+
+  created_at: Date;
+
+  updated_at: Date;
+}
+
+export class CustomerAgentResponseDto {
+  id: number;
+
+  customer: CustomerEntity;
+
+  agent: UserEntity[];
+
+  lastMessage?: MessageEntity;
+
+  created_at: Date;
+
+  updated_at: Date;
 }

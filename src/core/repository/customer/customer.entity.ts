@@ -2,13 +2,17 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ConversationEntity } from '../conversation/conversation.entity';
+import { CustomerAgent } from '../customer-agent/customer-agent.entity';
 import { MessageEntity } from '../message/message.entity';
+import { UserEntity } from '../user/user.entity';
 
 @Entity('customer')
 export class CustomerEntity {
@@ -18,10 +22,13 @@ export class CustomerEntity {
   @Column()
   name: string;
 
-  @CreateDateColumn({ type: 'datetime', default: 'CURRENT_TIMESTAMP' })
+  @Column({ unique: true })
+  phoneNumber: string;
+
+  @CreateDateColumn({ type: 'timestamp', nullable: true })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'datetime', default: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
 
   @OneToOne(() => ConversationEntity, (conversation) => conversation.customer)
@@ -29,4 +36,7 @@ export class CustomerEntity {
 
   @OneToMany(() => MessageEntity, (message) => message.customer)
   messages: MessageEntity[];
+
+  @OneToMany(() => CustomerAgent, (agent) => agent.customer)
+  agent: CustomerAgent[];
 }

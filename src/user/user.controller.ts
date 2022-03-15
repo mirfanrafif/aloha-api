@@ -9,6 +9,7 @@ import {
   Put,
   Request,
   UploadedFile,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,9 +18,10 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
-import { AddJobRequest } from './user.dto';
+import { AddJobRequest, UpdateUserRequestDto } from './user.dto';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -34,10 +36,9 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Put('profile')
-  updateProfile(@Request() request) {
+  updateProfile(@Request() request, @Body() body: UpdateUserRequestDto) {
     const user: UserEntity = request.user;
-    const updateRequest: RegisterRequestDto = request.body;
-    return this.userService.updateProfile(user, updateRequest);
+    return this.userService.updateProfile(user, body);
   }
 
   @Get('job')
@@ -45,6 +46,7 @@ export class UserController {
     return this.userService.getJobList();
   }
 
+  @UseFilters(DbexceptionFilter)
   @Get('job/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)

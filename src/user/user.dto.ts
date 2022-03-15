@@ -13,6 +13,9 @@ export class UpdateUserRequestDto {
   full_name: string;
 
   @IsNotEmpty()
+  username: string;
+
+  @IsNotEmpty()
   @IsEmail()
   email: string;
 

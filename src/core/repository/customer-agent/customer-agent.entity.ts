@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CustomerEntity } from '../customer/customer.entity';
 import { UserEntity } from '../user/user.entity';
 
 @Entity({
@@ -15,15 +17,15 @@ export class CustomerAgent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  customerNumber: string;
+  @ManyToOne(() => CustomerEntity, (customer) => customer.agent)
+  customer: CustomerEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.customer)
   agent: UserEntity;
 
-  @CreateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp', nullable: true })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
 }

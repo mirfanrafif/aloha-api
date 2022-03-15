@@ -4,6 +4,7 @@ import {
   ConversationEntity,
   ConversationStatus,
 } from 'src/core/repository/conversation/conversation.entity';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -13,22 +14,23 @@ export class ConversationService {
     private conversationRepository: Repository<ConversationEntity>,
   ) {}
 
-  async getCurrentConversationSession(customerNumber: string) {
+  async getCurrentConversationSession(customer: CustomerEntity) {
     const conversation = await this.conversationRepository.findOne({
       where: {
-        customerNumber: customerNumber,
+        customer: customer,
       },
       order: {
         id: 'DESC',
       },
+      relations: ['customer'],
     });
 
     return conversation;
   }
 
-  async startConversation(customerNumber: string) {
+  async startConversation(customer: CustomerEntity) {
     const conversation = this.conversationRepository.create({
-      customerNumber: customerNumber,
+      customer: customer,
       status: ConversationStatus.STARTED,
     });
     return await this.conversationRepository.save(conversation);

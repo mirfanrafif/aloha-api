@@ -20,4 +20,4 @@ export const USER_JOB_REPOSITORY = 'user_category_repository';
   imports: [DatabaseModule],
   exports: [USER_JOB_REPOSITORY],
 })
-export class UserJobModule {}
+export class UserJobRepositoryModule {}
