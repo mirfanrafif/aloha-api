@@ -45,6 +45,7 @@ export class AuthService {
     const job = await this.jobRepository.findOneOrFail(registerRequest.jobId);
     const userData = this.userRepository.create({
       full_name: registerRequest.full_name,
+      username: registerRequest.username,
       email: registerRequest.email,
       role: registerRequest.role,
       password: password,
