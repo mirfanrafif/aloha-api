@@ -1,19 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
-
-export type TextMessage = {
-  id: string;
-  pushName: string;
-  isGroup: boolean;
-  group: Group;
-  message: string;
-  phone: string;
-  messageType: MessageType;
-  file: string;
-  mimeType: string;
-  // thumbProfile: string;
-  sender: number;
-  timestamp: number;
-};
+import { IsEnum, IsNotEmpty } from 'class-validator';
 
 export enum MessageType {
   text = 'text',
@@ -26,6 +11,24 @@ export type Group = {
   owner: string;
   desc: string;
 };
+export class TextMessage {
+  id: string;
+  pushName: string;
+  isGroup: boolean;
+  group: Group;
+  message: string;
+  phone: string;
+
+  @IsNotEmpty()
+  @IsEnum(MessageType)
+  messageType: MessageType;
+
+  file: string;
+  mimeType: string;
+  // thumbProfile: string;
+  sender: number;
+  timestamp: number;
+}
 export class MessageRequestDto {
   @IsNotEmpty()
   customerNumber: string;

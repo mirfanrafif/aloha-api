@@ -36,6 +36,11 @@ export class MessageController {
     return this.service.handleIncomingMessage(message);
   }
 
+  @Post('tracking')
+  trackMessageStatus(@Body() body) {
+    console.log(body);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseFilters(DbexceptionFilter)
@@ -65,6 +70,7 @@ export class MessageController {
       message: 'Please provide customer_number',
     };
   }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   async getCustomerByAgentId(

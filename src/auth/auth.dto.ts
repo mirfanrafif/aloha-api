@@ -19,6 +19,9 @@ export class RegisterRequestDto {
   email: string;
 
   @IsNotEmpty()
+  username: string;
+
+  @IsNotEmpty()
   password: string;
 
   @IsNotEmpty()

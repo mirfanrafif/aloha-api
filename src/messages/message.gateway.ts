@@ -30,7 +30,7 @@ export class MessageGateway {
 
   sendMessage(data: MessageEntity) {
     this.server
-      .to('message:' + data.agent)
+      .to('message:' + data.agent.id)
       .to('message:admin')
       .emit('message', data);
   }
