@@ -11,10 +11,7 @@ services:
     container_name: aloha_api_app
     restart: unless-stopped
     ports:
-      - 3000:3000
-    working_dir: /app/aloha_api
-    volumes:
-      - ./:/app/aloha_api
+      - 80:3000
     networks:
       - aloha_api
   db:
