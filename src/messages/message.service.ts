@@ -503,6 +503,12 @@ export class MessageService {
     return result;
   }
 
+  async searchCustomer(customerNumber: string, user: UserEntity) {
+    return await this.customerService.searchCustomer({
+      agent: user,
+      customerNumber: customerNumber,
+    });
+  }
   //tampilkan menu
   async showMenu() {
     const userJobs = await this.userJobRepository.find();

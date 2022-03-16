@@ -258,7 +258,7 @@ export class CustomerService {
     customerNumber: string;
     agent: UserEntity;
   }) {
-    const customer = await this.customerRepository.findOneOrFail({
+    const customer = await this.customerAgentRepository.findOneOrFail({
       where: {
         customerNumber: customerNumber,
         agent: agent,
@@ -271,5 +271,38 @@ export class CustomerService {
     }
 
     return true;
+  }
+
+  async searchCustomer({
+    customerNumber,
+    agent,
+  }: {
+    customerNumber: string;
+    agent: UserEntity;
+  }) {
+    const conditions = {};
+
+    if (agent.role !== 'admin') {
+      conditions['agent'] = agent;
+    }
+    const listCustomer = await this.customerAgentRepository.find({
+      where: {
+        ...conditions,
+        customer: {
+          phoneNumber: customerNumber,
+        },
+      },
+      relations: ['agent', 'customer'],
+      take: pageSize,
+    });
+
+    const newListCustomer = this.mappingCustomerAgent(listCustomer);
+    const customerAgentResponse = await this.findLastMessage(newListCustomer);
+    const response: ApiResponse<CustomerAgentResponseDto[]> = {
+      success: true,
+      data: customerAgentResponse,
+      message: 'Success search data',
+    };
+    return response;
   }
 }

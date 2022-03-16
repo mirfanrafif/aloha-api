@@ -59,31 +59,27 @@ export class MessageController {
     @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageResponseDto[]>> {
     const user: UserEntity = request.user;
-    if (customerId !== undefined) {
-      return this.service.getPastMessageByCustomerId(
-        customerId,
-        lastMessageId !== undefined ? lastMessageId : 0,
-        user,
-      );
-    }
-    return {
-      success: false,
-      data: [],
-      message: 'Please provide customer_number',
-    };
+    return this.service.getPastMessageByCustomerId(
+      customerId,
+      lastMessageId !== undefined ? lastMessageId : 0,
+      user,
+    );
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
   async getCustomerByAgentId(
     @Request() request,
+    @Query('search') customerNumber?: string,
     @Query('last_customer_id') lastCustomerId?: number,
   ): Promise<ApiResponse<any>> {
-    const result = await this.service.getCustomerByAgentId(
+    if (customerNumber !== undefined) {
+      return this.service.searchCustomer(customerNumber, request.user);
+    }
+    return await this.service.getCustomerByAgentId(
       request.user,
       lastCustomerId,
     );
-    return result;
   }
 
   @Post('broadcast')
