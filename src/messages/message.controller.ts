@@ -41,6 +41,7 @@ export class MessageController {
   @Post('tracking')
   trackMessageStatus(@Body() body) {
     console.log(body);
+    return body;
   }
 
   @Post()
