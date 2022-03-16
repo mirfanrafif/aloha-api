@@ -132,7 +132,7 @@ export class MessageService {
         await this.sendMessageToCustomer({
           customerNumber: data.customer.phoneNumber,
           message:
-            'Mohon maaf tidak ada customer service yang dapat melayani di bidang itu',
+            'Mohon maaf tidak ada customer service yang dapat melayani di bidang tersebut',
         }).then((value) => {
           value.subscribe();
         });

@@ -42,14 +42,13 @@ export class AuthService {
 
   async register(registerRequest: RegisterRequestDto) {
     const password = await hash(registerRequest.password, 10);
-    const job = await this.jobRepository.findOneOrFail(registerRequest.jobId);
+    // const job = await this.jobRepository.findOneOrFail(registerRequest.jobId);
     const userData = this.userRepository.create({
       full_name: registerRequest.full_name,
       username: registerRequest.username,
       email: registerRequest.email,
       role: registerRequest.role,
       password: password,
-      job: job,
     });
     const user = await this.userRepository.save(userData);
     // const userData = this.getUserData(user);
