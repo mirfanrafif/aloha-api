@@ -22,11 +22,15 @@ import { AddJobRequest, UpdateUserRequestDto } from './user.dto';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
+import { UserJobService } from 'src/user-job/user-job.service';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private jobService: UserJobService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -43,7 +47,7 @@ export class UserController {
 
   @Get('job')
   getJobList() {
-    return this.userService.getJobList();
+    return this.jobService.getJobList();
   }
 
   @UseFilters(DbexceptionFilter)
@@ -51,14 +55,14 @@ export class UserController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   getJobAgents(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.getJobAgents(id);
+    return this.jobService.getJobAgents(id);
   }
 
   @Post('job')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   addJob(@Body() body: AddJobRequest) {
-    return this.userService.addJob(body);
+    return this.jobService.addJob(body);
   }
 
   @Put('profile_image')

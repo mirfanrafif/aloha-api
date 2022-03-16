@@ -30,6 +30,10 @@ import { ConversationStatus } from 'src/core/repository/conversation/conversatio
 import { ConversationService } from './conversation.service';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { UserJobService } from 'src/user-job/user-job.service';
+import {
+  CustomerAgentArrDto,
+  CustomerAgentResponseDto,
+} from 'src/customer/customer.dto';
 
 const pageSize = 20;
 
@@ -41,8 +45,6 @@ export class MessageService {
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
     private customerService: CustomerService,
-    @Inject(USER_JOB_REPOSITORY)
-    private userJobRepository: Repository<UserJobEntity>,
     private conversationService: ConversationService,
     private userJobService: UserJobService,
   ) {}
@@ -78,7 +80,7 @@ export class MessageService {
     // jika belum maka mulai percakapan
     if (currentConversation === undefined) {
       //tampilkan menu
-      const jobs = await this.showMenu();
+      const jobs = await this.userJobService.showMenu();
       const helloMessage =
         'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' + jobs;
       //kirim pesan pertama ke customer
@@ -495,27 +497,57 @@ export class MessageService {
       agent: user,
       lastCustomerId,
     });
+
+    const customerWithLastMessage = await this.findLastMessage(messages);
+
     const result = {
       success: true,
-      data: messages,
+      data: customerWithLastMessage,
       message: `Success getting customer list by agent id ${user.id}`,
     };
     return result;
   }
 
   async searchCustomer(customerNumber: string, user: UserEntity) {
-    return await this.customerService.searchCustomer({
+    const customer = await this.customerService.searchCustomer({
       agent: user,
       customerNumber: customerNumber,
     });
+    const customerWithLastMessage = await this.findLastMessage(customer);
+    const result = {
+      success: true,
+      data: customerWithLastMessage,
+      message: `Success searching customer with phone number ${customerNumber}`,
+    };
+    return result;
   }
-  //tampilkan menu
-  async showMenu() {
-    const userJobs = await this.userJobRepository.find();
-    return userJobs
-      .map((job) => {
-        return `${job.id}. ${job.name}`;
-      })
-      .join('\n');
+
+  //cari pesan terakhir
+  async findLastMessage(
+    listCustomer: CustomerAgentArrDto[],
+  ): Promise<CustomerAgentResponseDto[]> {
+    const result = await Promise.all(
+      listCustomer.map(async (customerAgent) => {
+        const lastMessage = await this.messageRepository.findOne({
+          where: {
+            customer: customerAgent.customer,
+          },
+          order: {
+            id: 'DESC',
+          },
+        });
+
+        const newCustomer: CustomerAgentResponseDto = {
+          id: customerAgent.id,
+          customer: customerAgent.customer,
+          created_at: customerAgent.created_at,
+          agent: customerAgent.agent,
+          lastMessage: lastMessage,
+          updated_at: customerAgent.updated_at,
+        };
+        return newCustomer;
+      }),
+    );
+    return result;
   }
 }

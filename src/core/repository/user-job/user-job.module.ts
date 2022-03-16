@@ -6,7 +6,7 @@ import {
 import { Connection } from 'typeorm';
 import { UserJobEntity } from './user-job.entity';
 
-export const USER_JOB_REPOSITORY = 'user_category_repository';
+export const USER_JOB_REPOSITORY = 'user_job_repository';
 
 @Module({
   providers: [

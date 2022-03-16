@@ -26,16 +26,12 @@ const pageSize = 20;
 export class CustomerService {
   constructor(
     private httpService: HttpService,
-    // @Inject(CUSTOMER_AGENT_REPOSITORY)
-    // private customerRepository: Repository<CustomerAgent>,
     @Inject(USER_REPOSITORY)
     private userRepository: Repository<UserEntity>,
     @Inject(CUSTOMER_REPOSITORY)
     private customerRepository: Repository<CustomerEntity>,
     @Inject(CUSTOMER_AGENT_REPOSITORY)
     private customerAgentRepository: Repository<CustomerAgent>,
-    @Inject(MESSAGE_REPOSITORY)
-    private messageRepository: Repository<MessageEntity>,
   ) {}
 
   async findAndCreateCustomer({
@@ -186,7 +182,7 @@ export class CustomerService {
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
 
-    return this.findLastMessage(newListCustomer);
+    return newListCustomer;
   }
 
   /*
@@ -216,35 +212,6 @@ export class CustomerService {
     });
 
     return newListCustomer;
-  }
-
-  //cari pesan terakhir
-  async findLastMessage(
-    listCustomer: CustomerAgentArrDto[],
-  ): Promise<CustomerAgentResponseDto[]> {
-    const result = await Promise.all(
-      listCustomer.map(async (customerAgent) => {
-        const lastMessage = await this.messageRepository.findOne({
-          where: {
-            customer: customerAgent.customer,
-          },
-          order: {
-            id: 'DESC',
-          },
-        });
-
-        const newCustomer: CustomerAgentResponseDto = {
-          id: customerAgent.id,
-          customer: customerAgent.customer,
-          created_at: customerAgent.created_at,
-          agent: customerAgent.agent,
-          lastMessage: lastMessage,
-          updated_at: customerAgent.updated_at,
-        };
-        return newCustomer;
-      }),
-    );
-    return result;
   }
 
   /*
@@ -297,12 +264,7 @@ export class CustomerService {
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
-    const customerAgentResponse = await this.findLastMessage(newListCustomer);
-    const response: ApiResponse<CustomerAgentResponseDto[]> = {
-      success: true,
-      data: customerAgentResponse,
-      message: 'Success search data',
-    };
-    return response;
+
+    return newListCustomer;
   }
 }
