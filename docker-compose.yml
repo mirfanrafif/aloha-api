@@ -1,0 +1,42 @@
+version: '3.7'
+services:
+  app:
+    build:
+      args:
+        user: mirfanrafif
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: aloha_api_app
+    container_name: aloha_api_app
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    working_dir: /app/aloha_api
+    volumes:
+      - ./:/app/aloha_api
+    networks:
+      - aloha_api
+  db:
+    image: mysql:8.0
+    container_name: aloha_api_db
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - aloha_api
+networks:
+  aloha_api:
+    driver: bridge
+volumes:
+  dbdata: 
+    driver: local
