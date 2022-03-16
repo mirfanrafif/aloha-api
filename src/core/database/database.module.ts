@@ -28,7 +28,6 @@ export const DATABASE_CONNECTION = 'database_connection';
             ConversationEntity,
             CustomerEntity,
           ],
-          synchronize: true,
         }),
     },
   ],
