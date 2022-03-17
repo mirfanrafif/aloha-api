@@ -24,8 +24,6 @@ import {
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
-import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
 import { ConversationService } from './conversation.service';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
