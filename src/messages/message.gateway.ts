@@ -24,7 +24,7 @@ export class MessageGateway {
     this.server
       .to(`message:${agentId}`)
       .to('message:admin')
-      .emit('message', data);
+      .emit('message', JSON.stringify(data));
   }
 
   @SubscribeMessage('join')
