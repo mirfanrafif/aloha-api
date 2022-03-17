@@ -82,6 +82,19 @@ export class MessageResponseItem {
   status: MessageStatus;
 }
 
+export class SendImageResponseData {
+  messages: ImageResponseItem[];
+}
+
+export class ImageResponseItem {
+  id: string;
+  phone: string;
+  message?: string;
+  caption: string;
+  image: string;
+  status: MessageStatus;
+}
+
 export class BroadcastMessageRequest {
   @IsNotEmpty()
   message: string;

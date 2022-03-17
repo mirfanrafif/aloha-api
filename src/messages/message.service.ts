@@ -28,6 +28,7 @@ import {
   WablasSendMessageRequestData,
   MessageResponseDto,
   WablasSendImageRequest,
+  SendImageResponseData,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -382,28 +383,28 @@ export class MessageService {
       .pipe(
         map(
           async (
-            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
             console.log(JSON.stringify(response.data));
-            // //save ke database
-            // const messages = await this.saveOutgoingMessage({
-            //   messageResponses: response.data.data,
-            //   agent: agent,
-            // });
+            //save ke database
+            const messages = await this.saveOutgoingImageMessage({
+              messageResponses: response.data.data,
+              agent: agent,
+            });
 
-            // //kirim ke frontend lewat websocket
-            // messages.forEach((message: MessageEntity) => {
-            //   const response = this.mapMessageEntityToResponse(message);
-            //   this.gateway.sendMessage(response);
-            // });
+            //kirim ke frontend lewat websocket
+            messages.forEach((message: MessageEntity) => {
+              const response = this.mapMessageEntityToResponse(message);
+              this.gateway.sendMessage(response);
+            });
 
-            // //return result
-            // const result: ApiResponse<MessageEntity[]> = {
-            //   success: true,
-            //   data: messages,
-            //   message: 'Success sending message to Wablas API',
-            // };
-            return;
+            //return result
+            const result: ApiResponse<MessageEntity[]> = {
+              success: true,
+              data: messages,
+              message: 'Success sending message to Wablas API',
+            };
+            return result;
           },
         ),
         catchError((value: AxiosError<WablasApiResponse<any>>) => {
@@ -449,10 +450,10 @@ export class MessageService {
       .pipe(
         map(
           async (
-            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingMessage({
+            const messages = await this.saveOutgoingImageMessage({
               messageResponses: response.data.data,
               agent: agent,
             });
@@ -513,6 +514,42 @@ export class MessageService {
         fromMe: true,
         type: MessageType.text,
         created_at: Date(),
+      });
+      messages.push(message);
+    }
+
+    return messages;
+  }
+
+  //simpan pesan keluar
+  async saveOutgoingImageMessage({
+    messageResponses,
+    customer,
+    agent,
+  }: {
+    messageResponses: SendImageResponseData;
+    customer?: CustomerEntity;
+    agent?: UserEntity;
+  }): Promise<MessageEntity[]> {
+    const messages: MessageEntity[] = [];
+
+    //for loop insert data
+    for (const messageItem of messageResponses.messages) {
+      const newCustomer =
+        customer !== undefined
+          ? customer
+          : await this.customerService.findAndCreateCustomer({
+              phoneNumber: messageItem.phone,
+            });
+      const message = await this.messageRepository.save({
+        messageId: messageItem.id,
+        message: messageItem.message,
+        file: messageItem.image,
+        customer: newCustomer,
+        agent: agent,
+        status: messageItem.status,
+        fromMe: true,
+        type: MessageType.text,
       });
       messages.push(message);
     }
