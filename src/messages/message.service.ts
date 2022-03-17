@@ -98,7 +98,7 @@ export class MessageService {
     //jika sudah mulai percakapan maka pilih menu
     if (currentConversation.status === ConversationStatus.STARTED) {
       //cek apakah pilihan sudah benar
-      const findPilihan = /\d/gi.exec(incomingMessage.message);
+      const findPilihan = /\d/gi.exec(data.message);
       if (findPilihan === null) {
         //jika pilihan tidak benar, maka kirim mohon pilih menu diatas
         this.sendMessageToCustomer({
