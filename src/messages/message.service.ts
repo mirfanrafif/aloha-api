@@ -148,8 +148,6 @@ export class MessageService {
         agentJob: pilihan,
       });
 
-      console.log(customerAgent);
-
       //ubah status jadi connected
       await this.conversationService.connectConversation(currentConversation);
       //kirim pesan bahwa akan terhubung
@@ -212,7 +210,6 @@ export class MessageService {
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
-    console.log(response);
     return response;
   }
 
