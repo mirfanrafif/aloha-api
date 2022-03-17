@@ -18,11 +18,16 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
-import { AddJobRequest, UpdateUserRequestDto } from './user.dto';
+import {
+  AddJobRequest,
+  JobAssignRequestDto,
+  UpdateUserRequestDto,
+} from './user.dto';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import { UserJobService } from 'src/user-job/user-job.service';
+import { request } from 'http';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -50,7 +55,6 @@ export class UserController {
     return this.jobService.getJobList();
   }
 
-  @UseFilters(DbexceptionFilter)
   @Get('job/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
@@ -74,5 +78,12 @@ export class UserController {
   ) {
     const user: UserEntity = request.user;
     return this.userService.updateProfilePhoto(file, user);
+  }
+
+  @Put('job/assign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  assignAgentToJob(@Body() jobAssignBody: JobAssignRequestDto) {
+    return this.userService.assignAgentToJob(jobAssignBody);
   }
 }

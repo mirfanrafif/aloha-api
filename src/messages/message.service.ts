@@ -344,16 +344,16 @@ export class MessageService {
     body: BroadcastMessageRequest,
     agent: UserEntity,
   ) {
+    const customer = await this.customerService.getAllCustomer();
+
     //templating request
-    const messages = body.messages.map<WablasSendMessageRequestData>(
-      (item) => ({
-        phone: item.customerNumber,
-        message: item.message,
-        isGroup: false,
-        retry: false,
-        secret: false,
-      }),
-    );
+    const messages = customer.map<WablasSendMessageRequestData>((item) => ({
+      phone: item.phoneNumber,
+      message: body.message,
+      isGroup: false,
+      retry: false,
+      secret: false,
+    }));
     const request: WablasSendMessageRequest = {
       data: messages,
     };

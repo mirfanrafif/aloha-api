@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class AddJobRequest {
   @IsNotEmpty()
@@ -20,4 +20,14 @@ export class UpdateUserRequestDto {
   email: string;
 
   password?: string;
+}
+
+export class JobAssignRequestDto {
+  @IsNotEmpty()
+  @IsNumber()
+  agentId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  jobId: number;
 }

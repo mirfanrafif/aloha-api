@@ -28,7 +28,6 @@ import {
 import { MessageService } from './message.service';
 
 @Controller('message')
-@UseFilters(DbexceptionFilter)
 @UseInterceptors(ClassSerializerInterceptor)
 export class MessageController {
   constructor(private service: MessageService) {}
@@ -46,7 +45,6 @@ export class MessageController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseFilters(DbexceptionFilter)
   handleAgentMessage(@Request() request, @Body() data: MessageRequestDto) {
     const user: UserEntity = request.user;
     return this.service.sendMessageToCustomer(data, user);

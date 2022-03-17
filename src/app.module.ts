@@ -9,6 +9,7 @@ import { CustomerModule } from './customer/customer.module';
 import { UserJobRepositoryModule } from './core/repository/user-job/user-job.module';
 import { UserJobModule } from './user-job/user-job.module';
 import { MulterModule } from '@nestjs/platform-express';
+import { MessageModule } from './messages/message.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -18,8 +19,8 @@ import { MulterModule } from '@nestjs/platform-express';
     }),
     AuthModule,
     CustomerModule,
-    UserJobRepositoryModule,
     UserJobModule,
+    MessageModule,
     MulterModule.register({
       dest: './uploads',
     }),

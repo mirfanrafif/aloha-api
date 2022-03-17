@@ -23,7 +23,6 @@ export class CustomerController {
   constructor(private service: CustomerService) {}
 
   @Post('delegate')
-  @UseFilters(DbexceptionFilter)
   delegateCustomerToAgent(@Body() body: DelegateCustomerRequestDto) {
     return this.service.delegateCustomerToAgent(body);
   }

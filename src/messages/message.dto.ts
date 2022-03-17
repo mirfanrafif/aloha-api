@@ -70,7 +70,8 @@ export class MessageResponseItem {
 }
 
 export class BroadcastMessageRequest {
-  messages: MessageRequestDto[];
+  @IsNotEmpty()
+  message: string;
 }
 
 export class MessageResponseDto {

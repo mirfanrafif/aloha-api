@@ -267,4 +267,8 @@ export class CustomerService {
 
     return newListCustomer;
   }
+
+  async getAllCustomer() {
+    return await this.customerRepository.find();
+  }
 }

@@ -5,10 +5,10 @@ import { MessageController } from './message.controller';
 import { HttpModule } from '@nestjs/axios';
 import { MessageRepositoryModule } from 'src/core/repository/message/message.module';
 import { CustomerModule } from 'src/customer/customer.module';
-import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 import { ConversationRepositoryModule } from 'src/core/repository/conversation/conversation-repository.module';
 import { ConversationService } from './conversation.service';
 import { UserJobModule } from 'src/user-job/user-job.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   providers: [MessageService, MessageGateway, ConversationService],
@@ -20,7 +20,7 @@ import { UserJobModule } from 'src/user-job/user-job.module';
     }),
     MessageRepositoryModule,
     CustomerModule,
-    UserRepositoryModule,
+    UserModule,
     ConversationRepositoryModule,
     UserJobModule,
   ],
