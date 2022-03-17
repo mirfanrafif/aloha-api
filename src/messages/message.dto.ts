@@ -52,6 +52,19 @@ export type WablasSendMessageRequestData = {
   isGroup: boolean;
 };
 
+export type WablasSendImageRequest = {
+  data: WablasSendImageRequestData[];
+};
+
+export type WablasSendImageRequestData = {
+  phone: string;
+  image: string;
+  caption?: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
 export class WablasApiResponse<T> {
   status: boolean;
   message: string;

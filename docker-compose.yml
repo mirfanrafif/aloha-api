@@ -13,6 +13,8 @@ services:
       - 80:3000
     networks:
       - aloha_api
+    volumes:
+      - /home/${USER}/aloha-api/uploads/:/app/aloha-api/uploads
   db:
     image: mysql:8.0
     container_name: aloha_api_db

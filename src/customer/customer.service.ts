@@ -9,15 +9,12 @@ import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { MessageEntity } from 'src/core/repository/message/message.entity';
-import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { MoreThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
-  CustomerAgentResponseDto,
   DelegateCustomerRequestDto,
 } from './customer.dto';
 

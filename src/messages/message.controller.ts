@@ -8,10 +8,15 @@ import {
   Post,
   Query,
   Request,
+  Res,
+  UploadedFile,
   UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -92,5 +97,39 @@ export class MessageController {
       body,
       request.user as UserEntity,
     );
+  }
+
+  @Post('image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: 'uploads/messages/image',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          const filename = Buffer.from(
+            Date.now().toString() + file.originalname.slice(0, 16),
+            'utf-8',
+          ).toString('base64url');
+          cb(null, filename + extname(file.originalname));
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  sendImageToCustomer(
+    @UploadedFile() image: Express.Multer.File,
+    @Body() body: MessageRequestDto,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.service.sendImageToCustomer(image, body, user);
+  }
+
+  @Get('image/:file_name')
+  getMessageImage(@Param('file_name') fileName: string, @Res() res) {
+    res.sendFile(fileName, { root: 'uploads/messages/image' });
   }
 }

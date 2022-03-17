@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Request,
+  Res,
   UploadedFile,
   UseFilters,
   UseGuards,
@@ -28,6 +29,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import { UserJobService } from 'src/user-job/user-job.service';
 import { request } from 'http';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -70,12 +73,30 @@ export class UserController {
   }
 
   @Put('profile_image')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: 'uploads/profile_pictures',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          const filename = Buffer.from(
+            Date.now().toString() + file.originalname.slice(0, 16),
+            'utf-8',
+          ).toString('base64url');
+          cb(null, filename + extname(file.originalname));
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
   @UseGuards(JwtAuthGuard)
   updateProfilePhoto(
     @UploadedFile() file: Express.Multer.File,
     @Request() request,
   ) {
+    console.log(file);
     const user: UserEntity = request.user;
     return this.userService.updateProfilePhoto(file, user);
   }
@@ -85,5 +106,10 @@ export class UserController {
   @Roles(Role.admin)
   assignAgentToJob(@Body() jobAssignBody: JobAssignRequestDto) {
     return this.userService.assignAgentToJob(jobAssignBody);
+  }
+
+  @Get('profile_image/:file_name')
+  getProfilePhoto(@Param('file_name') filename: string, @Res() res) {
+    res.sendFile(filename, { root: 'uploads/profile_pictures' });
   }
 }
