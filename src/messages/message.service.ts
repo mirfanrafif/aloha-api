@@ -384,7 +384,7 @@ export class MessageService {
           async (
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
-            console.log(response.data);
+            console.log(JSON.stringify(response.data));
             // //save ke database
             // const messages = await this.saveOutgoingMessage({
             //   messageResponses: response.data.data,
