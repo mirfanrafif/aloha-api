@@ -197,6 +197,7 @@ export class MessageService {
       where: {
         messageId: body.id,
       },
+      relations: ['customer', 'agent'],
     });
     message.status = body.status;
     const response = this.mapMessageEntityToResponse(
