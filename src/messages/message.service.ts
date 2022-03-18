@@ -29,6 +29,8 @@ import {
   MessageResponseDto,
   WablasSendImageRequest,
   SendImageResponseData,
+  DocumentRequestDto,
+  WablasSendDocumentRequest,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -390,6 +392,85 @@ export class MessageService {
             const messages = await this.saveOutgoingImageMessage({
               messageResponses: response.data.data,
               agent: agent,
+              customer: customer,
+            });
+
+            //kirim ke frontend lewat websocket
+            messages.forEach((message: MessageEntity) => {
+              const response = this.mapMessageEntityToResponse(message);
+              this.gateway.sendMessage(response);
+            });
+
+            //return result
+            const result: ApiResponse<MessageEntity[]> = {
+              success: true,
+              data: messages,
+              message: 'Success sending message to Wablas API',
+            };
+            return result;
+          },
+        ),
+        catchError((value: AxiosError<WablasApiResponse<any>>) => {
+          if (value.response !== undefined) {
+            throw new WablasAPIException(
+              'Failed to send message to Wablas API. Message : ' +
+                value.response.data.message,
+            );
+          }
+          throw new WablasAPIException('Failed to send message to Wablas API.');
+        }),
+      );
+  }
+
+  //kirim gambar ke customer
+  async sendDocumentToCustomer(
+    file: Express.Multer.File,
+    body: DocumentRequestDto,
+    agent: UserEntity,
+  ) {
+    const fileType = /image\/(.*)/gi.exec(file.mimetype);
+    if (fileType === null) {
+      throw new BadRequestException();
+    }
+
+    const customer = await this.customerService.findCustomer({
+      phoneNumber: body.customerNumber,
+    });
+
+    //templating request
+    const request: WablasSendDocumentRequest = {
+      data: [
+        {
+          phone: customer.phoneNumber,
+          document: process.env.BASE_URL + '/message/document/' + file.filename,
+          isGroup: false,
+          retry: false,
+          secret: false,
+        },
+      ],
+    };
+
+    //buat request ke WABLAS API
+    return this.http
+      .post('/api/v2/send-document', JSON.stringify(request), {
+        headers: {
+          Authorization: `${process.env.WABLAS_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      })
+      .pipe(
+        map(
+          async (
+            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+          ) => {
+            console.log(JSON.stringify(response.data));
+            //save ke database
+            const messages = await this.saveOutgoingDocumentMessage({
+              messageResponses: response.data.data,
+              agent: agent,
+              filename: file.filename,
+              customer: customer,
             });
 
             //kirim ke frontend lewat websocket
@@ -426,7 +507,7 @@ export class MessageService {
   ) {
     const customer = await this.customerService.getAllCustomer();
 
-    //templating request
+    //mapping request
     const messages = customer.map<WablasSendMessageRequestData>((item) => ({
       phone: item.phoneNumber,
       message: body.message,
@@ -450,10 +531,10 @@ export class MessageService {
       .pipe(
         map(
           async (
-            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingImageMessage({
+            const messages = await this.saveOutgoingMessage({
               messageResponses: response.data.data,
               agent: agent,
             });
@@ -521,7 +602,46 @@ export class MessageService {
     return messages;
   }
 
-  //simpan pesan keluar
+  //simpan pesan dokumen keluar
+  async saveOutgoingDocumentMessage({
+    messageResponses,
+    customer,
+    agent,
+    filename,
+  }: {
+    messageResponses: SendMessageResponseData;
+    customer?: CustomerEntity;
+    agent?: UserEntity;
+    filename: string;
+  }): Promise<MessageEntity[]> {
+    const messages: MessageEntity[] = [];
+
+    //for loop insert data
+    for (const messageItem of messageResponses.messages) {
+      const newCustomer =
+        customer !== undefined
+          ? customer
+          : await this.customerService.findAndCreateCustomer({
+              phoneNumber: messageItem.phone,
+            });
+      const message = await this.messageRepository.save({
+        messageId: messageItem.id,
+        message: messageItem.message,
+        customer: newCustomer,
+        file: filename,
+        agent: agent,
+        status: messageItem.status,
+        fromMe: true,
+        type: MessageType.document,
+        created_at: Date(),
+      });
+      messages.push(message);
+    }
+
+    return messages;
+  }
+
+  //simpan pesan gambar keluar
   async saveOutgoingImageMessage({
     messageResponses,
     customer,
@@ -549,7 +669,7 @@ export class MessageService {
         agent: agent,
         status: messageItem.status,
         fromMe: true,
-        type: MessageType.text,
+        type: MessageType.image,
       });
       messages.push(message);
     }

@@ -26,6 +26,7 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import {
   BroadcastMessageRequest,
+  DocumentRequestDto,
   MessageRequestDto,
   MessageResponseDto,
   TextMessage,
@@ -128,8 +129,41 @@ export class MessageController {
     return this.service.sendImageToCustomer(image, body, user);
   }
 
+  @Post('document')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('document', {
+      storage: diskStorage({
+        destination: 'uploads/messages/document',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          const filename = Buffer.from(
+            Date.now().toString() + file.originalname.slice(0, 16),
+            'utf-8',
+          ).toString('base64url');
+          cb(null, filename + extname(file.originalname));
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  sendDocumentToCustomer(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() data: DocumentRequestDto,
+    @Request() request,
+  ) {
+    return this.service.sendDocumentToCustomer(file, data, request.user);
+  }
+
   @Get('image/:file_name')
   getMessageImage(@Param('file_name') fileName: string, @Res() res) {
     res.sendFile(fileName, { root: 'uploads/messages/image' });
+  }
+
+  @Get('document/:document_name')
+  getMessageDocument(@Param('document_name') filename: string, @Res() res) {
+    res.sendFile(filename, { root: 'uploads/messages/document' });
   }
 }

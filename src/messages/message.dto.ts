@@ -40,6 +40,11 @@ export class MessageRequestDto {
   message: string;
 }
 
+export class DocumentRequestDto {
+  @IsNotEmpty()
+  customerNumber: string;
+}
+
 export type WablasSendMessageRequest = {
   data: WablasSendMessageRequestData[];
 };
@@ -47,6 +52,18 @@ export type WablasSendMessageRequest = {
 export type WablasSendMessageRequestData = {
   phone: string;
   message: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
+export type WablasSendDocumentRequest = {
+  data: WablasSendDocumentRequestData[];
+};
+
+export type WablasSendDocumentRequestData = {
+  phone: string;
+  document: string;
   secret: boolean;
   retry: boolean;
   isGroup: boolean;
@@ -78,7 +95,7 @@ export class SendMessageResponseData {
 export class MessageResponseItem {
   id: string;
   phone: string;
-  message: string;
+  message?: string;
   status: MessageStatus;
 }
 
