@@ -29,6 +29,7 @@ import {
   DocumentRequestDto,
   MessageRequestDto,
   MessageResponseDto,
+  MessageTrackingDto,
   TextMessage,
 } from './message.dto';
 import { MessageService } from './message.service';
@@ -44,8 +45,8 @@ export class MessageController {
   }
 
   @Post('tracking')
-  trackMessageStatus(@Body() body) {
-    console.log(body);
+  trackMessageStatus(@Body() body: MessageTrackingDto) {
+    return this.service.updateMessageStatus(body);
     return body;
   }
 

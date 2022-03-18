@@ -31,6 +31,7 @@ import {
   SendImageResponseData,
   DocumentRequestDto,
   WablasSendDocumentRequest,
+  MessageTrackingDto,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -166,11 +167,7 @@ export class MessageService {
           customerAgent.agent.full_name +
           '. Mohon tunggu sebentar',
       }).then((value) => {
-        value.subscribe({
-          error: (err: WablasAPIException) => {
-            console.log(err);
-          },
-        });
+        value.subscribe();
       });
 
       return this.sendIncomingMessageResponse(data);
@@ -191,6 +188,27 @@ export class MessageService {
 
       return this.sendIncomingMessageResponse(data);
     }
+  }
+
+  async updateMessageStatus(
+    body: MessageTrackingDto,
+  ): Promise<ApiResponse<MessageResponseDto>> {
+    const message = await this.messageRepository.findOneOrFail({
+      where: {
+        messageId: body.id,
+      },
+    });
+    message.status = body.status;
+    const response = this.mapMessageEntityToResponse(
+      await this.messageRepository.save(message),
+    );
+
+    this.gateway.sendMessage(response);
+    return {
+      success: true,
+      data: response,
+      message: 'Succesfully update message status',
+    };
   }
 
   mapMessageEntityToResponse(data: MessageEntity) {
@@ -387,7 +405,6 @@ export class MessageService {
           async (
             response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
-            console.log(JSON.stringify(response.data));
             //save ke database
             const messages = await this.saveOutgoingImageMessage({
               messageResponses: response.data.data,
@@ -459,7 +476,6 @@ export class MessageService {
           async (
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
-            console.log(JSON.stringify(response.data));
             //save ke database
             const messages = await this.saveOutgoingDocumentMessage({
               messageResponses: response.data.data,

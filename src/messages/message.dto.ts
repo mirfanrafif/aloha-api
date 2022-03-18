@@ -131,3 +131,14 @@ export class MessageResponseDto {
   created_at: Date;
   updated_at: Date;
 }
+
+export type MessageTrackingDto = {
+  id: string;
+  message: string;
+  phone: string;
+  deviceId: string;
+  sender: string;
+  status: MessageStatus;
+  note: string;
+  timestamp: Date;
+};
