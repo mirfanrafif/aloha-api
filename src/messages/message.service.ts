@@ -621,7 +621,7 @@ export class MessageService {
             });
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
-        message: messageItem.message,
+        message: '',
         customer: newCustomer,
         file: filename,
         agent: agent,
