@@ -64,4 +64,5 @@ export class UserEntity {
 export enum Role {
   agent = 'agent',
   admin = 'admin',
+  sistem = 'sistem',
 }
