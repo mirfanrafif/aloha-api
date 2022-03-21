@@ -94,8 +94,10 @@ export class MessageService {
         'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' + jobs;
       //kirim pesan pertama ke customer
       this.sendMessageToCustomer({
-        customerNumber: data.customer.phoneNumber,
-        message: helloMessage,
+        messageRequest: {
+          customerNumber: data.customer.phoneNumber,
+          message: helloMessage,
+        },
       }).then((value) => {
         value.subscribe();
       });
@@ -111,8 +113,10 @@ export class MessageService {
       if (findPilihan === null) {
         //jika pilihan tidak benar, maka kirim mohon pilih menu diatas
         this.sendMessageToCustomer({
-          customerNumber: data.customer.phoneNumber,
-          message: 'Mohon pilih menu diatas',
+          messageRequest: {
+            customerNumber: data.customer.phoneNumber,
+            message: 'Mohon pilih menu diatas',
+          },
         }).then((value) => {
           value.subscribe();
         });
@@ -129,8 +133,10 @@ export class MessageService {
       //jika sesuai maka arahkan customer ke agent yang sedia
       if (pilihanSesuai === undefined) {
         this.sendMessageToCustomer({
-          customerNumber: data.customer.phoneNumber,
-          message: 'Mohon pilih menu diatas',
+          messageRequest: {
+            customerNumber: data.customer.phoneNumber,
+            message: 'Mohon pilih menu diatas',
+          },
         }).then((value) => {
           value.subscribe();
         });
@@ -141,9 +147,11 @@ export class MessageService {
       //cek apakah ada cs yang bekerja di layanan itu
       if (pilihanSesuai.agents.length == 0) {
         await this.sendMessageToCustomer({
-          customerNumber: data.customer.phoneNumber,
-          message:
-            'Mohon maaf tidak ada customer service yang dapat melayani di bidang tersebut',
+          messageRequest: {
+            customerNumber: data.customer.phoneNumber,
+            message:
+              'Mohon maaf tidak ada customer service yang dapat melayani di bidang tersebut',
+          },
         }).then((value) => {
           value.subscribe();
         });
@@ -161,11 +169,13 @@ export class MessageService {
       await this.conversationService.connectConversation(currentConversation);
       //kirim pesan bahwa akan terhubung
       await this.sendMessageToCustomer({
-        customerNumber: data.customer.phoneNumber,
-        message:
-          'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
-          customerAgent.agent.full_name +
-          '. Mohon tunggu sebentar',
+        messageRequest: {
+          customerNumber: data.customer.phoneNumber,
+          message:
+            'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
+            customerAgent.agent.full_name +
+            '. Mohon tunggu sebentar',
+        },
       }).then((value) => {
         value.subscribe();
       });
@@ -285,11 +295,15 @@ export class MessageService {
   }
 
   //kirim pesan ke customer
-  async sendMessageToCustomer(
-    messageRequest: MessageRequestDto,
-    agent?: UserEntity,
-    customer?: CustomerEntity,
-  ) {
+  async sendMessageToCustomer({
+    messageRequest,
+    agent,
+    customer,
+  }: {
+    messageRequest: MessageRequestDto;
+    agent?: UserEntity;
+    customer?: CustomerEntity;
+  }) {
     //templating request
     const request: WablasSendMessageRequest = {
       data: [
@@ -305,7 +319,7 @@ export class MessageService {
 
     if (agent !== undefined) {
       //jika role admin tidak perlu cek ini
-      if (agent.role !== Role.admin) {
+      if (agent.role === Role.agent) {
         //cek apakah agent handle customer. jika tidak throw Httpexception
         await this.customerService.agentShouldHandleCustomer({
           customerNumber: messageRequest.customerNumber,
@@ -797,5 +811,9 @@ export class MessageService {
       }),
     );
     return result;
+  }
+
+  notifyUpdatesToCustomer(body: MessageRequestDto, user: UserEntity) {
+    return this.sendMessageToCustomer({ messageRequest: body, agent: user });
   }
 }

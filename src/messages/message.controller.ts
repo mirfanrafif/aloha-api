@@ -47,14 +47,24 @@ export class MessageController {
   @Post('tracking')
   trackMessageStatus(@Body() body: MessageTrackingDto) {
     return this.service.updateMessageStatus(body);
-    return body;
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
   handleAgentMessage(@Request() request, @Body() data: MessageRequestDto) {
     const user: UserEntity = request.user;
-    return this.service.sendMessageToCustomer(data, user);
+    return this.service.sendMessageToCustomer({
+      messageRequest: data,
+      agent: user,
+    });
+  }
+
+  @Post('notify')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.sistem)
+  notifyUpdatesToCustomer(@Body() body: MessageRequestDto, @Request() request) {
+    const agent = request.user;
+    return this.service.notifyUpdatesToCustomer(body, agent);
   }
 
   @Get(':customer_number')

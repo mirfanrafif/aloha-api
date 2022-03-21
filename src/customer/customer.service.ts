@@ -224,10 +224,12 @@ export class CustomerService {
   }) {
     const customer = await this.customerAgentRepository.findOneOrFail({
       where: {
-        customerNumber: customerNumber,
+        customer: {
+          phoneNumber: customerNumber,
+        },
         agent: agent,
       },
-      relations: ['agent'],
+      relations: ['agent', 'customer'],
     });
 
     if (customer === undefined) {
