@@ -6,16 +6,12 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import { LoginRequestDto, RegisterRequestDto } from './auth.dto';
 import { hash, compare } from 'bcrypt';
-import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
-import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
     private jwtService: JwtService,
-    @Inject(USER_JOB_REPOSITORY)
-    private jobRepository: Repository<UserJobEntity>,
   ) {}
 
   async login(loginRequest: LoginRequestDto): Promise<ApiResponse<any>> {
@@ -24,6 +20,7 @@ export class AuthService {
         username: loginRequest.username,
       },
     });
+    console.log(process.env.JWT_SECRET);
     if (user && (await compare(loginRequest.password, user.password))) {
       // const userData = this.getUserData(user);
       const jwtPayload = this.getPayload(user);

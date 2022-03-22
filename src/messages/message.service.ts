@@ -43,6 +43,7 @@ import {
   CustomerAgentArrDto,
   CustomerAgentResponseDto,
 } from 'src/customer/customer.dto';
+import { UserService } from 'src/user/user.service';
 
 const pageSize = 20;
 
@@ -56,6 +57,7 @@ export class MessageService {
     private customerService: CustomerService,
     private conversationService: ConversationService,
     private userJobService: UserJobService,
+    private userService: UserService,
   ) {}
 
   async handleIncomingMessage(incomingMessage: TextMessage) {
@@ -86,6 +88,8 @@ export class MessageService {
         data.customer,
       );
 
+    const aloha = await this.userService.getAloha();
+
     // jika belum maka mulai percakapan
     if (currentConversation === undefined) {
       //tampilkan menu
@@ -98,6 +102,7 @@ export class MessageService {
           customerNumber: data.customer.phoneNumber,
           message: helloMessage,
         },
+        agent: aloha,
       }).then((value) => {
         value.subscribe();
       });
@@ -117,6 +122,7 @@ export class MessageService {
             customerNumber: data.customer.phoneNumber,
             message: 'Mohon pilih menu diatas',
           },
+          agent: aloha,
         }).then((value) => {
           value.subscribe();
         });
@@ -137,6 +143,7 @@ export class MessageService {
             customerNumber: data.customer.phoneNumber,
             message: 'Mohon pilih menu diatas',
           },
+          agent: aloha,
         }).then((value) => {
           value.subscribe();
         });
@@ -152,6 +159,7 @@ export class MessageService {
             message:
               'Mohon maaf tidak ada customer service yang dapat melayani di bidang tersebut',
           },
+          agent: aloha,
         }).then((value) => {
           value.subscribe();
         });
@@ -176,6 +184,7 @@ export class MessageService {
             customerAgent.agent.full_name +
             '. Mohon tunggu sebentar',
         },
+        agent: aloha,
       }).then((value) => {
         value.subscribe();
       });
@@ -811,9 +820,5 @@ export class MessageService {
       }),
     );
     return result;
-  }
-
-  notifyUpdatesToCustomer(body: MessageRequestDto, user: UserEntity) {
-    return this.sendMessageToCustomer({ messageRequest: body, agent: user });
   }
 }

@@ -59,14 +59,6 @@ export class MessageController {
     });
   }
 
-  @Post('notify')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.sistem)
-  notifyUpdatesToCustomer(@Body() body: MessageRequestDto, @Request() request) {
-    const agent = request.user;
-    return this.service.notifyUpdatesToCustomer(body, agent);
-  }
-
   @Get(':customer_number')
   @UseGuards(JwtAuthGuard)
   async getPastMessages(

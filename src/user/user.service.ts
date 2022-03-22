@@ -102,4 +102,12 @@ export class UserService {
         'Succesfully assign agent ' + agent.id + ' to job ' + agent.job.id,
     };
   }
+
+  getAloha() {
+    return this.userRepository.findOneOrFail({
+      where: {
+        email: 'aloha@rajadinar.com',
+      },
+    });
+  }
 }
