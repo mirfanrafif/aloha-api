@@ -808,12 +808,17 @@ export class MessageService {
           },
         });
 
+        const lastMessageResponse =
+          lastMessage !== undefined
+            ? this.mapMessageEntityToResponse(lastMessage)
+            : undefined;
+
         const newCustomer: CustomerAgentResponseDto = {
           id: customerAgent.id,
           customer: customerAgent.customer,
           created_at: customerAgent.created_at,
           agent: customerAgent.agent,
-          lastMessage: lastMessage,
+          lastMessage: lastMessageResponse,
           updated_at: customerAgent.updated_at,
         };
         return newCustomer;

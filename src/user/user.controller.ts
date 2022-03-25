@@ -96,7 +96,6 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
     @Request() request,
   ) {
-    console.log(file);
     const user: UserEntity = request.user;
     return this.userService.updateProfilePhoto(file, user);
   }
