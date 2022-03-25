@@ -223,7 +223,7 @@ export class MessageService {
       await this.messageRepository.save(message),
     );
 
-    // this.gateway.sendMessage(response);
+    this.gateway.sendMessage(response);
     return {
       success: true,
       data: response,
