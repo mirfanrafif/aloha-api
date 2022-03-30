@@ -806,6 +806,7 @@ export class MessageService {
           order: {
             id: 'DESC',
           },
+          relations: ['customer', 'agent']
         });
 
         const lastMessageResponse =
