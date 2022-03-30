@@ -719,14 +719,6 @@ export class MessageService {
     agent: UserEntity,
   ) {
     let condition = {};
-    //check role if not admin
-    if (agent.role !== 'admin') {
-      condition = {
-        ...condition,
-        agent: agent,
-      };
-    }
-
     //check last message id for pagination
     if (lastMessageId > 0) {
       condition = {
