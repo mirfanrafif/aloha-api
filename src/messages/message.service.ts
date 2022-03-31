@@ -415,6 +415,8 @@ export class MessageService {
       ],
     };
 
+    console.log(request);
+
     //buat request ke WABLAS API
     return this.http
       .post('/api/v2/send-image', JSON.stringify(request), {
