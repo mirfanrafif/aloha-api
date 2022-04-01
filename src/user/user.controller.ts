@@ -40,6 +40,13 @@ export class UserController {
     private jobService: UserJobService,
   ) {}
 
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  getAllUsers() {
+    return this.userService.getAllUsers();
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getCurrentUser(@Request() request) {
