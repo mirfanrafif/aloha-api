@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
@@ -29,11 +29,7 @@ export class AuthService {
         message: 'Login Success',
       };
     }
-    return {
-      success: false,
-      message: 'Password not match',
-      data: null,
-    };
+    throw new UnauthorizedException('Password not match');
   }
 
   async register(registerRequest: RegisterRequestDto) {
