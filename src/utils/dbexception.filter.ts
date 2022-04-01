@@ -12,21 +12,17 @@ export class DbexceptionFilter implements ExceptionFilter {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
       return response.status(404).json({
-        message: {
-          statusCode: 404,
-          error: 'Not Found',
-          message: exception.message,
-        },
+        statusCode: 404,
+        error: 'Not Found',
+        message: exception.message,
       });
     } else if (exception instanceof QueryFailedError) {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
       return response.status(400).json({
-        message: {
-          statusCode: 400,
-          error: 'Bad Request',
-          message: exception.message,
-        },
+        statusCode: 400,
+        error: 'Bad Request',
+        message: exception.message,
       });
     }
   }
