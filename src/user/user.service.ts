@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -113,7 +113,10 @@ export class UserService {
 
   async getAllUsers() {
     var users = await this.userRepository.find({
-      relations: ['job']
+      relations: ['job'],
+      where: {
+        role: Role.agent
+      }
     });
     return <ApiResponse<UserEntity[]>>{
       success: true,
