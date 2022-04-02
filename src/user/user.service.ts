@@ -111,9 +111,14 @@ export class UserService {
     });
   }
 
-  getAllUsers() {
-    return this.userRepository.find({
+  async getAllUsers() {
+    var users = await this.userRepository.find({
       relations: ['job']
     });
+    return <ApiResponse<UserEntity[]>>{
+      success: true,
+      data: users,
+      message: 'Success getting users'
+    }
   }
 }
