@@ -10,7 +10,6 @@ import {
   Request,
   Res,
   UploadedFile,
-  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,16 +19,13 @@ import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
-import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import {
   BroadcastMessageRequest,
   DocumentRequestDto,
   MessageRequestDto,
   MessageResponseDto,
-  MessageTemplateRequestDto,
   MessageTrackingDto,
   TextMessage,
 } from './message.dto';
@@ -63,15 +59,12 @@ export class MessageController {
   @Get(':customer_number')
   @UseGuards(JwtAuthGuard)
   async getPastMessages(
-    @Request() request,
     @Param('customer_number', ParseIntPipe) customerId: number,
     @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageResponseDto[]>> {
-    const user: UserEntity = request.user;
     return this.service.getPastMessageByCustomerId(
       customerId,
       lastMessageId !== undefined ? lastMessageId : 0,
-      user,
     );
   }
 

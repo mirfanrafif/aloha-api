@@ -28,7 +28,7 @@ export const DATABASE_CONNECTION = 'database_connection';
             UserJobEntity,
             ConversationEntity,
             CustomerEntity,
-            MessageTemplateEntity
+            MessageTemplateEntity,
           ],
         }),
     },

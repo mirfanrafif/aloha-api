@@ -21,7 +21,7 @@ export class AuthService {
       },
     });
 
-    console.log(process.env.JWT_SECRET) ;
+    console.log(process.env.JWT_SECRET);
     if (user && (await compare(loginRequest.password, user.password))) {
       // const userData = this.getUserData(user);
       const jwtPayload = this.getPayload(user);

@@ -720,11 +720,7 @@ export class MessageService {
   }
 
   //dapatkan pesan sebelumnya berdasarkan customer number
-  async getPastMessageByCustomerId(
-    customerId: number,
-    lastMessageId: number,
-    agent: UserEntity,
-  ) {
+  async getPastMessageByCustomerId(customerId: number, lastMessageId: number) {
     let condition = {};
     //check last message id for pagination
     if (lastMessageId > 0) {
@@ -805,7 +801,7 @@ export class MessageService {
           order: {
             id: 'DESC',
           },
-          relations: ['customer', 'agent']
+          relations: ['customer', 'agent'],
         });
 
         const lastMessageResponse =
@@ -828,24 +824,24 @@ export class MessageService {
   }
 
   async getMessageTemplates() {
-    var data = await this.messageTemplateRepository.find();
+    const data = await this.messageTemplateRepository.find();
     return <ApiResponse<MessageTemplateEntity[]>>{
       success: true,
       data: data,
-      message: "success getting message templates"
-    } 
+      message: 'success getting message templates',
+    };
   }
 
   async addMessageTemplate(body: MessageTemplateRequestDto) {
-    var addData = await this.messageTemplateRepository.create({
+    let addData = await this.messageTemplateRepository.create({
       name: body.name,
-      template: body.template
+      template: body.template,
     });
     addData = await this.messageTemplateRepository.save(addData);
     return <ApiResponse<MessageTemplateEntity>>{
       success: true,
       data: addData,
-      message: "Success adding template"
+      message: 'Success adding template',
     };
   }
 }

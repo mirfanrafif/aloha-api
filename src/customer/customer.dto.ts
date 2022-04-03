@@ -1,6 +1,5 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { MessageResponseDto } from 'src/messages/message.dto';
 

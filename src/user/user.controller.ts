@@ -10,11 +10,9 @@ import {
   Request,
   Res,
   UploadedFile,
-  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { RegisterRequestDto } from 'src/auth/auth.dto';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { Roles } from 'src/auth/role.decorator';
@@ -26,9 +24,7 @@ import {
 } from './user.dto';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { DbexceptionFilter } from 'src/utils/dbexception.filter';
 import { UserJobService } from 'src/user-job/user-job.service';
-import { request } from 'http';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 

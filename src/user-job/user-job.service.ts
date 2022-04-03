@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
 import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
-import { AddJobRequest, JobAssignRequestDto } from 'src/user/user.dto';
+import { AddJobRequest } from 'src/user/user.dto';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 

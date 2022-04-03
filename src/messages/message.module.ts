@@ -25,7 +25,7 @@ import { MessageTemplateController } from './message-template.controller';
     UserModule,
     ConversationRepositoryModule,
     UserJobModule,
-    MessageTemplateModule
+    MessageTemplateModule,
   ],
 })
 export class MessageModule {}

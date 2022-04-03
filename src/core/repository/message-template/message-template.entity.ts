@@ -1,7 +1,13 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity({
-  name: "message_template"
+  name: 'message_template',
 })
 export class MessageTemplateEntity {
   @PrimaryGeneratedColumn()
@@ -13,10 +19,9 @@ export class MessageTemplateEntity {
   @Column()
   template: string;
 
-  @CreateDateColumn({type: "timestamp"})
+  @CreateDateColumn({ type: 'timestamp' })
   created_at: string;
 
-  @UpdateDateColumn({type: "timestamp"})
+  @UpdateDateColumn({ type: 'timestamp' })
   updated_at: string;
-  
 }

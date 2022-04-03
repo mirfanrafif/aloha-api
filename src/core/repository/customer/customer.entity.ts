@@ -2,8 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -12,7 +10,6 @@ import {
 import { ConversationEntity } from '../conversation/conversation.entity';
 import { CustomerAgent } from '../customer-agent/customer-agent.entity';
 import { MessageEntity } from '../message/message.entity';
-import { UserEntity } from '../user/user.entity';
 
 @Entity('customer')
 export class CustomerEntity {
