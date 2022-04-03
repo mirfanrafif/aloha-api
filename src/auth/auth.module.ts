@@ -11,7 +11,7 @@ import { RolesGuard } from './roles.guard';
   imports: [
     UserRepositoryModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: "sebuah_secret",
       signOptions: {
         expiresIn: '1d',
       },

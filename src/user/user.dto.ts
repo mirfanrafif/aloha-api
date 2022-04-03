@@ -19,7 +19,8 @@ export class UpdateUserRequestDto {
   @IsEmail()
   email: string;
 
-  password?: string;
+  @IsNotEmpty()
+  password: string;
 }
 
 export class JobAssignRequestDto {
