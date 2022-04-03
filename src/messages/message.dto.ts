@@ -142,3 +142,11 @@ export type MessageTrackingDto = {
   note: string;
   timestamp: Date;
 };
+
+export class MessageTemplateRequestDto {
+  @IsNotEmpty()
+  name: string;
+
+  @IsNotEmpty()
+  template: string;
+}

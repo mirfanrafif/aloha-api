@@ -9,10 +9,12 @@ import { ConversationRepositoryModule } from 'src/core/repository/conversation/c
 import { ConversationService } from './conversation.service';
 import { UserJobModule } from 'src/user-job/user-job.module';
 import { UserModule } from 'src/user/user.module';
+import { MessageTemplateModule } from 'src/core/repository/message-template/message-template.module';
+import { MessageTemplateController } from './message-template.controller';
 
 @Module({
   providers: [MessageService, MessageGateway, ConversationService],
-  controllers: [MessageController],
+  controllers: [MessageController, MessageTemplateController],
   imports: [
     HttpModule.register({
       withCredentials: true,
@@ -23,6 +25,7 @@ import { UserModule } from 'src/user/user.module';
     UserModule,
     ConversationRepositoryModule,
     UserJobModule,
+    MessageTemplateModule
   ],
 })
 export class MessageModule {}

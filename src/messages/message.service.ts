@@ -32,6 +32,7 @@ import {
   DocumentRequestDto,
   WablasSendDocumentRequest,
   MessageTrackingDto,
+  MessageTemplateRequestDto,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -44,6 +45,8 @@ import {
   CustomerAgentResponseDto,
 } from 'src/customer/customer.dto';
 import { UserService } from 'src/user/user.service';
+import { MESSAGE_TEMPLATE_REPOSITORY } from 'src/core/repository/message-template/message-template.module';
+import { MessageTemplateEntity } from 'src/core/repository/message-template/message-template.entity';
 
 const pageSize = 20;
 
@@ -54,6 +57,8 @@ export class MessageService {
     private gateway: MessageGateway,
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
+    @Inject(MESSAGE_TEMPLATE_REPOSITORY)
+    private messageTemplateRepository: Repository<MessageTemplateEntity>,
     private customerService: CustomerService,
     private conversationService: ConversationService,
     private userJobService: UserJobService,
@@ -820,5 +825,27 @@ export class MessageService {
       }),
     );
     return result;
+  }
+
+  async getMessageTemplates() {
+    var data = await this.messageTemplateRepository.find();
+    return <ApiResponse<MessageTemplateEntity[]>>{
+      success: true,
+      data: data,
+      message: "success getting message templates"
+    } 
+  }
+
+  async addMessageTemplate(body: MessageTemplateRequestDto) {
+    var addData = await this.messageTemplateRepository.create({
+      name: body.name,
+      template: body.template
+    });
+    addData = await this.messageTemplateRepository.save(addData);
+    return <ApiResponse<MessageTemplateEntity>>{
+      success: true,
+      data: addData,
+      message: "Success adding template"
+    };
   }
 }

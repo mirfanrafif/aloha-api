@@ -29,6 +29,7 @@ import {
   DocumentRequestDto,
   MessageRequestDto,
   MessageResponseDto,
+  MessageTemplateRequestDto,
   MessageTrackingDto,
   TextMessage,
 } from './message.dto';

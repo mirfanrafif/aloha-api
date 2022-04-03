@@ -6,6 +6,7 @@ import { UserEntity } from '../repository/user/user.entity';
 import { UserJobEntity } from '../repository/user-job/user-job.entity';
 import { ConversationEntity } from '../repository/conversation/conversation.entity';
 import { CustomerEntity } from '../repository/customer/customer.entity';
+import { MessageTemplateEntity } from '../repository/message-template/message-template.entity';
 
 export const DATABASE_CONNECTION = 'database_connection';
 
@@ -27,6 +28,7 @@ export const DATABASE_CONNECTION = 'database_connection';
             UserJobEntity,
             ConversationEntity,
             CustomerEntity,
+            MessageTemplateEntity
           ],
         }),
     },

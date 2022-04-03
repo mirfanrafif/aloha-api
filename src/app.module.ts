@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CustomerModule } from './customer/customer.module';
 import { UserJobModule } from './user-job/user-job.module';
 import { MessageModule } from './messages/message.module';
+import { MessageTemplateModule } from './core/repository/message-template/message-template.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -19,6 +20,7 @@ import { MessageModule } from './messages/message.module';
     CustomerModule,
     UserJobModule,
     MessageModule,
+    MessageTemplateModule,
   ],
   controllers: [AppController],
   providers: [AppService],
