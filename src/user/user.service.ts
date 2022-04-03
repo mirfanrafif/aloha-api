@@ -53,7 +53,8 @@ export class UserService {
     const currentUser = await this.userRepository.findOneOrFail(user.id);
     currentUser.full_name = request.full_name;
     currentUser.email = request.email;
-    currentUser.password = request.password;
+    const password = await hash(request.password, 10);
+    currentUser.password = password;
     currentUser.username = request.username;
     const finalUser = await this.userRepository.save(currentUser);
     return finalUser;
