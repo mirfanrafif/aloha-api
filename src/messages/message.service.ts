@@ -397,6 +397,11 @@ export class MessageService {
     body: MessageRequestDto,
     agent: UserEntity,
   ) {
+    // const fileType = /image\/(.*)/gi.exec(file.mimetype);
+    // if (fileType === null) {
+    //   throw new BadRequestException();
+    // }
+
     const customer = await this.customerService.findCustomer({
       phoneNumber: body.customerNumber,
     });
