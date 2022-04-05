@@ -9,6 +9,6 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new DbexceptionFilter());
-  await app.listen(3000);
+  await app.listen(process.env.APP_PORT ?? 3000);
 }
 bootstrap();
