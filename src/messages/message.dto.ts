@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
@@ -44,6 +44,7 @@ export class ImageMessageRequestDto {
   @IsNotEmpty()
   customerNumber: string;
 
+  @IsString()
   message: string;
 }
 
