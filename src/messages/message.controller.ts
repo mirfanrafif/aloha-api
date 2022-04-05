@@ -24,6 +24,7 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import {
   BroadcastMessageRequest,
   DocumentRequestDto,
+  ImageMessageRequestDto,
   MessageRequestDto,
   MessageResponseDto,
   MessageTrackingDto,
@@ -119,7 +120,7 @@ export class MessageController {
   )
   sendImageToCustomer(
     @UploadedFile() image: Express.Multer.File,
-    @Body() body: MessageRequestDto,
+    @Body() body: ImageMessageRequestDto,
     @Request() request,
   ) {
     const user: UserEntity = request.user;

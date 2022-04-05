@@ -40,6 +40,13 @@ export class MessageRequestDto {
   message: string;
 }
 
+export class ImageMessageRequestDto {
+  @IsNotEmpty()
+  customerNumber: string;
+
+  message: string;
+}
+
 export class DocumentRequestDto {
   @IsNotEmpty()
   customerNumber: string;
