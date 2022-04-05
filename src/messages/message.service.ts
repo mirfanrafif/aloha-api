@@ -444,15 +444,16 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            messages.forEach((message: MessageEntity) => {
+            const messageResponse = messages.map((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
               this.gateway.sendMessage(response);
+              return response;
             });
 
             //return result
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
-              data: messages,
+              data: messageResponse,
               message: 'Success sending message to Wablas API',
             };
             return result;
@@ -516,15 +517,16 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            messages.forEach((message: MessageEntity) => {
+            const messageResponse = messages.map((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
               this.gateway.sendMessage(response);
+              return response;
             });
 
             //return result
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
-              data: messages,
+              data: messageResponse,
               message: 'Success sending message to Wablas API',
             };
             return result;
