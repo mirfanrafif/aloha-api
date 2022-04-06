@@ -3,7 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { UserJwtPayload } from './auth.dto';
 import { AuthService } from './auth.service';
-
+import * as dotenv from 'dotenv';
+dotenv.config();
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {

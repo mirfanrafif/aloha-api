@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   Post,
   UseGuards,
   UseInterceptors,
@@ -23,5 +24,10 @@ export class CustomerController {
   @Post('delegate')
   delegateCustomerToAgent(@Body() body: DelegateCustomerRequestDto) {
     return this.service.delegateCustomerToAgent(body);
+  }
+
+  @Get()
+  getAllCustomer() {
+    return this.service.getAllCustomer();
   }
 }

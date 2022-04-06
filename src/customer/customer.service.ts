@@ -5,6 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { map } from 'rxjs';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
