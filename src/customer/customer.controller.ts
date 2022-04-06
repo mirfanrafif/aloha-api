@@ -18,7 +18,7 @@ import { CustomerService } from './customer.service';
 
 @Controller('customer')
 @UseGuards(JwtAuthGuard, RolesGuard)
-// @Roles(Role.admin)
+@Roles(Role.admin)
 @UseInterceptors(ClassSerializerInterceptor)
 export class CustomerController {
   constructor(private service: CustomerService) {}
