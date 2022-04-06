@@ -3,7 +3,9 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  ParseIntPipe,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,7 +18,7 @@ import { CustomerService } from './customer.service';
 
 @Controller('customer')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.admin)
+// @Roles(Role.admin)
 @UseInterceptors(ClassSerializerInterceptor)
 export class CustomerController {
   constructor(private service: CustomerService) {}
@@ -27,7 +29,7 @@ export class CustomerController {
   }
 
   @Get()
-  getAllCustomer() {
-    return this.service.getAllCustomer();
+  getAllCustomer(@Query('page', ParseIntPipe) page: number) {
+    return this.service.getAllCustomersFromCrm(page);
   }
 }

@@ -5,7 +5,8 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { map } from 'rxjs';
+import { AxiosError } from 'axios';
+import { catchError, map } from 'rxjs';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
@@ -16,6 +17,7 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { MoreThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
+  CustomerResponse,
   DelegateCustomerRequestDto,
 } from './customer.dto';
 
@@ -266,6 +268,72 @@ export class CustomerService {
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
 
     return newListCustomer;
+  }
+
+  async getAllCustomersFromCrm(page: number) {
+    return this.httpService
+      .get<CustomerResponse>(
+        `/customers?page=${page}&limit=${pageSize}&sortBy=full_name:ASC`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.CRM_TOKEN}`,
+          },
+        },
+      )
+      .pipe(
+        map(async (response) => {
+          if (response.status < 400) {
+            const customers = response.data.data;
+
+            const newCustomers: CustomerEntity[] = [];
+
+            for (const customer of customers) {
+              const existingCustomer = await this.customerRepository.findOne({
+                where: [
+                  {
+                    customerCrmId: customer.id,
+                  },
+                  {
+                    phoneNumber: customer.telephones,
+                  },
+                ],
+              });
+              if (existingCustomer !== undefined) {
+                newCustomers.push(existingCustomer);
+                continue;
+              }
+
+              let newCustomer = this.customerRepository.create({
+                name: customer.full_name,
+                phoneNumber: customer.telephones,
+                customerCrmId: customer.id,
+              });
+              newCustomer = await this.customerRepository.save(newCustomer);
+              newCustomers.push(newCustomer);
+            }
+            return <ApiResponse<CustomerEntity[]>>{
+              success: true,
+              data: newCustomers,
+              message: 'Success getting customer data from CRM API',
+            };
+          }
+        }),
+        catchError(async (err: AxiosError<any>) => {
+          console.log(err);
+          const customers = await this.customerRepository.find({
+            take: pageSize,
+            skip: pageSize * (page - 1),
+            order: {
+              name: 'ASC',
+            },
+          });
+          return <ApiResponse<CustomerEntity[]>>{
+            success: true,
+            data: customers,
+            message: `Failed to get data from CRM API. Error : ${err.message}. Getting data from database`,
+          };
+        }),
+      );
   }
 
   async getAllCustomer() {

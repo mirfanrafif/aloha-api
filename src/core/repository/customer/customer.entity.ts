@@ -19,7 +19,7 @@ export class CustomerEntity {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column()
   phoneNumber: string;
 
   @CreateDateColumn({ type: 'timestamp', nullable: true })
@@ -36,4 +36,10 @@ export class CustomerEntity {
 
   @OneToMany(() => CustomerAgent, (agent) => agent.customer)
   agent: CustomerAgent[];
+
+  @Column({
+    unique: true,
+    name: 'customer_crm_id',
+  })
+  customerCrmId: number;
 }
