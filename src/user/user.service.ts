@@ -70,8 +70,6 @@ export class UserService {
       },
     });
 
-    console.log(user);
-
     user.full_name = newData.full_name;
     user.email = newData.email;
     user.username = newData.username;

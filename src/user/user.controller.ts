@@ -69,7 +69,7 @@ export class UserController {
   @Put(':id')
   editSalesProfile(
     @Param('id', ParseIntPipe) agentId: number,
-    newData: UpdateUserRequestDto,
+    @Body() newData: UpdateUserRequestDto,
   ) {
     return this.userService.updateUser(agentId, newData);
   }
