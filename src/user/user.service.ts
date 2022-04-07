@@ -70,6 +70,8 @@ export class UserService {
       },
     });
 
+    console.log(user);
+
     user.full_name = newData.full_name;
     user.email = newData.email;
     user.username = newData.username;
@@ -84,10 +86,6 @@ export class UserService {
   }
 
   async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
-    const fileType = /image\/(.*)/gi.exec(file.mimetype);
-    if (fileType === null) {
-      throw new BadRequestException();
-    }
     user.profile_photo = file.filename;
     return await this.userRepository.save(user);
   }
