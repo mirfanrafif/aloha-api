@@ -135,9 +135,14 @@ export class UserService {
   async getAllUsers() {
     const users = await this.userRepository.find({
       relations: ['job'],
-      where: {
-        role: Role.agent,
-      },
+      where: [
+        {
+          role: Role.admin,
+        },
+        {
+          role: Role.agent,
+        },
+      ],
     });
     return <ApiResponse<UserEntity[]>>{
       success: true,
