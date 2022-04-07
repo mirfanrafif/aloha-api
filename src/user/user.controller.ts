@@ -29,6 +29,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserJobService } from 'src/user-job/user-job.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { RegisterRequestDto } from 'src/auth/auth.dto';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -43,6 +44,13 @@ export class UserController {
   @Roles(Role.admin)
   getAllUsers() {
     return this.userService.getAllUsers();
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  addUser(@Body() request: RegisterRequestDto) {
+    return this.userService.addUser(request);
   }
 
   @Put('password')
