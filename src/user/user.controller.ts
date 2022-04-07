@@ -19,6 +19,8 @@ import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import {
   AddJobRequest,
+  ChangePasswordDto,
+  EditProfileRequestDto,
   JobAssignRequestDto,
   UpdateUserRequestDto,
 } from './user.dto';
@@ -43,6 +45,12 @@ export class UserController {
     return this.userService.getAllUsers();
   }
 
+  @Put('password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(@Body() body: ChangePasswordDto, @Request() request) {
+    return this.userService.changePassword(body, request.user);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getCurrentUser(@Request() request) {
@@ -51,9 +59,19 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Put('profile')
-  updateProfile(@Request() request, @Body() body: UpdateUserRequestDto) {
+  updateProfile(@Request() request, @Body() body: EditProfileRequestDto) {
     const user: UserEntity = request.user;
-    return this.userService.updateProfile(user, body);
+    return this.userService.editProfile(user, body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  @Put(':id')
+  editSalesProfile(
+    @Param('id', ParseIntPipe) agentId: number,
+    newData: UpdateUserRequestDto,
+  ) {
+    return this.userService.updateUser(agentId, newData);
   }
 
   @Get('job')

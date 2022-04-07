@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { Role } from 'src/core/repository/user/user.entity';
 
 export class AddJobRequest {
   @IsNotEmpty()
@@ -20,7 +21,13 @@ export class UpdateUserRequestDto {
   email: string;
 
   @IsNotEmpty()
-  password: string;
+  @IsEnum(Role)
+  role: Role;
+}
+
+export class EditProfileRequestDto {
+  @IsNotEmpty()
+  full_name: string;
 }
 
 export class JobAssignRequestDto {
@@ -31,4 +38,12 @@ export class JobAssignRequestDto {
   @IsNotEmpty()
   @IsNumber()
   jobId: number;
+}
+
+export class ChangePasswordDto {
+  @IsNotEmpty()
+  oldPassword: string;
+
+  @IsNotEmpty()
+  newPassword: string;
 }

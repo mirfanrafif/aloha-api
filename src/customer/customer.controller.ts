@@ -29,7 +29,7 @@ export class CustomerController {
   }
 
   @Get()
-  getAllCustomer(@Query('page', ParseIntPipe) page: number) {
-    return this.service.getAllCustomersFromCrm(page);
+  getAllCustomer(@Query('page') page?: number) {
+    return this.service.getAllCustomersFromCrm(page ?? 1);
   }
 }

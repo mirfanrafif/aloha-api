@@ -32,31 +32,6 @@ export class AuthService {
     throw new UnauthorizedException('Password not match');
   }
 
-  async register(registerRequest: RegisterRequestDto) {
-    const password = await hash(registerRequest.password, 10);
-    // const job = await this.jobRepository.findOneOrFail(registerRequest.jobId);
-    const userData = this.userRepository.create({
-      full_name: registerRequest.full_name,
-      username: registerRequest.username,
-      email: registerRequest.email,
-      role: registerRequest.role,
-      password: password,
-    });
-    const user = await this.userRepository.save(userData);
-    // const userData = this.getUserData(user);
-    const jwtPayload = this.getPayload(user);
-    const result = {
-      user: user,
-      token: this.jwtService.sign(jwtPayload),
-    };
-    const response: ApiResponse<any> = {
-      success: true,
-      data: result,
-      message: 'Succesfully registered',
-    };
-    return response;
-  }
-
   getPayload(user: UserEntity) {
     return {
       id: user.id,
