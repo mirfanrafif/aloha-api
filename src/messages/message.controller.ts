@@ -79,10 +79,7 @@ export class MessageController {
     if (customerNumber !== undefined) {
       return this.service.searchCustomer(customerNumber, request.user);
     }
-    return await this.service.getCustomerByAgentId(
-      request.user,
-      lastCustomerId,
-    );
+    return await this.service.getMessageByAgentId(request.user, lastCustomerId);
   }
 
   @Post('broadcast')

@@ -1,11 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
 import { catchError, map } from 'rxjs';
 import {
@@ -760,7 +754,7 @@ export class MessageService {
   }
 
   //cari customer by user id / list pesan
-  async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
+  async getMessageByAgentId(user: UserEntity, lastCustomerId?: number) {
     const messages = await this.customerService.getCustomerByAgent({
       agent: user,
       lastCustomerId,
