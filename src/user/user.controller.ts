@@ -74,7 +74,7 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  @Put(':id')
+  @Put('manage/:id')
   editSalesProfile(
     @Param('id', ParseIntPipe) agentId: number,
     @Body() newData: UpdateUserRequestDto,
@@ -101,7 +101,7 @@ export class UserController {
     return this.jobService.addJob(body);
   }
 
-  @Put(':id/profile_image')
+  @Put('profile_image')
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
