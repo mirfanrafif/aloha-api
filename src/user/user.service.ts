@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { CustomerService } from 'src/customer/customer.service';
@@ -11,13 +6,12 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import {
   ChangePasswordDto,
+  ChangeSalesPasswordDto,
   EditProfileRequestDto,
-  JobAssignRequestDto,
   UpdateUserRequestDto,
 } from './user.dto';
 import { compare, hash } from 'bcrypt';
-import { UserJobService } from 'src/user-job/user-job.service';
-import {} from 'bcrypt';
+// import {} from 'bcrypt';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
 
 @Injectable()
@@ -25,7 +19,6 @@ export class UserService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
     private customerService: CustomerService,
-    private userJobService: UserJobService,
   ) {}
 
   async findUser(id: number) {
@@ -88,38 +81,6 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  async assignAgentToJob(
-    body: JobAssignRequestDto,
-  ): Promise<ApiResponse<UserEntity>> {
-    const agent = await this.userRepository.findOne(body.agentId, {
-      relations: ['job'],
-    });
-    if (agent === undefined) {
-      throw new NotFoundException(`Agent with id ${body.agentId} not found`);
-    }
-    if (agent.job.id === body.jobId) {
-      throw new BadRequestException(
-        `Agent with id ${body.agentId} is already assigned to job ${body.jobId}`,
-      );
-    }
-    const jobs = await await this.userJobService.getJobList();
-    const suitableJob = jobs.find((job) => job.id === body.jobId);
-
-    if (!suitableJob) {
-      throw new NotFoundException(`Job with id ${body.jobId} not found`);
-    }
-
-    agent.job = suitableJob;
-    const newAgent = await this.userRepository.save(agent);
-
-    return {
-      success: true,
-      data: newAgent,
-      message:
-        'Succesfully assign agent ' + agent.id + ' to job ' + agent.job.id,
-    };
-  }
-
   getAloha() {
     return this.userRepository.findOneOrFail({
       where: {
@@ -172,6 +133,24 @@ export class UserService {
     if (!validOldPassword) {
       throw new BadRequestException('Old password not match');
     }
+
+    const newHashedPassword = await hash(request.newPassword, 10);
+    agent.password = newHashedPassword;
+
+    await this.userRepository.save(agent);
+    return <ApiResponse<UserEntity>>{
+      success: true,
+      data: agent,
+      message: 'Password changed',
+    };
+  }
+
+  async changeSalesPassword(request: ChangeSalesPasswordDto, agentId: number) {
+    const agent = await this.userRepository.findOneOrFail({
+      where: {
+        id: agentId,
+      },
+    });
 
     const newHashedPassword = await hash(request.newPassword, 10);
     agent.password = newHashedPassword;

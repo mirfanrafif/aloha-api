@@ -4,7 +4,6 @@ import {
   Controller,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Request,
@@ -17,16 +16,9 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
-import {
-  AddJobRequest,
-  ChangePasswordDto,
-  EditProfileRequestDto,
-  JobAssignRequestDto,
-  UpdateUserRequestDto,
-} from './user.dto';
+import { ChangePasswordDto } from './user.dto';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UserJobService } from 'src/user-job/user-job.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
@@ -34,10 +26,7 @@ import { RegisterRequestDto } from 'src/auth/auth.dto';
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(
-    private userService: UserService,
-    private jobService: UserJobService,
-  ) {}
+  constructor(private userService: UserService) {}
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -57,48 +46,6 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   changePassword(@Body() body: ChangePasswordDto, @Request() request) {
     return this.userService.changePassword(body, request.user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getCurrentUser(@Request() request) {
-    return this.userService.getCurrentUser(request.user.id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Put('profile')
-  updateProfile(@Request() request, @Body() body: EditProfileRequestDto) {
-    const user: UserEntity = request.user;
-    return this.userService.editProfile(user, body);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
-  @Put('manage/:id')
-  editSalesProfile(
-    @Param('id', ParseIntPipe) agentId: number,
-    @Body() newData: UpdateUserRequestDto,
-  ) {
-    return this.userService.updateUser(agentId, newData);
-  }
-
-  @Get('job')
-  getJobList() {
-    return this.jobService.getJobList();
-  }
-
-  @Get('job/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
-  getJobAgents(@Param('id', ParseIntPipe) id: number) {
-    return this.jobService.getJobAgents(id);
-  }
-
-  @Post('job')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
-  addJob(@Body() body: AddJobRequest) {
-    return this.jobService.addJob(body);
   }
 
   @Put('profile_image')
@@ -127,13 +74,6 @@ export class UserController {
   ) {
     const user: UserEntity = request.user;
     return this.userService.updateProfilePhoto(file, user);
-  }
-
-  @Put('job/assign')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
-  assignAgentToJob(@Body() jobAssignBody: JobAssignRequestDto) {
-    return this.userService.assignAgentToJob(jobAssignBody);
   }
 
   @Get('profile_image/:file_name')

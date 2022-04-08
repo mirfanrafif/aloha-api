@@ -3,11 +3,12 @@ import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 import { CustomerModule } from 'src/customer/customer.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { UserJobModule } from 'src/user-job/user-job.module';
+import { UserProfileController } from './user-profile.controller';
+import { UserManageController } from './manage-user.controller';
 
 @Module({
-  imports: [UserRepositoryModule, CustomerModule, UserJobModule],
-  controllers: [UserController],
+  imports: [UserRepositoryModule, CustomerModule],
+  controllers: [UserController, UserProfileController, UserManageController],
   providers: [UserService],
   exports: [UserService],
 })

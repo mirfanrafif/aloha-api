@@ -47,3 +47,8 @@ export class ChangePasswordDto {
   @IsNotEmpty()
   newPassword: string;
 }
+
+export class ChangeSalesPasswordDto {
+  @IsNotEmpty()
+  newPassword: string;
+}
