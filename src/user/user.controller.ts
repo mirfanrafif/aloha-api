@@ -101,7 +101,7 @@ export class UserController {
     return this.jobService.addJob(body);
   }
 
-  @Put('profile_image')
+  @Put(':id/profile_image')
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
