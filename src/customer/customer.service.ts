@@ -71,9 +71,13 @@ export class CustomerService {
   async findAgentByCustomerNumber({ customer }: { customer: CustomerEntity }) {
     const agents = await this.customerAgentRepository.findOne({
       where: {
-        customer: customer,
+        customer: {
+          id: customer.id,
+        },
       },
-      relations: ['agent'],
+      relations: {
+        agent: true,
+      },
     });
     return agents;
   }
@@ -92,7 +96,9 @@ export class CustomerService {
           id: agentJob,
         },
       },
-      relations: ['customer'],
+      relations: {
+        customer: true,
+      },
     });
 
     //cari agent yang melayani customer paling sedikit agar seimbang
@@ -135,8 +141,12 @@ export class CustomerService {
 
     const existingCustomerAgent = await this.customerAgentRepository.findOne({
       where: {
-        customer: customer,
-        agent: agent,
+        customer: {
+          id: customer.id,
+        },
+        agent: {
+          id: agent.id,
+        },
       },
     });
 
@@ -176,7 +186,10 @@ export class CustomerService {
     }
     const listCustomer = await this.customerAgentRepository.find({
       where: conditions,
-      relations: ['agent', 'customer'],
+      relations: {
+        agent: true,
+        customer: true,
+      },
       take: pageSize,
     });
 
@@ -232,7 +245,10 @@ export class CustomerService {
         },
         agent: agent,
       },
-      relations: ['agent', 'customer'],
+      relations: {
+        agent: true,
+        customer: true,
+      },
     });
 
     if (customer === undefined) {
@@ -261,7 +277,10 @@ export class CustomerService {
           phoneNumber: customerNumber,
         },
       },
-      relations: ['agent', 'customer'],
+      relations: {
+        agent: true,
+        customer: true,
+      },
       take: pageSize,
     });
 

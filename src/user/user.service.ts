@@ -57,7 +57,9 @@ export class UserService {
 
   async getAllUsers() {
     const users = await this.userRepository.find({
-      relations: ['job'],
+      relations: {
+        job: true,
+      },
       where: [
         {
           role: Role.admin,

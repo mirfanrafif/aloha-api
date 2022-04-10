@@ -215,7 +215,10 @@ export class MessageService {
       where: {
         messageId: body.id,
       },
-      relations: ['customer', 'agent'],
+      relations: {
+        agent: true,
+        customer: true,
+      },
     });
     message.status = body.status;
     const response = this.mapMessageEntityToResponse(
@@ -735,7 +738,10 @@ export class MessageService {
         ...condition,
       },
       take: pageSize,
-      relations: ['agent', 'customer'],
+      relations: {
+        agent: true,
+        customer: true,
+      },
       order: {
         id: 'DESC',
       },
@@ -792,16 +798,21 @@ export class MessageService {
       listCustomer.map(async (customerAgent) => {
         const lastMessage = await this.messageRepository.findOne({
           where: {
-            customer: customerAgent.customer,
+            customer: {
+              id: customerAgent.customer.id,
+            },
           },
           order: {
             id: 'DESC',
           },
-          relations: ['customer', 'agent'],
+          relations: {
+            customer: true,
+            agent: true,
+          },
         });
 
         const lastMessageResponse =
-          lastMessage !== null
+          lastMessage != null
             ? this.mapMessageEntityToResponse(lastMessage)
             : null;
 

@@ -22,7 +22,9 @@ export class ConversationService {
       order: {
         id: 'DESC',
       },
-      relations: ['customer'],
+      relations: {
+        customer: true,
+      },
     });
 
     return conversation;
