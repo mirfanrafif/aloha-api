@@ -39,6 +39,10 @@ export class AuthService {
   }
 
   findUser(id: number) {
-    return this.userRepository.findOne(id);
+    return this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
   }
 }

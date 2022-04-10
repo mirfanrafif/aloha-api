@@ -23,10 +23,15 @@ export class UserJobService {
   async assignAgentToJob(
     body: JobAssignRequestDto,
   ): Promise<ApiResponse<UserEntity>> {
-    const agent = await this.userRepository.findOne(body.agentId, {
-      relations: ['job'],
+    const agent = await this.userRepository.findOne({
+      where: {
+        id: body.agentId,
+      },
+      relations: {
+        job: true,
+      },
     });
-    if (agent === undefined) {
+    if (agent === null) {
       throw new NotFoundException(`Agent with id ${body.agentId} not found`);
     }
     if (agent.job.id === body.jobId) {
@@ -83,8 +88,13 @@ export class UserJobService {
   }
 
   async getJobAgents(id: number) {
-    const job = await this.jobRepository.findOneOrFail(id, {
-      relations: ['agents'],
+    const job = await this.jobRepository.findOneOrFail({
+      where: {
+        id: id,
+      },
+      relations: {
+        agents: true,
+      },
     });
     const result: ApiResponse<UserJobEntity> = {
       success: true,

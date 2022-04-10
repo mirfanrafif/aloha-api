@@ -34,7 +34,7 @@ export class MessageGateway {
   ) {
     const payload: UserJwtPayload = JSON.parse(data);
     const user = await this.userService.findUser(payload.id);
-    if (user === undefined) {
+    if (user === null) {
       return 'User not found';
     }
 

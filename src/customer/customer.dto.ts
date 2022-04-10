@@ -37,7 +37,7 @@ export class CustomerAgentResponseDto {
 
   agent: UserEntity[];
 
-  lastMessage?: MessageResponseDto;
+  lastMessage: MessageResponseDto | null;
 
   created_at: Date;
 

@@ -16,6 +16,7 @@ export const DATABASE_CONNECTION = 'database_connection';
       provide: DATABASE_CONNECTION,
       useFactory: () =>
         createConnection({
+          timezone: process.env.TZ,
           type: 'mysql',
           database: process.env.DB_DATABASE,
           username: process.env.DB_USERNAME,

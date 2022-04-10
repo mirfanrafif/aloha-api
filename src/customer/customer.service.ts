@@ -47,7 +47,7 @@ export class CustomerService {
       },
     });
 
-    if (findCustomer !== undefined) {
+    if (findCustomer !== null) {
       return findCustomer;
     }
 
@@ -298,7 +298,7 @@ export class CustomerService {
                   },
                 ],
               });
-              if (existingCustomer !== undefined) {
+              if (existingCustomer !== null) {
                 newCustomers.push(existingCustomer);
                 continue;
               }

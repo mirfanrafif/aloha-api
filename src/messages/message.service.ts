@@ -90,7 +90,7 @@ export class MessageService {
     const aloha = await this.userService.getAloha();
 
     // jika belum maka mulai percakapan
-    if (currentConversation === undefined) {
+    if (currentConversation === null) {
       //tampilkan menu
       const jobs = await this.userJobService.showMenu();
       const helloMessage =
@@ -198,7 +198,7 @@ export class MessageService {
           customer: customer,
         });
 
-      if (customerAgent !== undefined) {
+      if (customerAgent !== null) {
         //update message data
         data.agent = customerAgent.agent;
         await this.messageRepository.save(data);
@@ -624,7 +624,7 @@ export class MessageService {
           : await this.customerService.findAndCreateCustomer({
               phoneNumber: messageItem.phone,
             });
-      const message = await this.messageRepository.save({
+      let message = this.messageRepository.create({
         messageId: messageItem.id,
         message: messageItem.message,
         customer: newCustomer,
@@ -632,8 +632,8 @@ export class MessageService {
         status: messageItem.status,
         fromMe: true,
         type: MessageType.text,
-        created_at: Date(),
       });
+      message = await this.messageRepository.save(message);
       messages.push(message);
     }
 
@@ -801,9 +801,9 @@ export class MessageService {
         });
 
         const lastMessageResponse =
-          lastMessage !== undefined
+          lastMessage !== null
             ? this.mapMessageEntityToResponse(lastMessage)
-            : undefined;
+            : null;
 
         const newCustomer: CustomerAgentResponseDto = {
           id: customerAgent.id,

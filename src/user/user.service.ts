@@ -22,18 +22,11 @@ export class UserService {
   ) {}
 
   async findUser(id: number) {
-    return await this.userRepository.findOne(id);
-  }
-
-  async getCurrentUser(id: number): Promise<ApiResponse<any>> {
-    const user = await this.userRepository.findOneOrFail(id, {
-      relations: ['job'],
+    return await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
     });
-    return {
-      success: true,
-      data: user,
-      message: 'Success getting profile data with user id ' + id,
-    };
   }
 
   async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
@@ -47,33 +40,6 @@ export class UserService {
       message: `Success getting customer list by agent id ${user.id}`,
     };
     return result;
-  }
-
-  async editProfile(user: UserEntity, request: EditProfileRequestDto) {
-    const currentUser = await this.userRepository.findOneOrFail(user.id);
-    currentUser.full_name = request.full_name;
-    const finalUser = await this.userRepository.save(currentUser);
-    return finalUser;
-  }
-
-  async updateUser(agentId: number, newData: UpdateUserRequestDto) {
-    let user = await this.userRepository.findOneOrFail({
-      where: {
-        id: agentId,
-      },
-    });
-
-    user.full_name = newData.full_name;
-    user.email = newData.email;
-    user.username = newData.username;
-    user.role = newData.role;
-
-    user = await this.userRepository.save(user);
-    return <ApiResponse<UserEntity>>{
-      success: true,
-      data: user,
-      message: 'Success update user data with id ' + agentId,
-    };
   }
 
   async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
@@ -133,24 +99,6 @@ export class UserService {
     if (!validOldPassword) {
       throw new BadRequestException('Old password not match');
     }
-
-    const newHashedPassword = await hash(request.newPassword, 10);
-    agent.password = newHashedPassword;
-
-    await this.userRepository.save(agent);
-    return <ApiResponse<UserEntity>>{
-      success: true,
-      data: agent,
-      message: 'Password changed',
-    };
-  }
-
-  async changeSalesPassword(request: ChangeSalesPasswordDto, agentId: number) {
-    const agent = await this.userRepository.findOneOrFail({
-      where: {
-        id: agentId,
-      },
-    });
 
     const newHashedPassword = await hash(request.newPassword, 10);
     agent.password = newHashedPassword;
