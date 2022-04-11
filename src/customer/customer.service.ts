@@ -192,7 +192,6 @@ export class CustomerService {
         id: MoreThan(lastCustomerId),
       };
     }
-    console.log(conditions);
     const listCustomer = await this.customerAgentRepository.find({
       where: conditions,
       relations: {
