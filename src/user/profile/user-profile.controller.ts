@@ -11,7 +11,6 @@ import {
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { EditProfileRequestDto } from '../user.dto';
-import { UserService } from '../user.service';
 import { UserProfileService } from './user-profile.service';
 
 @Controller('user/profile')

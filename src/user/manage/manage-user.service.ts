@@ -60,9 +60,7 @@ export class ManageUserService {
       relations: {
         customer: {
           customer: {
-            messages: {
-              agent: true,
-            },
+            messages: true,
           },
         },
       },
@@ -83,22 +81,8 @@ export class ManageUserService {
       const dateMessagesGroup = this.groupingByDate(customer);
       const responseTimes = dateMessagesGroup.map((item) => {
         //cari response time pada tanggal sekian
-        const responseTime = this.calculateResponseTime(item, id);
-        //hitung rata2 response time
-        const responseTimeAvg =
-          responseTime.responseTimes.length > 0
-            ? responseTime.responseTimes
-                .map((time) => time.seconds)
-                .reduce((prev, cur) => prev + cur) /
-              responseTime.responseTimes.length
-            : 0;
-
-        return <DailyResponseTimeResult>{
-          date: item.date,
-          avg: responseTimeAvg,
-          unread_message_count: responseTime.unread_message_count,
-          responseTimes: responseTime.responseTimes,
-        };
+        const responseTime = this.calculateDailyResponseTime(item);
+        return responseTime;
       });
 
       const allResponseTime: number[] = [];
@@ -115,7 +99,7 @@ export class ManageUserService {
 
       const allUnreadMessagesCount: number[] = [];
       responseTimes.forEach((item) => {
-        allUnreadMessagesCount.push(item.unread_message_count);
+        allUnreadMessagesCount.push(item.unread_message);
       });
 
       const avgAllUnreadMessagesCount =
@@ -131,24 +115,17 @@ export class ManageUserService {
         updated_at: customer.updated_at,
         average_all_response_time: avgAllResponseTime,
         all_unread_message_count: avgAllUnreadMessagesCount,
-        responseTime: responseTimes,
+        dailyReport: responseTimes,
       };
     });
-
-    // yang di cek yang jam kerja aja
-    // messages = messages.filter(
-    //   (message) =>
-    //     message.created_at.getHours() >= 8 &&
-    //     message.created_at.getHours() <= 16,
-    // );
-    //untuk demo, pake chat nya arik aja
     return result;
   }
 
-  private calculateResponseTime(dateMessage: DateMessages, agentId: number) {
+  private calculateDailyResponseTime(dateMessage: DateMessages) {
     const messages = dateMessage.messages;
     const responseTimes: ResponseTime[] = [];
     let unreadMessageCount = 0;
+    let lateResponseCount = 0;
 
     let customerFirstQuestionIndex = -1;
     messages.forEach((message, index) => {
@@ -157,16 +134,21 @@ export class ManageUserService {
         if (customerFirstQuestionIndex == -1) {
           customerFirstQuestionIndex = index;
         }
-        unreadMessageCount++;
+        if (
+          message.created_at.getHours() >= 8 &&
+          message.created_at.getHours() < 21
+        ) {
+          unreadMessageCount++;
+        }
       }
       //jika dijawab sales, maka jalan kode dibawah ini
 
       //jika pesan sebelumnya bukan dari aloha, maka dianggap menjawab pesan
       else if (
         index != 0 &&
-        !messages[index - 1].fromMe &&
-        message.agent !== null &&
-        message.agent.id == agentId
+        !messages[index - 1].fromMe //&&
+        // message.agent !== null &&
+        // message.agent.id == agentId
       ) {
         const customerQuestionDate = Math.abs(
           messages[customerFirstQuestionIndex].created_at.getTime() / 1000,
@@ -175,13 +157,31 @@ export class ManageUserService {
           messages[index].created_at.getTime() / 1000,
         );
 
+        //hitung response time
         const responseTime = salesReplyDate - customerQuestionDate;
+
+        //format ke jam:menit:detik
         const responseTimeHours = Math.floor(responseTime / 3600);
         const responseTimeMinutes = Math.floor((responseTime % 3600) / 60);
         const responseTimeSeconds = responseTime % 60;
-        const formattedResponseTime = `${responseTimeHours}:${responseTimeMinutes}:${responseTimeSeconds}`;
+        const formattedResponseTime =
+          responseTimeHours.toString() +
+          ':' +
+          responseTimeMinutes.toString() +
+          ':' +
+          responseTimeSeconds.toString();
+
+        //jika lebih dari 600 detik maka dianggap telat
+        if (responseTime > 600) {
+          lateResponseCount++;
+        }
 
         responseTimes.push({
+          question:
+            messages[customerFirstQuestionIndex].message.length != 0
+              ? messages[customerFirstQuestionIndex].message
+              : '(' + messages[customerFirstQuestionIndex].type + ')',
+          answer: messages[index].message,
           formattedString: formattedResponseTime,
           seconds: responseTime,
         });
@@ -190,8 +190,19 @@ export class ManageUserService {
       }
     });
 
-    return <CalculateResponseTimeResult>{
-      unread_message_count: unreadMessageCount,
+    //hitung rata2 response time
+    const responseTimeAvg =
+      responseTimes.length > 0
+        ? responseTimes
+            .map((time) => time.seconds)
+            .reduce((prev, cur) => prev + cur) / responseTimes.length
+        : 0;
+
+    return <DailyResponseTimeResult>{
+      date: dateMessage.date,
+      average: responseTimeAvg,
+      late_response: lateResponseCount,
+      unread_message: unreadMessageCount,
       responseTimes: responseTimes,
     };
   }
@@ -212,6 +223,9 @@ export class ManageUserService {
       const formattedDate = getFormattedDate(message);
       const dateIndex = result.findIndex((date) => date.date == formattedDate);
       if (dateIndex == -1) {
+        if (message.fromMe) {
+          return;
+        }
         const messageWithDate = <DateMessages>{
           date: formattedDate,
           messages: [message],
@@ -231,18 +245,16 @@ type DateMessages = {
 };
 
 type ResponseTime = {
+  question: string;
+  answer: string;
   formattedString: string;
   seconds: number;
 };
 
-type CalculateResponseTimeResult = {
-  unread_message_count: number;
-  responseTimes: ResponseTime[];
-};
-
 type DailyResponseTimeResult = {
   date: string;
-  avg: number;
-  unread_message_count: number;
+  average: number;
+  unread_message: number;
+  late_response: number;
   responseTimes: ResponseTime[];
 };
