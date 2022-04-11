@@ -5,7 +5,7 @@ import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { ChangeSalesPasswordDto, UpdateUserRequestDto } from '../user.dto';
 
 @Injectable()
@@ -52,10 +52,20 @@ export class ManageUserService {
     };
   }
 
-  async getStats(id: number) {
+  async getStats(id: number, month: number, year: number) {
     const userWithMessages = await this.userRepository.findOneOrFail({
       where: {
         id: id,
+        customer: {
+          customer: {
+            messages: {
+              created_at: Between(
+                new Date(year, month, 1),
+                new Date(year, month, 31),
+              ),
+            },
+          },
+        },
       },
       relations: {
         customer: {
@@ -67,9 +77,7 @@ export class ManageUserService {
       order: {
         customer: {
           customer: {
-            messages: {
-              created_at: 'ASC',
-            },
+            id: 'ASC',
           },
         },
       },
@@ -160,17 +168,6 @@ export class ManageUserService {
         //hitung response time
         const responseTime = salesReplyDate - customerQuestionDate;
 
-        //format ke jam:menit:detik
-        const responseTimeHours = Math.floor(responseTime / 3600);
-        const responseTimeMinutes = Math.floor((responseTime % 3600) / 60);
-        const responseTimeSeconds = responseTime % 60;
-        const formattedResponseTime =
-          responseTimeHours.toString() +
-          ':' +
-          responseTimeMinutes.toString() +
-          ':' +
-          responseTimeSeconds.toString();
-
         //jika lebih dari 600 detik maka dianggap telat
         if (responseTime > 600) {
           lateResponseCount++;
@@ -182,9 +179,11 @@ export class ManageUserService {
               ? messages[customerFirstQuestionIndex].message
               : '(' + messages[customerFirstQuestionIndex].type + ')',
           answer: messages[index].message,
-          formattedString: formattedResponseTime,
+          formattedString: this.formatResponseTime(responseTime),
           seconds: responseTime,
         });
+
+        //reset counter jika sudah dijawab
         unreadMessageCount = 0;
         customerFirstQuestionIndex = -1;
       }
@@ -205,6 +204,20 @@ export class ManageUserService {
       unread_message: unreadMessageCount,
       responseTimes: responseTimes,
     };
+  }
+
+  private formatResponseTime(responseTime: number) {
+    //format ke jam:menit:detik
+    const responseTimeHours = Math.floor(responseTime / 3600);
+    const responseTimeMinutes = Math.floor((responseTime % 3600) / 60);
+    const responseTimeSeconds = responseTime % 60;
+    const formattedResponseTime =
+      responseTimeHours.toString() +
+      ':' +
+      responseTimeMinutes.toString() +
+      ':' +
+      responseTimeSeconds.toString();
+    return formattedResponseTime;
   }
 
   private groupingByDate(customer: CustomerEntity) {

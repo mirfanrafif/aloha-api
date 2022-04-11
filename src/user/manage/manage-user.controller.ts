@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Put,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -44,7 +45,11 @@ export class UserManageController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   @Get(':id/stats')
-  getSalesStats(@Param('id', ParseIntPipe) id: number) {
-    return this.service.getStats(id);
+  getSalesStats(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('year', ParseIntPipe) year: number,
+  ) {
+    return this.service.getStats(id, month, year);
   }
 }
