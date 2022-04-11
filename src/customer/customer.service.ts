@@ -191,6 +191,9 @@ export class CustomerService {
         customer: true,
       },
       take: pageSize,
+      order: {
+        id: 'DESC',
+      },
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
