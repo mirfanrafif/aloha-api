@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple websocket Client</title>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+  </body>
+  <script
+    src="https://cdn.socket.io/4.4.1/socket.io.min.js"
+    integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H"
+    crossorigin="anonymous"
+  ></script>
+  <script>
+    const socket = io('https://dev.mirfanrafif.me/messages', {
+      transports: ['websocket'],
+    });
+
+    const data = {
+      id: 3,
+    };
+
+    socket.emit('join', JSON.stringify(data), (response) => {
+      console.log(response);
+    });
+
+    socket.on('message', (message) => {
+      console.log(message);
+      document.getElementById('messages').append(JSON.parse(message).message);
+    });
+  </script>
+</html>

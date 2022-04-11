@@ -1,0 +1,160 @@
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { MessageStatus } from 'src/core/repository/message/message.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
+
+export enum MessageType {
+  text = 'text',
+  document = 'document',
+  image = 'image',
+}
+
+export type Group = {
+  subject: string;
+  owner: string;
+  desc: string;
+};
+export class TextMessage {
+  id: string;
+  pushName: string;
+  isGroup: boolean;
+  group: Group;
+  message: string;
+  phone: string;
+
+  @IsNotEmpty()
+  @IsEnum(MessageType)
+  messageType: MessageType;
+
+  file: string;
+  mimeType: string;
+  // thumbProfile: string;
+  sender: number;
+  timestamp: number;
+}
+export class MessageRequestDto {
+  @IsNotEmpty()
+  customerNumber: string;
+
+  @IsNotEmpty()
+  message: string;
+}
+
+export class ImageMessageRequestDto {
+  @IsNotEmpty()
+  customerNumber: string;
+
+  @IsString()
+  message: string;
+}
+
+export class DocumentRequestDto {
+  @IsNotEmpty()
+  customerNumber: string;
+}
+
+export type WablasSendMessageRequest = {
+  data: WablasSendMessageRequestData[];
+};
+
+export type WablasSendMessageRequestData = {
+  phone: string;
+  message: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
+export type WablasSendDocumentRequest = {
+  data: WablasSendDocumentRequestData[];
+};
+
+export type WablasSendDocumentRequestData = {
+  phone: string;
+  document: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
+export type WablasSendImageRequest = {
+  data: WablasSendImageRequestData[];
+};
+
+export type WablasSendImageRequestData = {
+  phone: string;
+  image: string;
+  caption?: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
+export class WablasApiResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
+
+export class SendMessageResponseData {
+  messages: MessageResponseItem[];
+}
+
+export class MessageResponseItem {
+  id: string;
+  phone: string;
+  message?: string;
+  status: MessageStatus;
+}
+
+export class SendImageResponseData {
+  messages: ImageResponseItem[];
+}
+
+export class ImageResponseItem {
+  id: string;
+  phone: string;
+  message?: string;
+  caption: string;
+  image: string;
+  status: MessageStatus;
+}
+
+export class BroadcastMessageRequest {
+  @IsNotEmpty()
+  message: string;
+}
+
+export class MessageResponseDto {
+  id: number;
+  messageId: string;
+  message: string;
+  customer: CustomerEntity;
+  status: MessageStatus;
+  agent: UserEntity;
+  file: string;
+  sender_name: string;
+  type: MessageType;
+  fromMe: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type MessageTrackingDto = {
+  id: string;
+  message: string;
+  phone: string;
+  deviceId: string;
+  sender: string;
+  status: MessageStatus;
+  note: string;
+  timestamp: Date;
+};
+
+export class MessageTemplateRequestDto {
+  @IsNotEmpty()
+  name: string;
+
+  @IsNotEmpty()
+  template: string;
+}
