@@ -58,6 +58,18 @@ export class UserEntity {
   job: UserJobEntity;
 }
 
+export type UserEntityType = {
+  id: number;
+  full_name: string;
+  username: string;
+  email: string;
+  password: string;
+  role: Role;
+  profile_photo: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
 export enum Role {
   agent = 'agent',
   admin = 'admin',
