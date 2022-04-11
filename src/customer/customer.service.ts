@@ -274,10 +274,15 @@ export class CustomerService {
     customerNumber: string;
     agent: UserEntity;
   }) {
-    const conditions = {};
+    let conditions: any = {};
 
-    if (agent.role !== 'admin') {
-      conditions['agent'] = agent;
+    if (agent.role == Role.agent) {
+      conditions = {
+        ...conditions,
+        agent: {
+          id: agent.id,
+        },
+      };
     }
     const listCustomer = await this.customerAgentRepository.find({
       where: {
