@@ -11,7 +11,7 @@ import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { MoreThan, Repository } from 'typeorm';
@@ -176,14 +176,23 @@ export class CustomerService {
     agent: UserEntity;
     lastCustomerId?: number;
   }) {
-    const conditions = {};
+    let conditions: any = {};
 
-    if (agent.role !== 'admin') {
-      conditions['agent'] = agent;
+    if (agent.role !== Role.agent) {
+      conditions = {
+        ...conditions,
+        agent: {
+          id: agent.id,
+        },
+      };
     }
     if (lastCustomerId !== undefined) {
-      conditions['id'] = MoreThan(lastCustomerId);
+      conditions = {
+        ...conditions,
+        id: MoreThan(lastCustomerId),
+      };
     }
+    console.log(conditions);
     const listCustomer = await this.customerAgentRepository.find({
       where: conditions,
       relations: {
@@ -191,9 +200,6 @@ export class CustomerService {
         customer: true,
       },
       take: pageSize,
-      order: {
-        id: 'DESC',
-      },
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
