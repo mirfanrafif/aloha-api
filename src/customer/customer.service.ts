@@ -265,7 +265,7 @@ export class CustomerService {
     });
 
     if (customer === null) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException("agent shouldn't handle this customer");
     }
 
     return true;
