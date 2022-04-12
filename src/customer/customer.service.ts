@@ -14,7 +14,7 @@ import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { LessThan, MoreThan, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
   CustomerResponse,
@@ -69,7 +69,7 @@ export class CustomerService {
 
   //Mencari agen yang menangani customer tersebut
   async findAgentByCustomerNumber({ customer }: { customer: CustomerEntity }) {
-    const agents = await this.customerAgentRepository.findOne({
+    const agents = await this.customerAgentRepository.find({
       where: {
         customer: {
           id: customer.id,

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UserJwtPayload } from 'src/auth/auth.dto';
+import { CustomerService } from 'src/customer/customer.service';
 import { UserService } from 'src/user/user.service';
 import { MessageResponseDto } from './message.dto';
 @WebSocketGateway({
@@ -17,13 +18,21 @@ import { MessageResponseDto } from './message.dto';
 })
 @UseInterceptors(ClassSerializerInterceptor)
 export class MessageGateway {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private customerService: CustomerService,
+  ) {}
 
-  sendMessage({ data }: { data: MessageResponseDto }) {
-    this.server
-      .to(`message:${data.customer.id}`)
-      .to('message:admin')
-      .emit('message', JSON.stringify(data));
+  async sendMessage({ data }: { data: MessageResponseDto }) {
+    const customer = data.customer;
+    const agents = await this.customerService.findAgentByCustomerNumber({
+      customer: customer,
+    });
+    const agentIds = agents.map((item) => item.agent.id.toString());
+    agentIds.push('admin');
+    agentIds.forEach((item) => {
+      this.server.to('message:' + item).emit('message', JSON.stringify(data));
+    });
   }
 
   @SubscribeMessage('join')
@@ -42,11 +51,7 @@ export class MessageGateway {
       return 'Admin joined the message';
     }
 
-    const customers = user.customer.map((item) => item.customer);
-
-    customers.forEach((item) => {
-      socket.join('message:' + item.id);
-    });
+    socket.join('message:' + user.id);
     return 'Agent ' + user.full_name + ' joined the message';
   }
 

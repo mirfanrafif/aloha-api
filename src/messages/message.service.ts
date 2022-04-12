@@ -191,19 +191,6 @@ export class MessageService {
       return this.sendIncomingMessageResponse(data);
     }
     if (currentConversation.status === ConversationStatus.CONNECTED) {
-      //jika sudah terhubung, maka langsung chat ke agent
-      //find agent by customer
-      const customerAgent =
-        await this.customerService.findAgentByCustomerNumber({
-          customer: customer,
-        });
-
-      if (customerAgent !== null) {
-        //update message data
-        data.agent = customerAgent.agent;
-        await this.messageRepository.save(data);
-      }
-
       return this.sendIncomingMessageResponse(data);
     }
   }
@@ -225,7 +212,7 @@ export class MessageService {
       await this.messageRepository.save(message),
     );
 
-    this.gateway.sendMessage({ data: response });
+    await this.gateway.sendMessage({ data: response });
     return {
       success: true,
       data: response,
@@ -261,9 +248,9 @@ export class MessageService {
     return response;
   }
 
-  sendIncomingMessageResponse(data: MessageEntity) {
+  async sendIncomingMessageResponse(data: MessageEntity) {
     const response = this.mapMessageEntityToResponse(data);
-    this.gateway.sendMessage({ data: response });
+    await this.gateway.sendMessage({ data: response });
     const result: ApiResponse<MessageResponseDto> = {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -361,11 +348,13 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            const messageResponses = messages.map((message: MessageEntity) => {
-              const messageResponse = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage({ data: messageResponse });
-              return messageResponse;
-            });
+            const messageResponses = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
 
             //return result
             const result: ApiResponse<MessageResponseDto[]> = {
@@ -441,11 +430,13 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            const messageResponse = messages.map((message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage({ data: response });
-              return response;
-            });
+            const messageResponse = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
 
             //return result
             const result: ApiResponse<MessageEntity[]> = {
@@ -514,11 +505,13 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            const messageResponse = messages.map((message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage({ data: response });
-              return response;
-            });
+            const messageResponse = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
 
             //return result
             const result: ApiResponse<MessageEntity[]> = {
@@ -581,11 +574,10 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            messages.forEach((message: MessageEntity) => {
+            for (const message of messages) {
               const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage({ data: response });
-            });
-
+              await this.gateway.sendMessage({ data: response });
+            }
             //return result
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
