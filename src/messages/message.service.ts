@@ -281,7 +281,6 @@ export class MessageService {
       fromMe: false,
       file: message.file,
       type: message.messageType,
-      created_at: Date(),
     });
 
     //save entity
