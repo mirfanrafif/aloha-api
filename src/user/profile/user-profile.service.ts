@@ -37,4 +37,9 @@ export class UserProfileService {
       message: 'Success getting profile data with user id ' + id,
     };
   }
+
+  async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
+    user.profile_photo = file.filename;
+    return await this.userRepository.save(user);
+  }
 }

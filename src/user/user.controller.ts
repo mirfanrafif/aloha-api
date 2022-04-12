@@ -48,34 +48,6 @@ export class UserController {
     return this.userService.changePassword(body, request.user);
   }
 
-  @Put('profile_image')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: 'uploads/profile_pictures',
-        filename: (request, file, cb) => {
-          //file name biar keliatan random aja sih
-          const filename = Buffer.from(
-            Date.now().toString() + file.originalname.slice(0, 16),
-            'utf-8',
-          ).toString('base64url');
-          cb(null, filename + extname(file.originalname));
-        },
-      }),
-      limits: {
-        fileSize: 10 * 1024 * 1024,
-      },
-    }),
-  )
-  @UseGuards(JwtAuthGuard)
-  updateProfilePhoto(
-    @UploadedFile() file: Express.Multer.File,
-    @Request() request,
-  ) {
-    const user: UserEntity = request.user;
-    return this.userService.updateProfilePhoto(file, user);
-  }
-
   @Get('profile_image/:file_name')
   getProfilePhoto(@Param('file_name') filename: string, @Res() res) {
     res.sendFile(filename, { root: 'uploads/profile_pictures' });

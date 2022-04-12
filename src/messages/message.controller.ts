@@ -103,11 +103,14 @@ export class MessageController {
         destination: 'uploads/messages/image',
         filename: (request, file, cb) => {
           //file name biar keliatan random aja sih
-          const filename = Buffer.from(
-            Date.now().toString() + file.originalname.slice(0, 16),
-            'utf-8',
-          ).toString('base64url');
-          cb(null, filename + extname(file.originalname));
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
         },
       }),
       limits: {
@@ -132,11 +135,14 @@ export class MessageController {
         destination: 'uploads/messages/document',
         filename: (request, file, cb) => {
           //file name biar keliatan random aja sih
-          const filename = Buffer.from(
-            Date.now().toString() + file.originalname.slice(0, 16),
-            'utf-8',
-          ).toString('base64url');
-          cb(null, filename + extname(file.originalname));
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
         },
       }),
       limits: {

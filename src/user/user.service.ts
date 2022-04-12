@@ -42,11 +42,6 @@ export class UserService {
     return result;
   }
 
-  async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
-    user.profile_photo = file.filename;
-    return await this.userRepository.save(user);
-  }
-
   getAloha() {
     return this.userRepository.findOneOrFail({
       where: {
