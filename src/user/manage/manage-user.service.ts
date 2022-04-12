@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
@@ -52,17 +52,16 @@ export class ManageUserService {
     };
   }
 
-  async getStats(id: number, month: number, year: number) {
-    const userWithMessages = await this.userRepository.findOneOrFail({
+  async getStats(id: number, start: string, end: string) {
+    const dateStart = new Date(start);
+    const dateEnd = new Date(end);
+    const userWithMessages = await this.userRepository.findOne({
       where: {
         id: id,
         customer: {
           customer: {
             messages: {
-              created_at: Between(
-                new Date(year, month, 1),
-                new Date(year, month, 31),
-              ),
+              created_at: Between(dateStart, dateEnd),
             },
           },
         },
@@ -82,6 +81,18 @@ export class ManageUserService {
         },
       },
     });
+
+    if (userWithMessages == null) {
+      throw new NotFoundException(
+        'Not found report from id ' +
+          id +
+          ' with date ' +
+          dateStart.toDateString() +
+          ' to ' +
+          dateEnd.toDateString(),
+      );
+    }
+
     const customers = userWithMessages.customer.map((item) => item.customer);
 
     const result = customers.map((customer) => {

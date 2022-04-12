@@ -103,4 +103,40 @@ export class UserJobService {
     };
     return result;
   }
+
+  async updateJob(id: number, request: AddJobRequest) {
+    const job = await this.jobRepository.findOneOrFail({
+      where: {
+        id: id,
+      },
+    });
+    job.name = request.name;
+    job.description = request.description;
+    const newJob = await this.jobRepository.save(job);
+    return <ApiResponse<UserJobEntity>>{
+      success: true,
+      data: newJob,
+      message: 'Success update job with id ' + id,
+    };
+  }
+
+  async deleteJob(id: number) {
+    const job = await this.jobRepository.findOneOrFail({
+      where: {
+        id: id,
+      },
+      relations: {
+        agents: true,
+      },
+    });
+    if (job.agents.length > 0) {
+      throw new BadRequestException('Job is not empty. Move agents to new job');
+    }
+    await this.jobRepository.delete(job.id);
+    return <ApiResponse<UserJobEntity>>{
+      success: true,
+      data: job,
+      message: 'Success delete job with id ' + id,
+    };
+  }
 }

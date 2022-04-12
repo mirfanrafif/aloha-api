@@ -813,7 +813,7 @@ export class MessageService {
         });
 
         const lastMessageResponse =
-          messages != null
+          messages != null && messages.length > 0
             ? this.mapMessageEntityToResponse(messages[0])
             : null;
 
