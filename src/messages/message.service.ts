@@ -225,7 +225,7 @@ export class MessageService {
       await this.messageRepository.save(message),
     );
 
-    this.gateway.sendMessage(response);
+    this.gateway.sendMessage({ data: response });
     return {
       success: true,
       data: response,
@@ -263,7 +263,7 @@ export class MessageService {
 
   sendIncomingMessageResponse(data: MessageEntity) {
     const response = this.mapMessageEntityToResponse(data);
-    this.gateway.sendMessage(response);
+    this.gateway.sendMessage({ data: response });
     const result: ApiResponse<MessageResponseDto> = {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -363,7 +363,7 @@ export class MessageService {
             //kirim ke frontend lewat websocket
             const messageResponses = messages.map((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
+              this.gateway.sendMessage({ data: response });
               return response;
             });
 
@@ -443,7 +443,7 @@ export class MessageService {
             //kirim ke frontend lewat websocket
             const messageResponse = messages.map((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
+              this.gateway.sendMessage({ data: response });
               return response;
             });
 
@@ -516,7 +516,7 @@ export class MessageService {
             //kirim ke frontend lewat websocket
             const messageResponse = messages.map((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
+              this.gateway.sendMessage({ data: response });
               return response;
             });
 
@@ -583,7 +583,7 @@ export class MessageService {
             //kirim ke frontend lewat websocket
             messages.forEach((message: MessageEntity) => {
               const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
+              this.gateway.sendMessage({ data: response });
             });
 
             //return result

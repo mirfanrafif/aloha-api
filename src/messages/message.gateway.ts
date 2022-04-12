@@ -19,10 +19,9 @@ import { MessageResponseDto } from './message.dto';
 export class MessageGateway {
   constructor(private userService: UserService) {}
 
-  sendMessage(data: MessageResponseDto) {
-    const agentId = data.agent !== undefined ? data.agent.id.toString() : '0';
+  sendMessage({ data }: { data: MessageResponseDto }) {
     this.server
-      .to(`message:${agentId}`)
+      .to(`message:${data.customer.id}`)
       .to('message:admin')
       .emit('message', JSON.stringify(data));
   }
@@ -43,7 +42,11 @@ export class MessageGateway {
       return 'Admin joined the message';
     }
 
-    socket.join('message:' + user.id);
+    const customers = user.customer.map((item) => item.customer);
+
+    customers.forEach((item) => {
+      socket.join('message:' + item.id);
+    });
     return 'Agent ' + user.full_name + ' joined the message';
   }
 

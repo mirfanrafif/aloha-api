@@ -4,12 +4,7 @@ import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
-import {
-  ChangePasswordDto,
-  ChangeSalesPasswordDto,
-  EditProfileRequestDto,
-  UpdateUserRequestDto,
-} from './user.dto';
+import { ChangePasswordDto } from './user.dto';
 import { compare, hash } from 'bcrypt';
 // import {} from 'bcrypt';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
@@ -25,6 +20,11 @@ export class UserService {
     return await this.userRepository.findOne({
       where: {
         id: id,
+      },
+      relations: {
+        customer: {
+          customer: true,
+        },
       },
     });
   }
