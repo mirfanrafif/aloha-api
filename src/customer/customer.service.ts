@@ -14,7 +14,7 @@ import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { LessThan, Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
   CustomerResponse,
@@ -189,7 +189,7 @@ export class CustomerService {
     if (lastCustomerId !== undefined) {
       conditions = {
         ...conditions,
-        id: LessThan(lastCustomerId),
+        id: MoreThan(lastCustomerId),
       };
     }
     const listCustomer = await this.customerAgentRepository.find({
@@ -199,9 +199,6 @@ export class CustomerService {
         customer: true,
       },
       take: pageSize,
-      order: {
-        id: 'DESC',
-      },
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
