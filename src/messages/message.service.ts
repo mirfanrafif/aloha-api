@@ -362,9 +362,9 @@ export class MessageService {
 
             //kirim ke frontend lewat websocket
             const messageResponses = messages.map((message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage({ data: response });
-              return response;
+              const messageResponse = this.mapMessageEntityToResponse(message);
+              this.gateway.sendMessage({ data: messageResponse });
+              return messageResponse;
             });
 
             //return result

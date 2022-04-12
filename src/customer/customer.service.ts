@@ -249,12 +249,14 @@ export class CustomerService {
     customerNumber: string;
     agent: UserEntity;
   }) {
-    const customer = await this.customerAgentRepository.findOneOrFail({
+    const customer = await this.customerAgentRepository.findOne({
       where: {
         customer: {
           phoneNumber: customerNumber,
         },
-        agent: agent,
+        agent: {
+          id: agent.id,
+        },
       },
       relations: {
         agent: true,
@@ -262,7 +264,7 @@ export class CustomerService {
       },
     });
 
-    if (customer === undefined) {
+    if (customer === null) {
       throw new UnauthorizedException();
     }
 
