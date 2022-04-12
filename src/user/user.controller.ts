@@ -8,19 +8,15 @@ import {
   Put,
   Request,
   Res,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { Role } from 'src/core/repository/user/user.entity';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { ChangePasswordDto } from './user.dto';
 import { UserService } from './user.service';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
 
 @Controller('user')
