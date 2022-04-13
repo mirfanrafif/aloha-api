@@ -55,7 +55,7 @@ export class UserEntity {
   messages: MessageEntity[];
 
   @ManyToOne(() => UserJobEntity, (category) => category.agents)
-  job: UserJobEntity;
+  job?: UserJobEntity;
 }
 
 export type UserEntityType = {

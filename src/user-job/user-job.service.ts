@@ -34,19 +34,23 @@ export class UserJobService {
     if (agent === null) {
       throw new NotFoundException(`Agent with id ${body.agentId} not found`);
     }
-    if (agent.job.id === body.jobId) {
+    if (agent.job !== undefined && agent.job.id === body.jobId) {
       throw new BadRequestException(
         `Agent with id ${body.agentId} is already assigned to job ${body.jobId}`,
       );
     }
-    const jobs = await await this.getJobList();
-    const suitableJob = jobs.find((job) => job.id === body.jobId);
 
-    if (!suitableJob) {
+    const job = await this.jobRepository.findOne({
+      where: {
+        id: body.jobId,
+      },
+    });
+
+    if (job === null) {
       throw new NotFoundException(`Job with id ${body.jobId} not found`);
     }
 
-    agent.job = suitableJob;
+    agent.job = job;
     const newAgent = await this.userRepository.save(agent);
 
     return {
