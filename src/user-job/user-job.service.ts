@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
@@ -34,7 +35,12 @@ export class UserJobService {
     if (agent === null) {
       throw new NotFoundException(`Agent with id ${body.agentId} not found`);
     }
-    if (agent.job !== undefined && agent.job.id === body.jobId) {
+
+    if (agent.job === undefined) {
+      throw new InternalServerErrorException('job not found');
+    }
+
+    if (agent.job !== null && agent.job.id === body.jobId) {
       throw new BadRequestException(
         `Agent with id ${body.agentId} is already assigned to job ${body.jobId}`,
       );
