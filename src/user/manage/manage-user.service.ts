@@ -246,7 +246,7 @@ export class ManageUserService {
 
     const getFormattedDate = (message: MessageEntity) => {
       const date = message.created_at.getDate();
-      const month = message.created_at.getMonth();
+      const month = message.created_at.getMonth() + 1;
       const year = message.created_at.getFullYear();
       const formattedDate = `${date}/${month}/${year}`;
       return formattedDate;
