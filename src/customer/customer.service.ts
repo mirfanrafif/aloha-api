@@ -19,9 +19,8 @@ import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { StartConversationDto } from 'src/messages/message.dto';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { LessThan, Like, MoreThan, Repository } from 'typeorm';
+import { Like, MoreThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
   CustomerResponse,
