@@ -4,8 +4,10 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  Query,
   Request,
   Res,
   UseGuards,
@@ -27,8 +29,8 @@ export class UserController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  getAllUsers() {
-    return this.userService.getAllUsers();
+  getAllUsers(@Query('search') search?: string, @Query('page') page?: number) {
+    return this.userService.getAllUsers(search, page);
   }
 
   @Post()

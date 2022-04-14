@@ -315,7 +315,7 @@ export class CustomerService {
 
   async searchCustomerFromCrm(search: string, page: number) {
     if (search === undefined) {
-      throw new BadRequestException();
+      throw new BadRequestException('Search not defined');
     }
 
     return this.httpService
