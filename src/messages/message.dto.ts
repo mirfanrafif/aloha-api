@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
@@ -157,4 +157,10 @@ export class MessageTemplateRequestDto {
 
   @IsNotEmpty()
   template: string;
+}
+
+export class StartConversationDto {
+  @IsNotEmpty()
+  @IsNumber()
+  customerId: number;
 }

@@ -27,6 +27,7 @@ import {
   WablasSendDocumentRequest,
   MessageTrackingDto,
   MessageTemplateRequestDto,
+  StartConversationDto,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';

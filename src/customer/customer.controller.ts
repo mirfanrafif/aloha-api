@@ -7,7 +7,9 @@ import {
   Post,
   Query,
   UseGuards,
+  Request,
   UseInterceptors,
+  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
@@ -29,7 +31,19 @@ export class CustomerController {
   }
 
   @Get()
-  getAllCustomer(@Query('page') page?: number) {
-    return this.service.getAllCustomersFromCrm(page ?? 1);
+  getAllCustomer(
+    @Query('search') search: string,
+    @Query('page', ParseIntPipe) page: number,
+  ) {
+    return this.service.searchCustomerFromCrm(search, page);
+  }
+
+  @Post(':id/start')
+  @UseGuards(JwtAuthGuard)
+  startConversationWithCustomer(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() request,
+  ) {
+    return this.service.startMessageWithCustomer(id, request.user);
   }
 }

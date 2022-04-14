@@ -28,6 +28,7 @@ import {
   MessageRequestDto,
   MessageResponseDto,
   MessageTrackingDto,
+  StartConversationDto,
   TextMessage,
 } from './message.dto';
 import { MessageService } from './message.service';
@@ -57,10 +58,10 @@ export class MessageController {
     });
   }
 
-  @Get(':customer_number')
+  @Get(':customer_id')
   @UseGuards(JwtAuthGuard)
   async getPastMessages(
-    @Param('customer_number', ParseIntPipe) customerId: number,
+    @Param('customer_id', ParseIntPipe) customerId: number,
     @Query('last_message_id') lastMessageId?: number,
   ): Promise<ApiResponse<MessageResponseDto[]>> {
     return this.service.getPastMessageByCustomerId(
