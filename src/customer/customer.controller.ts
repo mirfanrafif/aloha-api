@@ -33,7 +33,7 @@ export class CustomerController {
   @Get()
   getAllCustomer(
     @Query('search') search: string,
-    @Query('page', ParseIntPipe) page: number,
+    @Query('page') page?: number,
   ) {
     return this.service.searchCustomerFromCrm(search, page);
   }

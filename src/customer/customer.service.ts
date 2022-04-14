@@ -313,7 +313,7 @@ export class CustomerService {
     return newListCustomer;
   }
 
-  async searchCustomerFromCrm(search: string, page: number) {
+  async searchCustomerFromCrm(search: string, page?: number) {
     if (search === undefined) {
       throw new BadRequestException('Search not defined');
     }
@@ -321,7 +321,7 @@ export class CustomerService {
     return this.httpService
       .get<CustomerResponse>(`/customers`, {
         params: {
-          page: page,
+          page: page ?? 1,
           limit: pageSize,
           search: search,
         },
@@ -374,7 +374,7 @@ export class CustomerService {
               name: Like(search),
             },
             take: pageSize,
-            skip: pageSize * (page - 1),
+            skip: pageSize * ((page ?? 1) - 1),
             order: {
               name: 'ASC',
             },
