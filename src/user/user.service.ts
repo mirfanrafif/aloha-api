@@ -3,17 +3,13 @@ import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Repository } from 'typeorm';
-import {
-  ChangePasswordDto,
-  ChangeSalesPasswordDto,
-  EditProfileRequestDto,
-  UpdateUserRequestDto,
-} from './user.dto';
+import { Not, Repository } from 'typeorm';
+import { ChangePasswordDto } from './user.dto';
 import { compare, hash } from 'bcrypt';
 // import {} from 'bcrypt';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
 
+const pageSize = 25;
 @Injectable()
 export class UserService {
   constructor(
@@ -42,11 +38,6 @@ export class UserService {
     return result;
   }
 
-  async updateProfilePhoto(file: Express.Multer.File, user: UserEntity) {
-    user.profile_photo = file.filename;
-    return await this.userRepository.save(user);
-  }
-
   getAloha() {
     return this.userRepository.findOneOrFail({
       where: {
@@ -55,19 +46,22 @@ export class UserService {
     });
   }
 
-  async getAllUsers() {
+  async getAllUsers(search?: string, page?: number) {
+    const conditions: any = {
+      role: Not(Role.sistem),
+    };
+
+    if (search !== undefined && search.length > 0) {
+      conditions.full_name = search;
+    }
+
     const users = await this.userRepository.find({
       relations: {
         job: true,
       },
-      where: [
-        {
-          role: Role.admin,
-        },
-        {
-          role: Role.agent,
-        },
-      ],
+      where: conditions,
+      take: pageSize,
+      skip: ((page ?? 1) - 1) * 25,
     });
     return <ApiResponse<UserEntity[]>>{
       success: true,

@@ -47,9 +47,9 @@ export class UserManageController {
   @Get(':id/stats')
   getSalesStats(
     @Param('id', ParseIntPipe) id: number,
-    @Query('month', ParseIntPipe) month: number,
-    @Query('year', ParseIntPipe) year: number,
+    @Query('start') start: string,
+    @Query('end') end: string,
   ) {
-    return this.service.getStats(id, month, year);
+    return this.service.getStats(id, start, end);
   }
 }

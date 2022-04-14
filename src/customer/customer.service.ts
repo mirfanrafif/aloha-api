@@ -3,10 +3,16 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AxiosError } from 'axios';
 import { catchError, map } from 'rxjs';
+import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import {
+  ConversationEntity,
+  ConversationStatus,
+} from 'src/core/repository/conversation/conversation.entity';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
@@ -14,7 +20,7 @@ import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { MoreThan, Repository } from 'typeorm';
+import { Like, MoreThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
   CustomerResponse,
@@ -32,6 +38,8 @@ export class CustomerService {
     private customerRepository: Repository<CustomerEntity>,
     @Inject(CUSTOMER_AGENT_REPOSITORY)
     private customerAgentRepository: Repository<CustomerAgent>,
+    @Inject(CONVERSATION_REPOSITORY)
+    private conversationRepository: Repository<ConversationEntity>,
   ) {}
 
   async findAndCreateCustomer({
@@ -69,7 +77,7 @@ export class CustomerService {
 
   //Mencari agen yang menangani customer tersebut
   async findAgentByCustomerNumber({ customer }: { customer: CustomerEntity }) {
-    const agents = await this.customerAgentRepository.findOne({
+    const agents = await this.customerAgentRepository.find({
       where: {
         customer: {
           id: customer.id,
@@ -178,7 +186,7 @@ export class CustomerService {
   }) {
     let conditions: any = {};
 
-    if (agent.role !== Role.agent) {
+    if (agent.role === Role.agent) {
       conditions = {
         ...conditions,
         agent: {
@@ -246,12 +254,14 @@ export class CustomerService {
     customerNumber: string;
     agent: UserEntity;
   }) {
-    const customer = await this.customerAgentRepository.findOneOrFail({
+    const customer = await this.customerAgentRepository.findOne({
       where: {
         customer: {
           phoneNumber: customerNumber,
         },
-        agent: agent,
+        agent: {
+          id: agent.id,
+        },
       },
       relations: {
         agent: true,
@@ -259,8 +269,8 @@ export class CustomerService {
       },
     });
 
-    if (customer === undefined) {
-      throw new UnauthorizedException();
+    if (customer === null) {
+      throw new UnauthorizedException("agent shouldn't handle this customer");
     }
 
     return true;
@@ -302,16 +312,22 @@ export class CustomerService {
     return newListCustomer;
   }
 
-  async getAllCustomersFromCrm(page: number) {
+  async searchCustomerFromCrm(search: string, page?: number) {
+    if (search === undefined) {
+      throw new BadRequestException('Search not defined');
+    }
+
     return this.httpService
-      .get<CustomerResponse>(
-        `/customers?page=${page}&limit=${pageSize}&sortBy=full_name:ASC`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.CRM_TOKEN}`,
-          },
+      .get<CustomerResponse>(`/customers`, {
+        params: {
+          page: page ?? 1,
+          limit: pageSize,
+          search: search,
         },
-      )
+        headers: {
+          Authorization: `Bearer ${process.env.CRM_TOKEN}`,
+        },
+      })
       .pipe(
         map(async (response) => {
           if (response.status < 400) {
@@ -353,8 +369,11 @@ export class CustomerService {
         catchError(async (err: AxiosError<any>) => {
           console.log(err);
           const customers = await this.customerRepository.find({
+            where: {
+              name: Like(search),
+            },
             take: pageSize,
-            skip: pageSize * (page - 1),
+            skip: pageSize * ((page ?? 1) - 1),
             order: {
               name: 'ASC',
             },
@@ -362,7 +381,10 @@ export class CustomerService {
           return <ApiResponse<CustomerEntity[]>>{
             success: true,
             data: customers,
-            message: `Failed to get data from CRM API. Error : ${err.message}. Getting data from database`,
+            message:
+              'Failed to get data from CRM API. Error : ' +
+              err.message +
+              '. Getting data from database',
           };
         }),
       );
@@ -370,5 +392,51 @@ export class CustomerService {
 
   async getAllCustomer() {
     return await this.customerRepository.find();
+  }
+
+  async startMessageWithCustomer(customerId: number, user: UserEntity) {
+    //get user
+    const customer = await this.customerRepository.findOne({
+      where: {
+        id: customerId,
+      },
+    });
+
+    if (customer === null) {
+      throw new NotFoundException('Not found customer with id ' + customerId);
+    }
+
+    const existingConversation = await this.conversationRepository.findOne({
+      where: {
+        customer: {
+          id: customer.id,
+        },
+      },
+      relations: {
+        customer: true,
+      },
+    });
+
+    if (existingConversation !== null) {
+      throw new BadRequestException(
+        'Customer already connected to conversation',
+      );
+    }
+    //create conversation
+    await this.conversationRepository.save({
+      customer: customer,
+      status: ConversationStatus.CONNECTED,
+    });
+
+    const customerAgent = await this.customerAgentRepository.save({
+      customer: customer,
+      agent: user,
+    });
+
+    return <ApiResponse<CustomerAgent>>{
+      success: true,
+      data: customerAgent,
+      message: 'Success starting conversation with customer ' + customer.name,
+    };
   }
 }

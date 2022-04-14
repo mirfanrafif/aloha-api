@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -40,10 +41,27 @@ export class UserJobController {
     return this.jobService.addJob(body);
   }
 
-  @Put('assign')
+  @Post('assign')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   assignAgentToJob(@Body() jobAssignBody: JobAssignRequestDto) {
     return this.jobService.assignAgentToJob(jobAssignBody);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  updateJob(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() request: AddJobRequest,
+  ) {
+    return this.jobService.updateJob(id, request);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  deleteJob(@Param('id', ParseIntPipe) id: number) {
+    return this.jobService.deleteJob(id);
   }
 }

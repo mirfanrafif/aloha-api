@@ -37,6 +37,8 @@ export class CustomerAgentResponseDto {
 
   agent: UserEntity[];
 
+  unread: number;
+
   lastMessage: MessageResponseDto | null;
 
   created_at: Date;
@@ -46,7 +48,7 @@ export class CustomerAgentResponseDto {
 
 export interface CustomerResponse {
   data: CrmCustomer[];
-  meta: Meta;
+  meta: CRMCustomerMeta;
   links: Links;
 }
 
@@ -109,7 +111,7 @@ export interface Links {
   last: string;
 }
 
-export interface Meta {
+export interface CRMCustomerMeta {
   itemsPerPage: number;
   totalItems: number;
   currentPage: number;

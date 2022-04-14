@@ -17,7 +17,9 @@ export class ConversationService {
   async getCurrentConversationSession(customer: CustomerEntity) {
     const conversation = await this.conversationRepository.findOne({
       where: {
-        customer: customer,
+        customer: {
+          id: customer.id,
+        },
       },
       order: {
         id: 'DESC',

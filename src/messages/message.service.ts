@@ -27,6 +27,7 @@ import {
   WablasSendDocumentRequest,
   MessageTrackingDto,
   MessageTemplateRequestDto,
+  StartConversationDto,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -191,19 +192,6 @@ export class MessageService {
       return this.sendIncomingMessageResponse(data);
     }
     if (currentConversation.status === ConversationStatus.CONNECTED) {
-      //jika sudah terhubung, maka langsung chat ke agent
-      //find agent by customer
-      const customerAgent =
-        await this.customerService.findAgentByCustomerNumber({
-          customer: customer,
-        });
-
-      if (customerAgent !== null) {
-        //update message data
-        data.agent = customerAgent.agent;
-        await this.messageRepository.save(data);
-      }
-
       return this.sendIncomingMessageResponse(data);
     }
   }
@@ -225,7 +213,7 @@ export class MessageService {
       await this.messageRepository.save(message),
     );
 
-    this.gateway.sendMessage(response);
+    await this.gateway.sendMessage({ data: response });
     return {
       success: true,
       data: response,
@@ -261,9 +249,9 @@ export class MessageService {
     return response;
   }
 
-  sendIncomingMessageResponse(data: MessageEntity) {
+  async sendIncomingMessageResponse(data: MessageEntity) {
     const response = this.mapMessageEntityToResponse(data);
-    this.gateway.sendMessage(response);
+    await this.gateway.sendMessage({ data: response });
     const result: ApiResponse<MessageResponseDto> = {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -294,7 +282,6 @@ export class MessageService {
       fromMe: false,
       file: message.file,
       type: message.messageType,
-      created_at: Date(),
     });
 
     //save entity
@@ -361,11 +348,13 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            const messageResponses = messages.map((message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
-              return response;
-            });
+            const messageResponses = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
 
             //return result
             const result: ApiResponse<MessageResponseDto[]> = {
@@ -441,11 +430,13 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            const messageResponse = messages.map((message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
-              return response;
-            });
+            const messageResponse = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
 
             //return result
             const result: ApiResponse<MessageEntity[]> = {
@@ -514,11 +505,13 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            const messageResponse = messages.map((message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
-              return response;
-            });
+            const messageResponse = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
 
             //return result
             const result: ApiResponse<MessageEntity[]> = {
@@ -581,11 +574,10 @@ export class MessageService {
             });
 
             //kirim ke frontend lewat websocket
-            messages.forEach((message: MessageEntity) => {
+            for (const message of messages) {
               const response = this.mapMessageEntityToResponse(message);
-              this.gateway.sendMessage(response);
-            });
-
+              await this.gateway.sendMessage({ data: response });
+            }
             //return result
             const result: ApiResponse<MessageEntity[]> = {
               success: true,
@@ -796,7 +788,7 @@ export class MessageService {
   ): Promise<CustomerAgentResponseDto[]> {
     const result = await Promise.all(
       listCustomer.map(async (customerAgent) => {
-        const lastMessage = await this.messageRepository.findOne({
+        const messages = await this.messageRepository.find({
           where: {
             customer: {
               id: customerAgent.customer.id,
@@ -809,25 +801,39 @@ export class MessageService {
             customer: true,
             agent: true,
           },
+          take: 10,
         });
 
         const lastMessageResponse =
-          lastMessage != null
-            ? this.mapMessageEntityToResponse(lastMessage)
+          messages != null && messages.length > 0
+            ? this.mapMessageEntityToResponse(messages[0])
             : null;
 
         const newCustomer: CustomerAgentResponseDto = {
           id: customerAgent.id,
           customer: customerAgent.customer,
-          created_at: customerAgent.created_at,
           agent: customerAgent.agent,
+          unread: this.findUnreadMessage(messages),
           lastMessage: lastMessageResponse,
+          created_at: customerAgent.created_at,
           updated_at: customerAgent.updated_at,
         };
         return newCustomer;
       }),
     );
     return result;
+  }
+
+  findUnreadMessage(messages: MessageEntity[]) {
+    let count = 0;
+    for (const message of messages) {
+      if (!message.fromMe) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
   }
 
   async getMessageTemplates() {

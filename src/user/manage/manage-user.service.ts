@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Between, Repository } from 'typeorm';
@@ -52,17 +52,16 @@ export class ManageUserService {
     };
   }
 
-  async getStats(id: number, month: number, year: number) {
-    const userWithMessages = await this.userRepository.findOneOrFail({
+  async getStats(id: number, start: string, end: string) {
+    const dateStart = new Date(start);
+    const dateEnd = new Date(end);
+    const userWithMessages = await this.userRepository.findOne({
       where: {
         id: id,
         customer: {
           customer: {
             messages: {
-              created_at: Between(
-                new Date(year, month, 1),
-                new Date(year, month, 31),
-              ),
+              created_at: Between(dateStart, dateEnd),
             },
           },
         },
@@ -82,6 +81,18 @@ export class ManageUserService {
         },
       },
     });
+
+    if (userWithMessages == null) {
+      throw new NotFoundException(
+        'Not found report from id ' +
+          id +
+          ' with date ' +
+          dateStart.toDateString() +
+          ' to ' +
+          dateEnd.toDateString(),
+      );
+    }
+
     const customers = userWithMessages.customer.map((item) => item.customer);
 
     const result = customers.map((customer) => {
@@ -105,14 +116,11 @@ export class ManageUserService {
             allResponseTime.length
           : 0;
 
-      const allUnreadMessagesCount: number[] = [];
-      responseTimes.forEach((item) => {
-        allUnreadMessagesCount.push(item.unread_message);
-      });
-
-      const avgAllUnreadMessagesCount =
-        allUnreadMessagesCount.length > 0
-          ? allUnreadMessagesCount.reduce((prev, value) => prev + value)
+      const allUnreadMessagesCount: number =
+        responseTimes.length > 0
+          ? responseTimes
+              .map((item) => item.unread_message)
+              .reduce((prev, value) => prev + value)
           : 0;
 
       return {
@@ -122,11 +130,23 @@ export class ManageUserService {
         created_at: customer.created_at,
         updated_at: customer.updated_at,
         average_all_response_time: avgAllResponseTime,
-        all_unread_message_count: avgAllUnreadMessagesCount,
+        all_unread_message_count: allUnreadMessagesCount,
         dailyReport: responseTimes,
       };
     });
-    return result;
+
+    const userEntity = {
+      id: userWithMessages.id,
+      full_name: userWithMessages.full_name,
+      username: userWithMessages.username,
+      email: userWithMessages.email,
+      role: userWithMessages.role,
+      created_at: userWithMessages.created_at,
+      updated_at: userWithMessages.updated_at,
+      statistics: result,
+    };
+
+    return userEntity;
   }
 
   private calculateDailyResponseTime(dateMessage: DateMessages) {
@@ -226,7 +246,7 @@ export class ManageUserService {
 
     const getFormattedDate = (message: MessageEntity) => {
       const date = message.created_at.getDate();
-      const month = message.created_at.getMonth();
+      const month = message.created_at.getMonth() + 1;
       const year = message.created_at.getFullYear();
       const formattedDate = `${date}/${month}/${year}`;
       return formattedDate;
@@ -270,4 +290,16 @@ type DailyResponseTimeResult = {
   unread_message: number;
   late_response: number;
   responseTimes: ResponseTime[];
+};
+
+export type UserEntityType = {
+  id: number;
+  full_name: string;
+  username: string;
+  email: string;
+  password: string;
+  role: Role;
+  profile_photo: string;
+  created_at: Date;
+  updated_at: Date;
 };

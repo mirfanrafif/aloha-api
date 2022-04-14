@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
@@ -34,19 +35,28 @@ export class UserJobService {
     if (agent === null) {
       throw new NotFoundException(`Agent with id ${body.agentId} not found`);
     }
-    if (agent.job.id === body.jobId) {
+
+    if (agent.job === undefined) {
+      throw new InternalServerErrorException('job not found');
+    }
+
+    if (agent.job !== null && agent.job.id === body.jobId) {
       throw new BadRequestException(
         `Agent with id ${body.agentId} is already assigned to job ${body.jobId}`,
       );
     }
-    const jobs = await await this.getJobList();
-    const suitableJob = jobs.find((job) => job.id === body.jobId);
 
-    if (!suitableJob) {
+    const job = await this.jobRepository.findOne({
+      where: {
+        id: body.jobId,
+      },
+    });
+
+    if (job === null) {
       throw new NotFoundException(`Job with id ${body.jobId} not found`);
     }
 
-    agent.job = suitableJob;
+    agent.job = job;
     const newAgent = await this.userRepository.save(agent);
 
     return {
@@ -102,5 +112,41 @@ export class UserJobService {
       message: 'Success getting job and agents',
     };
     return result;
+  }
+
+  async updateJob(id: number, request: AddJobRequest) {
+    const job = await this.jobRepository.findOneOrFail({
+      where: {
+        id: id,
+      },
+    });
+    job.name = request.name;
+    job.description = request.description;
+    const newJob = await this.jobRepository.save(job);
+    return <ApiResponse<UserJobEntity>>{
+      success: true,
+      data: newJob,
+      message: 'Success update job with id ' + id,
+    };
+  }
+
+  async deleteJob(id: number) {
+    const job = await this.jobRepository.findOneOrFail({
+      where: {
+        id: id,
+      },
+      relations: {
+        agents: true,
+      },
+    });
+    if (job.agents.length > 0) {
+      throw new BadRequestException('Job is not empty. Move agents to new job');
+    }
+    await this.jobRepository.delete(job.id);
+    return <ApiResponse<UserJobEntity>>{
+      success: true,
+      data: job,
+      message: 'Success delete job with id ' + id,
+    };
   }
 }

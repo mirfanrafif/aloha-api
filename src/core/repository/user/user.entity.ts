@@ -55,8 +55,20 @@ export class UserEntity {
   messages: MessageEntity[];
 
   @ManyToOne(() => UserJobEntity, (category) => category.agents)
-  job: UserJobEntity;
+  job?: UserJobEntity;
 }
+
+export type UserEntityType = {
+  id: number;
+  full_name: string;
+  username: string;
+  email: string;
+  password: string;
+  role: Role;
+  profile_photo: string;
+  created_at: Date;
+  updated_at: Date;
+};
 
 export enum Role {
   agent = 'agent',

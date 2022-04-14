@@ -7,7 +7,11 @@ import {
   Put,
   ClassSerializerInterceptor,
   UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { EditProfileRequestDto } from '../user.dto';
@@ -28,5 +32,35 @@ export class UserProfileController {
   updateProfile(@Request() request, @Body() body: EditProfileRequestDto) {
     const user: UserEntity = request.user;
     return this.service.editProfile(user, body);
+  }
+
+  @Put('profile_image')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: 'uploads/profile_pictures',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  @UseGuards(JwtAuthGuard)
+  updateProfilePhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.service.updateProfilePhoto(file, user);
   }
 }
