@@ -28,7 +28,6 @@ import {
   MessageRequestDto,
   MessageResponseDto,
   MessageTrackingDto,
-  StartConversationDto,
   TextMessage,
 } from './message.dto';
 import { MessageService } from './message.service';
