@@ -924,16 +924,16 @@ export class MessageService {
     return result;
   }
 
-  async searchCustomer(customerNumber: string, user: UserEntity) {
+  async searchCustomer(name: string, user: UserEntity) {
     const customer = await this.customerService.searchCustomer({
       agent: user,
-      customerNumber: customerNumber,
+      name: name,
     });
     const customerWithLastMessage = await this.findLastMessage(customer);
     const result = {
       success: true,
       data: customerWithLastMessage,
-      message: `Success searching customer with phone number ${customerNumber}`,
+      message: `Success searching customer with phone number ${name}`,
     };
     return result;
   }

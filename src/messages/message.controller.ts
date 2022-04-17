@@ -74,11 +74,11 @@ export class MessageController {
   @UseGuards(JwtAuthGuard)
   async getCustomerByAgentId(
     @Request() request,
-    @Query('search') customerNumber?: string,
+    @Query('search') name?: string,
     @Query('last_customer_id') lastCustomerId?: number,
   ): Promise<ApiResponse<any>> {
-    if (customerNumber !== undefined) {
-      return this.service.searchCustomer(customerNumber, request.user);
+    if (name !== undefined) {
+      return this.service.searchCustomer(name, request.user);
     }
     return await this.service.getMessageByAgentId(request.user, lastCustomerId);
   }

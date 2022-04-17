@@ -276,13 +276,7 @@ export class CustomerService {
     return true;
   }
 
-  async searchCustomer({
-    customerNumber,
-    agent,
-  }: {
-    customerNumber: string;
-    agent: UserEntity;
-  }) {
+  async searchCustomer({ name, agent }: { name: string; agent: UserEntity }) {
     let conditions: any = {};
 
     if (agent.role == Role.agent) {
@@ -297,7 +291,7 @@ export class CustomerService {
       where: {
         ...conditions,
         customer: {
-          phoneNumber: customerNumber,
+          phoneNumber: name,
         },
       },
       relations: {
