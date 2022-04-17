@@ -159,6 +159,69 @@ export class MessageController {
     return this.service.sendDocumentToCustomer(file, data, request.user);
   }
 
+  @Post('broadcast/image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: 'uploads/messages/image',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  broadcastImageToCustomer(
+    @UploadedFile() image: Express.Multer.File,
+    @Body() body: ImageMessageRequestDto,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.service.broadcastImageToCustomer(image, body, user);
+  }
+
+  @Post('broadcast/document')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('document', {
+      storage: diskStorage({
+        destination: 'uploads/messages/document',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  broadcastDocumentToCustomer(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() data: DocumentRequestDto,
+    @Request() request,
+  ) {
+    return this.service.broadcastDocumentToCustomer(file, data, request.user);
+  }
+
   @Get('image/:file_name')
   getMessageImage(@Param('file_name') fileName: string, @Res() res) {
     res.sendFile(fileName, { root: 'uploads/messages/image' });
