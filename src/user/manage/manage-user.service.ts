@@ -123,12 +123,15 @@ export class ManageUserService {
               .reduce((prev, value) => prev + value)
           : 0;
 
+      const answeredMessages = allResponseTime.length;
+
       return {
         id: customer.id,
         name: customer.name,
         phoneNumber: customer.phoneNumber,
         created_at: customer.created_at,
         updated_at: customer.updated_at,
+        answered_messages: answeredMessages,
         average_all_response_time: avgAllResponseTime,
         all_unread_message_count: allUnreadMessagesCount,
         dailyReport: responseTimes,
