@@ -291,7 +291,7 @@ export class CustomerService {
       where: {
         ...conditions,
         customer: {
-          phoneNumber: name,
+          name: Like(`%${name}%`),
         },
       },
       relations: {
