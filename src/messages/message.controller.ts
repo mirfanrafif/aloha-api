@@ -75,12 +75,11 @@ export class MessageController {
   async getCustomerByAgentId(
     @Request() request,
     @Query('search') name?: string,
-    @Query('last_customer_id') lastCustomerId?: number,
   ): Promise<ApiResponse<any>> {
     if (name !== undefined) {
       return this.service.searchCustomer(name, request.user);
     }
-    return await this.service.getMessageByAgentId(request.user, lastCustomerId);
+    return await this.service.getMessageByAgentId(request.user);
   }
 
   @Post('broadcast')

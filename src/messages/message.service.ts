@@ -908,10 +908,9 @@ export class MessageService {
   }
 
   //cari customer by user id / list pesan
-  async getMessageByAgentId(user: UserEntity, lastCustomerId?: number) {
+  async getMessageByAgentId(user: UserEntity) {
     const messages = await this.customerService.getCustomerByAgent({
       agent: user,
-      lastCustomerId,
     });
 
     const customerWithLastMessage = await this.findLastMessage(messages);

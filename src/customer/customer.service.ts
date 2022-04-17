@@ -177,13 +177,7 @@ export class CustomerService {
   }
 
   //mengambil data customer berdasarkan agen (halaman list pesan)
-  async getCustomerByAgent({
-    agent,
-    lastCustomerId,
-  }: {
-    agent: UserEntity;
-    lastCustomerId?: number;
-  }) {
+  async getCustomerByAgent({ agent }: { agent: UserEntity }) {
     let conditions: any = {};
 
     if (agent.role === Role.agent) {
@@ -192,12 +186,6 @@ export class CustomerService {
         agent: {
           id: agent.id,
         },
-      };
-    }
-    if (lastCustomerId !== undefined) {
-      conditions = {
-        ...conditions,
-        id: MoreThan(lastCustomerId),
       };
     }
     const listCustomer = await this.customerAgentRepository.find({
