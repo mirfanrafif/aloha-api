@@ -48,6 +48,11 @@ export class ImageMessageRequestDto {
   message: string;
 }
 
+export class BroadcastImageMessageRequestDto {
+  @IsString()
+  message: string;
+}
+
 export class DocumentRequestDto {
   @IsNotEmpty()
   customerNumber: string;

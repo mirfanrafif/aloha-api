@@ -22,6 +22,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import {
+  BroadcastImageMessageRequestDto,
   BroadcastMessageRequest,
   DocumentRequestDto,
   ImageMessageRequestDto,
@@ -182,7 +183,7 @@ export class MessageController {
   )
   broadcastImageToCustomer(
     @UploadedFile() image: Express.Multer.File,
-    @Body() body: ImageMessageRequestDto,
+    @Body() body: BroadcastImageMessageRequestDto,
     @Request() request,
   ) {
     const user: UserEntity = request.user;
@@ -214,10 +215,9 @@ export class MessageController {
   )
   broadcastDocumentToCustomer(
     @UploadedFile() file: Express.Multer.File,
-    @Body() data: DocumentRequestDto,
     @Request() request,
   ) {
-    return this.service.broadcastDocumentToCustomer(file, data, request.user);
+    return this.service.broadcastDocumentToCustomer(file, request.user);
   }
 
   @Get('image/:file_name')

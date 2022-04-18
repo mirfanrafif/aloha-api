@@ -30,6 +30,7 @@ import {
   StartConversationDto,
   WablasSendImageRequestData,
   WablasSendDocumentRequestData,
+  BroadcastImageMessageRequestDto,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -604,14 +605,9 @@ export class MessageService {
   //kirim gambar ke customer
   async broadcastImageToCustomer(
     file: Express.Multer.File,
-    body: MessageRequestDto,
+    body: BroadcastImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    // const fileType = /image\/(.*)/gi.exec(file.mimetype);
-    // if (fileType === null) {
-    //   throw new BadRequestException();
-    // }
-
     const customer = await this.customerService.getAllCustomer();
 
     const sendImageData: WablasSendImageRequestData[] = customer.map(
@@ -684,7 +680,6 @@ export class MessageService {
   //kirim gambar ke customer
   async broadcastDocumentToCustomer(
     file: Express.Multer.File,
-    body: DocumentRequestDto,
     agent: UserEntity,
   ) {
     const customers = await this.customerService.getAllCustomer();
