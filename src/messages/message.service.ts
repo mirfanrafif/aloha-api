@@ -817,7 +817,6 @@ export class MessageService {
         status: messageItem.status,
         fromMe: true,
         type: MessageType.document,
-        created_at: Date(),
       });
       messages.push(message);
     }
