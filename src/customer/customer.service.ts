@@ -194,7 +194,6 @@ export class CustomerService {
         agent: true,
         customer: true,
       },
-      take: pageSize,
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
@@ -286,7 +285,6 @@ export class CustomerService {
         agent: true,
         customer: true,
       },
-      take: pageSize,
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
