@@ -462,6 +462,83 @@ export class MessageService {
   }
 
   //kirim gambar ke customer
+  async sendVideoToCustomer(
+    file: Express.Multer.File,
+    body: MessageRequestDto,
+    agent: UserEntity,
+  ) {
+    const customer = await this.customerService.findCustomer({
+      phoneNumber: body.customerNumber,
+    });
+
+    //templating request
+    const request: WablasSendImageRequest = {
+      data: [
+        {
+          phone: customer.phoneNumber,
+          image: process.env.BASE_URL + '/message/video/' + file.filename,
+          caption: body.message,
+          isGroup: false,
+          retry: false,
+          secret: false,
+        },
+      ],
+    };
+
+    console.log(request);
+
+    //buat request ke WABLAS API
+    return this.http
+      .post('/api/v2/send-video', JSON.stringify(request), {
+        headers: {
+          Authorization: `${process.env.WABLAS_TOKEN}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      })
+      .pipe(
+        map(
+          async (
+            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
+          ) => {
+            //save ke database
+            const messages = await this.saveOutgoingImageMessage({
+              messageResponses: response.data.data,
+              agent: agent,
+              customer: customer,
+            });
+
+            //kirim ke frontend lewat websocket
+            const messageResponse = await Promise.all(
+              messages.map(async (message: MessageEntity) => {
+                const response = this.mapMessageEntityToResponse(message);
+                await this.gateway.sendMessage({ data: response });
+                return response;
+              }),
+            );
+
+            //return result
+            const result: ApiResponse<MessageEntity[]> = {
+              success: true,
+              data: messageResponse,
+              message: 'Success sending message to Wablas API',
+            };
+            return result;
+          },
+        ),
+        catchError((value: AxiosError<WablasApiResponse<any>>) => {
+          if (value.response !== undefined) {
+            throw new WablasAPIException(
+              'Failed to send message to Wablas API. Message : ' +
+                value.response.data.message,
+            );
+          }
+          throw new WablasAPIException('Failed to send message to Wablas API.');
+        }),
+      );
+  }
+
+  //kirim gambar ke customer
   async sendDocumentToCustomer(
     file: Express.Multer.File,
     body: DocumentRequestDto,

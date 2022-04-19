@@ -158,6 +158,37 @@ export class MessageController {
     return this.service.sendDocumentToCustomer(file, data, request.user);
   }
 
+  @Post('video')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('video', {
+      storage: diskStorage({
+        destination: 'uploads/messages/video',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  sendVideoToCustomer(
+    @UploadedFile() video: Express.Multer.File,
+    @Body() body: ImageMessageRequestDto,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.service.sendVideoToCustomer(video, body, user);
+  }
+
   @Post('broadcast/image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(

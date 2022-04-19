@@ -7,6 +7,7 @@ export enum MessageType {
   text = 'text',
   document = 'document',
   image = 'image',
+  video = 'video',
 }
 
 export type Group = {
@@ -90,6 +91,18 @@ export type WablasSendImageRequestData = {
   phone: string;
   image: string;
   caption?: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
+export type WablasSendVideoRequest = {
+  data: WablasSendVideoRequestData[];
+};
+
+export type WablasSendVideoRequestData = {
+  phone: string;
+  video: string;
   secret: boolean;
   retry: boolean;
   isGroup: boolean;
