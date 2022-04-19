@@ -18,18 +18,12 @@ import {
   TextMessage,
   MessageType,
   WablasSendMessageRequest,
-  BroadcastMessageRequest,
-  WablasSendMessageRequestData,
   MessageResponseDto,
   WablasSendImageRequest,
   SendImageResponseData,
   DocumentRequestDto,
   WablasSendDocumentRequest,
   MessageTrackingDto,
-  MessageTemplateRequestDto,
-  WablasSendImageRequestData,
-  WablasSendDocumentRequestData,
-  BroadcastImageMessageRequestDto,
   WablasSendVideoRequest,
   ImageMessageRequestDto,
   SendVideoResponseData,
@@ -45,8 +39,6 @@ import {
   CustomerAgentResponseDto,
 } from 'src/customer/customer.dto';
 import { UserService } from 'src/user/user.service';
-import { MESSAGE_TEMPLATE_REPOSITORY } from 'src/core/repository/message-template/message-template.module';
-import { MessageTemplateEntity } from 'src/core/repository/message-template/message-template.entity';
 
 const pageSize = 20;
 
@@ -57,8 +49,6 @@ export class MessageService {
     private gateway: MessageGateway,
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
-    @Inject(MESSAGE_TEMPLATE_REPOSITORY)
-    private messageTemplateRepository: Repository<MessageTemplateEntity>,
     private customerService: CustomerService,
     private conversationService: ConversationService,
     private userJobService: UserJobService,
@@ -108,8 +98,6 @@ export class MessageService {
           message: helloMessage,
         },
         agent: aloha,
-      }).then((value) => {
-        value.subscribe();
       });
       //mulai conversation
       await this.conversationService.startConversation(data.customer);
@@ -616,219 +604,6 @@ export class MessageService {
       );
   }
 
-  //broadcast pesan ke customer
-  async broadcastMessageToCustomer(
-    body: BroadcastMessageRequest,
-    agent: UserEntity,
-  ) {
-    const customer = await this.customerService.getAllCustomer();
-
-    //mapping request
-    const messages = customer.map<WablasSendMessageRequestData>((item) => ({
-      phone: item.phoneNumber,
-      message: body.message,
-      isGroup: false,
-      retry: false,
-      secret: false,
-    }));
-    const request: WablasSendMessageRequest = {
-      data: messages,
-    };
-
-    //buat request ke WABLAS API
-    return this.http
-      .post('/api/v2/send-message', JSON.stringify(request), {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      })
-      .pipe(
-        map(
-          async (
-            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
-          ) => {
-            //save ke database
-            const messages = await this.saveOutgoingMessage({
-              messageResponses: response.data.data,
-              agent: agent,
-            });
-
-            //kirim ke frontend lewat websocket
-            for (const message of messages) {
-              const response = this.mapMessageEntityToResponse(message);
-              await this.gateway.sendMessage({ data: response });
-            }
-            //return result
-            const result: ApiResponse<MessageEntity[]> = {
-              success: true,
-              data: messages,
-              message: 'Success sending message to Wablas API',
-            };
-            return result;
-          },
-        ),
-        catchError((value: AxiosError<WablasApiResponse<any>>) => {
-          if (value.response !== undefined) {
-            throw new WablasAPIException(
-              'Failed to send message to Wablas API. Message : ' +
-                value.response.data.message,
-            );
-          }
-          throw new WablasAPIException('Failed to send message to Wablas API.');
-        }),
-      );
-  }
-
-  //kirim gambar ke customer
-  async broadcastImageToCustomer(
-    file: Express.Multer.File,
-    body: BroadcastImageMessageRequestDto,
-    agent: UserEntity,
-  ) {
-    const customer = await this.customerService.getAllCustomer();
-
-    const sendImageData: WablasSendImageRequestData[] = customer.map(
-      (item) => ({
-        phone: item.phoneNumber,
-        image: process.env.BASE_URL + '/message/image/' + file.filename,
-        caption: body.message,
-        isGroup: false,
-        retry: false,
-        secret: false,
-      }),
-    );
-    //templating request
-    const request: WablasSendImageRequest = {
-      data: sendImageData,
-    };
-
-    console.log(request);
-
-    //buat request ke WABLAS API
-    return this.http
-      .post('/api/v2/send-image', JSON.stringify(request), {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      })
-      .pipe(
-        map(
-          async (
-            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
-          ) => {
-            //save ke database
-            const messages = await this.saveOutgoingImageMessage({
-              messageResponses: response.data.data,
-              agent: agent,
-            });
-
-            //kirim ke frontend lewat websocket
-            const messageResponse = await Promise.all(
-              messages.map(async (message: MessageEntity) => {
-                const response = this.mapMessageEntityToResponse(message);
-                await this.gateway.sendMessage({ data: response });
-                return response;
-              }),
-            );
-
-            //return result
-            const result: ApiResponse<MessageEntity[]> = {
-              success: true,
-              data: messageResponse,
-              message: 'Success sending message to Wablas API',
-            };
-            return result;
-          },
-        ),
-        catchError((value: AxiosError<WablasApiResponse<any>>) => {
-          if (value.response !== undefined) {
-            throw new WablasAPIException(
-              'Failed to send message to Wablas API. Message : ' +
-                value.response.data.message,
-            );
-          }
-          throw new WablasAPIException('Failed to send message to Wablas API.');
-        }),
-      );
-  }
-
-  //kirim gambar ke customer
-  async broadcastDocumentToCustomer(
-    file: Express.Multer.File,
-    agent: UserEntity,
-  ) {
-    const customers = await this.customerService.getAllCustomer();
-
-    const requestData: WablasSendDocumentRequestData[] = customers.map(
-      (customer) => ({
-        phone: customer.phoneNumber,
-        document: process.env.BASE_URL + '/message/document/' + file.filename,
-        isGroup: false,
-        retry: false,
-        secret: false,
-      }),
-    );
-
-    //templating request
-    const request: WablasSendDocumentRequest = {
-      data: requestData,
-    };
-
-    //buat request ke WABLAS API
-    return this.http
-      .post('/api/v2/send-document', JSON.stringify(request), {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      })
-      .pipe(
-        map(
-          async (
-            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
-          ) => {
-            //save ke database
-            const messages = await this.saveOutgoingDocumentMessage({
-              messageResponses: response.data.data,
-              agent: agent,
-              filename: file.filename,
-            });
-
-            //kirim ke frontend lewat websocket
-            const messageResponse = await Promise.all(
-              messages.map(async (message: MessageEntity) => {
-                const response = this.mapMessageEntityToResponse(message);
-                await this.gateway.sendMessage({ data: response });
-                return response;
-              }),
-            );
-
-            //return result
-            const result: ApiResponse<MessageEntity[]> = {
-              success: true,
-              data: messageResponse,
-              message: 'Success sending message to Wablas API',
-            };
-            return result;
-          },
-        ),
-        catchError((value: AxiosError<WablasApiResponse<any>>) => {
-          if (value.response !== undefined) {
-            throw new WablasAPIException(
-              'Failed to send message to Wablas API. Message : ' +
-                value.response.data.message,
-            );
-          }
-          throw new WablasAPIException('Failed to send message to Wablas API.');
-        }),
-      );
-  }
-
   //simpan pesan keluar
   async saveOutgoingMessage({
     messageResponses,
@@ -1100,27 +875,5 @@ export class MessageService {
       }
     }
     return count;
-  }
-
-  async getMessageTemplates() {
-    const data = await this.messageTemplateRepository.find();
-    return <ApiResponse<MessageTemplateEntity[]>>{
-      success: true,
-      data: data,
-      message: 'success getting message templates',
-    };
-  }
-
-  async addMessageTemplate(body: MessageTemplateRequestDto) {
-    let addData = await this.messageTemplateRepository.create({
-      name: body.name,
-      template: body.template,
-    });
-    addData = await this.messageTemplateRepository.save(addData);
-    return <ApiResponse<MessageTemplateEntity>>{
-      success: true,
-      data: addData,
-      message: 'Success adding template',
-    };
   }
 }

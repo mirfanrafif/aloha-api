@@ -10,11 +10,24 @@ import { ConversationService } from './conversation.service';
 import { UserJobModule } from 'src/job/user-job.module';
 import { UserModule } from 'src/user/user.module';
 import { MessageTemplateModule } from 'src/core/repository/message-template/message-template.module';
-import { MessageTemplateController } from './message-template.controller';
+import { MessageTemplateController } from './template/message-template.controller';
+import { MessageTemplateService } from './template/message-template.service';
+import { MessageBroadcastController } from './broadcast/broadcast-message.controller';
+import { BroadcastMessageService } from './broadcast/broadcast-message.service';
 
 @Module({
-  providers: [MessageService, MessageGateway, ConversationService],
-  controllers: [MessageController, MessageTemplateController],
+  providers: [
+    MessageService,
+    MessageGateway,
+    ConversationService,
+    MessageTemplateService,
+    BroadcastMessageService,
+  ],
+  controllers: [
+    MessageController,
+    MessageTemplateController,
+    MessageBroadcastController,
+  ],
   imports: [
     HttpModule.register({
       withCredentials: true,

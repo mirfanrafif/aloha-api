@@ -17,13 +17,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Roles } from 'src/auth/role.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import {
-  BroadcastImageMessageRequestDto,
-  BroadcastMessageRequest,
   DocumentRequestDto,
   ImageMessageRequestDto,
   MessageRequestDto,
@@ -80,19 +76,6 @@ export class MessageController {
       return this.service.searchCustomer(name, request.user);
     }
     return await this.service.getMessageByAgentId(request.user);
-  }
-
-  @Post('broadcast')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
-  broadcastMessageToCustomer(
-    @Body() body: BroadcastMessageRequest,
-    @Request() request,
-  ) {
-    return this.service.broadcastMessageToCustomer(
-      body,
-      request.user as UserEntity,
-    );
   }
 
   @Post('image')
@@ -187,68 +170,6 @@ export class MessageController {
   ) {
     const user: UserEntity = request.user;
     return this.service.sendVideoToCustomer(video, body, user);
-  }
-
-  @Post('broadcast/image')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: 'uploads/messages/image',
-        filename: (request, file, cb) => {
-          //file name biar keliatan random aja sih
-          //file name biar keliatan random aja sih
-          const timestamp = Date.now().toString();
-          const filename =
-            file.originalname.split('.')[0].slice(0, 16) +
-            '-' +
-            timestamp +
-            extname(file.originalname);
-          cb(null, filename);
-        },
-      }),
-      limits: {
-        fileSize: 10 * 1024 * 1024,
-      },
-    }),
-  )
-  broadcastImageToCustomer(
-    @UploadedFile() image: Express.Multer.File,
-    @Body() body: BroadcastImageMessageRequestDto,
-    @Request() request,
-  ) {
-    const user: UserEntity = request.user;
-    return this.service.broadcastImageToCustomer(image, body, user);
-  }
-
-  @Post('broadcast/document')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(
-    FileInterceptor('document', {
-      storage: diskStorage({
-        destination: 'uploads/messages/document',
-        filename: (request, file, cb) => {
-          //file name biar keliatan random aja sih
-          //file name biar keliatan random aja sih
-          const timestamp = Date.now().toString();
-          const filename =
-            file.originalname.split('.')[0].slice(0, 16) +
-            '-' +
-            timestamp +
-            extname(file.originalname);
-          cb(null, filename);
-        },
-      }),
-      limits: {
-        fileSize: 10 * 1024 * 1024,
-      },
-    }),
-  )
-  broadcastDocumentToCustomer(
-    @UploadedFile() file: Express.Multer.File,
-    @Request() request,
-  ) {
-    return this.service.broadcastDocumentToCustomer(file, request.user);
   }
 
   @Get('image/:file_name')
