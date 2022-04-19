@@ -103,6 +103,7 @@ export type WablasSendVideoRequest = {
 export type WablasSendVideoRequestData = {
   phone: string;
   video: string;
+  caption: string;
   secret: boolean;
   retry: boolean;
   isGroup: boolean;
@@ -135,6 +136,19 @@ export class ImageResponseItem {
   message?: string;
   caption: string;
   image: string;
+  status: MessageStatus;
+}
+
+export class SendVideoResponseData {
+  messages: ImageResponseItem[];
+}
+
+export class VideoResponseItem {
+  id: string;
+  phone: string;
+  message?: string;
+  caption: string;
+  video: string;
   status: MessageStatus;
 }
 

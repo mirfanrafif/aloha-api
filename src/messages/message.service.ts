@@ -31,6 +31,8 @@ import {
   WablasSendDocumentRequestData,
   BroadcastImageMessageRequestDto,
   WablasSendVideoRequest,
+  ImageMessageRequestDto,
+  SendVideoResponseData,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -465,7 +467,7 @@ export class MessageService {
   //kirim gambar ke customer
   async sendVideoToCustomer(
     file: Express.Multer.File,
-    body: DocumentRequestDto,
+    body: ImageMessageRequestDto,
     agent: UserEntity,
   ) {
     const customer = await this.customerService.findCustomer({
@@ -478,6 +480,7 @@ export class MessageService {
         {
           phone: customer.phoneNumber,
           video: process.env.BASE_URL + '/message/video/' + file.filename,
+          caption: body.message,
           isGroup: false,
           retry: false,
           secret: false,
@@ -499,7 +502,7 @@ export class MessageService {
       .pipe(
         map(
           async (
-            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendVideoResponseData>>,
           ) => {
             //save ke database
             const messages = await this.saveOutgoingImageMessage({
@@ -887,6 +890,44 @@ export class MessageService {
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: '',
+        customer: newCustomer,
+        file: filename,
+        agent: agent,
+        status: messageItem.status,
+        fromMe: true,
+        type: MessageType.document,
+      });
+      messages.push(message);
+    }
+
+    return messages;
+  }
+
+  //simpan pesan dokumen keluar
+  async saveOutgoingVideoMessage({
+    messageResponses,
+    customer,
+    agent,
+    filename,
+  }: {
+    messageResponses: SendVideoResponseData;
+    customer?: CustomerEntity;
+    agent?: UserEntity;
+    filename: string;
+  }): Promise<MessageEntity[]> {
+    const messages: MessageEntity[] = [];
+
+    //for loop insert data
+    for (const messageItem of messageResponses.messages) {
+      const newCustomer =
+        customer !== undefined
+          ? customer
+          : await this.customerService.findAndCreateCustomer({
+              phoneNumber: messageItem.phone,
+            });
+      const message = await this.messageRepository.save({
+        messageId: messageItem.id,
+        message: messageItem.caption,
         customer: newCustomer,
         file: filename,
         agent: agent,

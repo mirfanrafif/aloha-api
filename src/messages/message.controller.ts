@@ -182,7 +182,7 @@ export class MessageController {
   )
   sendVideoToCustomer(
     @UploadedFile() video: Express.Multer.File,
-    @Body() body: DocumentRequestDto,
+    @Body() body: ImageMessageRequestDto,
     @Request() request,
   ) {
     const user: UserEntity = request.user;
