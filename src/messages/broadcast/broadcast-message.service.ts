@@ -48,7 +48,7 @@ export class BroadcastMessageService {
         interests.length > 0 ? '$in:' + interests.join(',') : undefined,
       'filter.types.name':
         types.length > 0 ? '$in:' + types.join(',') : undefined,
-      // 'filter.users.email': '$eq:' + email,
+      'filter.users.email': '$eq:' + email,
     };
 
     const customer: CustomerEntity[] = await lastValueFrom(
