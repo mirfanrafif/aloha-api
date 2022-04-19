@@ -158,3 +158,10 @@ export interface CustomerInterestsData {
   name: string;
   user: CrmUser;
 }
+
+export class CustomerCrmSearchFilter {
+  'filter.categories.name'?: string;
+  'filter.interests.name'?: string;
+  'filter.users.email'?: string;
+  'filter.types.name'?: string;
+}

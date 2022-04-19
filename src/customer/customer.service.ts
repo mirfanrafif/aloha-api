@@ -6,8 +6,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AxiosError } from 'axios';
-import { catchError, map } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
+import { catchError, filter, map } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -22,8 +22,10 @@ import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, MoreThan, Repository } from 'typeorm';
 import {
+  CrmCustomer,
   CustomerAgentArrDto,
   CustomerCategoriesResponse,
+  CustomerCrmSearchFilter,
   CustomerInterestsResponse,
   CustomerResponse,
   DelegateCustomerRequestDto,
@@ -363,42 +365,7 @@ export class CustomerService {
           if (response.status < 400) {
             const customers = response.data.data;
 
-            const newCustomers: CustomerEntity[] = [];
-
-            for (const customer of customers) {
-              let phoneNumber = '';
-
-              if (customer.telephones.length == 0) {
-                continue;
-              }
-
-              if (customer.telephones.startsWith('0')) {
-                phoneNumber = '62' + customer.telephones.slice(1);
-              } else {
-                phoneNumber = customer.telephones;
-              }
-              phoneNumber = phoneNumber.split('-').join('');
-
-              const existingCustomer = await this.customerRepository.findOne({
-                where: [
-                  {
-                    phoneNumber: phoneNumber,
-                  },
-                ],
-              });
-              if (existingCustomer !== null) {
-                newCustomers.push(existingCustomer);
-                continue;
-              }
-
-              let newCustomer = this.customerRepository.create({
-                name: customer.full_name,
-                phoneNumber: phoneNumber,
-                customerCrmId: customer.id,
-              });
-              newCustomer = await this.customerRepository.save(newCustomer);
-              newCustomers.push(newCustomer);
-            }
+            const newCustomers = await this.saveCustomerFromCrm(customers);
             return <ApiResponse<CustomerEntity[]>>{
               success: true,
               data: newCustomers,
@@ -428,6 +395,80 @@ export class CustomerService {
           };
         }),
       );
+  }
+
+  getCustomerWithFilters(filters: CustomerCrmSearchFilter) {
+    return this.httpService
+      .get<CustomerResponse>('/customers', {
+        params: {
+          ...filters,
+        },
+        headers: {
+          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
+        },
+      })
+      .pipe(
+        map<AxiosResponse<CustomerResponse, any>, Promise<CustomerEntity[]>>(
+          async (response) => {
+            if (response.status < 400) {
+              const customers = response.data.data;
+              const newCustomers = await this.saveCustomerFromCrm(customers);
+              return newCustomers;
+            } else {
+              const newCustomers: CustomerEntity[] = [];
+              return newCustomers;
+            }
+          },
+        ),
+      );
+  }
+  async saveCustomerFromCrm(customers: CrmCustomer[]) {
+    const newCustomers: CustomerEntity[] = [];
+
+    for (const customer of customers) {
+      let phoneNumber = '';
+
+      if (customer.telephones.length == 0) {
+        continue;
+      }
+
+      if (customer.telephones.startsWith('0')) {
+        phoneNumber = '62' + customer.telephones.slice(1);
+      } else {
+        phoneNumber = customer.telephones;
+      }
+      phoneNumber = phoneNumber.split('-').join('');
+
+      if (
+        newCustomers.find(
+          (findCustomer) => findCustomer.phoneNumber === phoneNumber,
+        ) !== undefined
+      ) {
+        continue;
+      }
+
+      const existingCustomer = await this.customerRepository.findOne({
+        where: [
+          {
+            phoneNumber: phoneNumber,
+          },
+        ],
+      });
+      if (existingCustomer !== null) {
+        newCustomers.push(existingCustomer);
+        continue;
+      }
+
+      let newCustomer = this.customerRepository.create({
+        name: customer.full_name,
+        phoneNumber: phoneNumber,
+        customerCrmId: customer.id,
+      });
+      newCustomer = await this.customerRepository.save(newCustomer);
+      newCustomers.push(newCustomer);
+    }
+
+    return newCustomers;
   }
 
   async getAllCustomer() {

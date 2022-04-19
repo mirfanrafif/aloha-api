@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
@@ -52,6 +58,26 @@ export class ImageMessageRequestDto {
 export class BroadcastImageMessageRequestDto {
   @IsString()
   message: string;
+
+  @IsArray()
+  categories: string[];
+
+  @IsArray()
+  interests: string[];
+
+  @IsArray()
+  types: string[];
+}
+
+export class BroadcastDocumentMessageRequestDto {
+  @IsArray()
+  categories: string[];
+
+  @IsArray()
+  interests: string[];
+
+  @IsArray()
+  types: string[];
 }
 
 export class DocumentRequestDto {
@@ -155,6 +181,15 @@ export class VideoResponseItem {
 export class BroadcastMessageRequest {
   @IsNotEmpty()
   message: string;
+
+  @IsArray()
+  categories: string[];
+
+  @IsArray()
+  interests: string[];
+
+  @IsArray()
+  types: string[];
 }
 
 export class MessageResponseDto {

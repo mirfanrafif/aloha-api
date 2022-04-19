@@ -1,9 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { AxiosResponse, AxiosError } from 'axios';
-import { map, catchError } from 'rxjs';
+import { map, catchError, lastValueFrom } from 'rxjs';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
+import { CustomerCrmSearchFilter } from 'src/customer/customer.dto';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
@@ -19,6 +21,7 @@ import {
   SendImageResponseData,
   WablasSendDocumentRequestData,
   WablasSendDocumentRequest,
+  BroadcastDocumentMessageRequestDto,
 } from '../message.dto';
 import { MessageGateway } from '../message.gateway';
 import { MessageService } from '../message.service';
@@ -32,13 +35,46 @@ export class BroadcastMessageService {
     private gateway: MessageGateway,
   ) {}
 
+  async getCustomers(
+    categories: string[],
+    interests: string[],
+    types: string[],
+    email?: string,
+  ) {
+    const filter: CustomerCrmSearchFilter = {
+      'filter.categories.name':
+        categories.length > 0 ? '$in:' + categories.join(',') : undefined,
+      'filter.interests.name':
+        interests.length > 0 ? '$in:' + interests.join(',') : undefined,
+      'filter.types.name':
+        types.length > 0 ? '$in:' + types.join(',') : undefined,
+      'filter.users.email': email,
+    };
+
+    const customer: CustomerEntity[] = await lastValueFrom(
+      this.customerService.getCustomerWithFilters(filter),
+    );
+
+    if (customer === undefined) {
+      throw new InternalServerErrorException(
+        'failed to get customer data from crm',
+      );
+    }
+
+    return customer;
+  }
+
   //broadcast pesan ke customer
   async broadcastMessageToCustomer(
     body: BroadcastMessageRequest,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.getAllCustomer();
-
+    const customer = await this.getCustomers(
+      body.categories,
+      body.interests,
+      body.types,
+      agent.email,
+    );
     //mapping request
     const messages = customer.map<WablasSendMessageRequestData>((item) => ({
       phone: item.phoneNumber,
@@ -50,7 +86,6 @@ export class BroadcastMessageService {
     const request: WablasSendMessageRequest = {
       data: messages,
     };
-
     //buat request ke WABLAS API
     return this.http
       .post('/api/v2/send-message', JSON.stringify(request), {
@@ -70,7 +105,6 @@ export class BroadcastMessageService {
               messageResponses: response.data.data,
               agent: agent,
             });
-
             //kirim ke frontend lewat websocket
             for (const message of messages) {
               const response =
@@ -104,7 +138,12 @@ export class BroadcastMessageService {
     body: BroadcastImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.getAllCustomer();
+    const customer = await this.getCustomers(
+      body.categories,
+      body.interests,
+      body.types,
+      agent.email,
+    );
 
     const sendImageData: WablasSendImageRequestData[] = customer.map(
       (item) => ({
@@ -120,8 +159,6 @@ export class BroadcastMessageService {
     const request: WablasSendImageRequest = {
       data: sendImageData,
     };
-
-    console.log(request);
 
     //buat request ke WABLAS API
     return this.http
@@ -179,9 +216,15 @@ export class BroadcastMessageService {
   //kirim gambar ke customer
   async broadcastDocumentToCustomer(
     file: Express.Multer.File,
+    body: BroadcastDocumentMessageRequestDto,
     agent: UserEntity,
   ) {
-    const customers = await this.customerService.getAllCustomer();
+    const customers = await this.getCustomers(
+      body.categories,
+      body.interests,
+      body.types,
+      agent.email,
+    );
 
     const requestData: WablasSendDocumentRequestData[] = customers.map(
       (customer) => ({

@@ -18,13 +18,14 @@ import { BroadcastMessageService } from './broadcast-message.service';
 import {
   BroadcastMessageRequest,
   BroadcastImageMessageRequestDto,
+  BroadcastDocumentMessageRequestDto,
 } from '../message.dto';
 
 @Controller('message/broadcast')
 export class MessageBroadcastController {
   constructor(private service: BroadcastMessageService) {}
 
-  @Post('broadcast')
+  @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
   broadcastMessageToCustomer(
@@ -37,7 +38,7 @@ export class MessageBroadcastController {
     );
   }
 
-  @Post('broadcast/image')
+  @Post('image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('image', {
@@ -69,7 +70,7 @@ export class MessageBroadcastController {
     return this.service.broadcastImageToCustomer(image, body, user);
   }
 
-  @Post('broadcast/document')
+  @Post('document')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('document', {
@@ -95,7 +96,8 @@ export class MessageBroadcastController {
   broadcastDocumentToCustomer(
     @UploadedFile() file: Express.Multer.File,
     @Request() request,
+    @Body() body: BroadcastDocumentMessageRequestDto,
   ) {
-    return this.service.broadcastDocumentToCustomer(file, request.user);
+    return this.service.broadcastDocumentToCustomer(file, body, request.user);
   }
 }
