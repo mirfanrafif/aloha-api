@@ -30,6 +30,7 @@ import {
   WablasSendImageRequestData,
   WablasSendDocumentRequestData,
   BroadcastImageMessageRequestDto,
+  WablasSendVideoRequest,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -464,7 +465,7 @@ export class MessageService {
   //kirim gambar ke customer
   async sendVideoToCustomer(
     file: Express.Multer.File,
-    body: MessageRequestDto,
+    body: DocumentRequestDto,
     agent: UserEntity,
   ) {
     const customer = await this.customerService.findCustomer({
@@ -472,12 +473,11 @@ export class MessageService {
     });
 
     //templating request
-    const request: WablasSendImageRequest = {
+    const request: WablasSendVideoRequest = {
       data: [
         {
           phone: customer.phoneNumber,
-          image: process.env.BASE_URL + '/message/video/' + file.filename,
-          caption: body.message,
+          video: process.env.BASE_URL + '/message/video/' + file.filename,
           isGroup: false,
           retry: false,
           secret: false,
