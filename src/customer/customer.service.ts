@@ -316,13 +316,23 @@ export class CustomerService {
             const newCustomers: CustomerEntity[] = [];
 
             for (const customer of customers) {
+              let phoneNumber = '';
+
+              if (customer.telephones.length == 0) {
+                continue;
+              }
+
+              if (customer.telephones.startsWith('0')) {
+                phoneNumber = '62' + customer.telephones.slice(1);
+              } else {
+                phoneNumber = customer.telephones;
+              }
+              phoneNumber = phoneNumber.split('-').join('');
+
               const existingCustomer = await this.customerRepository.findOne({
                 where: [
                   {
-                    customerCrmId: customer.id,
-                  },
-                  {
-                    phoneNumber: customer.telephones,
+                    phoneNumber: phoneNumber,
                   },
                 ],
               });
@@ -333,7 +343,7 @@ export class CustomerService {
 
               let newCustomer = this.customerRepository.create({
                 name: customer.full_name,
-                phoneNumber: customer.telephones,
+                phoneNumber: phoneNumber,
                 customerCrmId: customer.id,
               });
               newCustomer = await this.customerRepository.save(newCustomer);
