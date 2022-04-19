@@ -27,7 +27,6 @@ import {
   WablasSendDocumentRequest,
   MessageTrackingDto,
   MessageTemplateRequestDto,
-  StartConversationDto,
   WablasSendImageRequestData,
   WablasSendDocumentRequestData,
   BroadcastImageMessageRequestDto,
@@ -37,7 +36,7 @@ import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
 import { ConversationService } from './conversation.service';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { UserJobService } from 'src/user-job/user-job.service';
+import { UserJobService } from 'src/job/user-job.service';
 import {
   CustomerAgentArrDto,
   CustomerAgentResponseDto,
@@ -183,7 +182,7 @@ export class MessageService {
         messageRequest: {
           customerNumber: data.customer.phoneNumber,
           message:
-            'Sebentar lagi anda akan terhubung dengan customer service kami, ' +
+            'Sebentar lagi anda akan terhubung dengan sales kami, ' +
             customerAgent.agent.full_name +
             '. Mohon tunggu sebentar',
         },

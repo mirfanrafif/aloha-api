@@ -56,15 +56,28 @@ export class UserService {
 
     const users = await this.userRepository.find({
       relations: {
-        job: true,
+        job: {
+          job: true,
+        },
+        customer: {
+          customer: true,
+        },
       },
       where: conditions,
       take: pageSize,
       skip: ((page ?? 1) - 1) * 25,
     });
-    return <ApiResponse<UserEntity[]>>{
+
+    const userResponse = users.map((user) => {
+      const customers = user.customer.map((customer) => customer.customer);
+      return {
+        ...user,
+        customer: customers,
+      };
+    });
+    return <ApiResponse<any[]>>{
       success: true,
-      data: users,
+      data: userResponse,
       message: 'Success getting users',
     };
   }

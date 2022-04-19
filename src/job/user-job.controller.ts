@@ -15,7 +15,7 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/core/repository/user/user.entity';
-import { UserJobService } from 'src/user-job/user-job.service';
+import { UserJobService } from 'src/job/user-job.service';
 import { AddJobRequest, JobAssignRequestDto } from 'src/user/user.dto';
 
 @Controller('user/job')

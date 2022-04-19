@@ -7,7 +7,7 @@ import { MessageRepositoryModule } from 'src/core/repository/message/message.mod
 import { CustomerModule } from 'src/customer/customer.module';
 import { ConversationRepositoryModule } from 'src/core/repository/conversation/conversation-repository.module';
 import { ConversationService } from './conversation.service';
-import { UserJobModule } from 'src/user-job/user-job.module';
+import { UserJobModule } from 'src/job/user-job.module';
 import { UserModule } from 'src/user/user.module';
 import { MessageTemplateModule } from 'src/core/repository/message-template/message-template.module';
 import { MessageTemplateController } from './message-template.controller';

@@ -54,8 +54,8 @@ export class UserEntity {
   @OneToMany(() => MessageEntity, (message) => message.agent)
   messages: MessageEntity[];
 
-  @ManyToOne(() => UserJobEntity, (category) => category.agents)
-  job?: UserJobEntity;
+  @OneToMany(() => UserJobEntity, (job) => job.agent)
+  job: UserJobEntity[];
 }
 
 export type UserEntityType = {

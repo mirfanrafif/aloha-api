@@ -28,7 +28,9 @@ export class UserProfileService {
         id: id,
       },
       relations: {
-        job: true,
+        job: {
+          job: true,
+        },
       },
     });
     return {

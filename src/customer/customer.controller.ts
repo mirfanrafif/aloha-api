@@ -19,18 +19,19 @@ import { DelegateCustomerRequestDto } from './customer.dto';
 import { CustomerService } from './customer.service';
 
 @Controller('customer')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.admin)
 @UseInterceptors(ClassSerializerInterceptor)
 export class CustomerController {
   constructor(private service: CustomerService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @Post('delegate')
   delegateCustomerToAgent(@Body() body: DelegateCustomerRequestDto) {
     return this.service.delegateCustomerToAgent(body);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   getAllCustomer(
     @Query('search') search: string,
     @Query('page') page?: number,

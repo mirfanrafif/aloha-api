@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { UserJobRepositoryModule } from 'src/core/repository/user-job/user-job.module';
+import { JobRepositoryModule } from 'src/core/repository/job/job.module';
 import { UserRepositoryModule } from 'src/core/repository/user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -23,7 +23,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService],
     }),
-    UserJobRepositoryModule,
+    JobRepositoryModule,
     ConfigModule,
   ],
   controllers: [AuthController],
