@@ -260,4 +260,9 @@ export class MessageController {
   getMessageDocument(@Param('document_name') filename: string, @Res() res) {
     res.sendFile(filename, { root: 'uploads/messages/document' });
   }
+
+  @Get('video/:video_name')
+  getMessageVideo(@Param('video_name') filename: string, @Res() res) {
+    res.sendFile(filename, { root: 'uploads/messages/video' });
+  }
 }
