@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageTemplateEntity } from 'src/core/repository/message-template/message-template.entity';
 import { MESSAGE_TEMPLATE_REPOSITORY } from 'src/core/repository/message-template/message-template.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -31,6 +31,49 @@ export class MessageTemplateService {
       success: true,
       data: addData,
       message: 'Success adding template',
+    };
+  }
+
+  async updateMessageTemplate(id: number, body: MessageTemplateRequestDto) {
+    const templates = await this.messageTemplateRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (templates === null) {
+      throw new NotFoundException('template not found');
+    }
+
+    templates.name = body.name;
+    templates.template = body.template;
+
+    const newTemplate = await this.messageTemplateRepository.save(templates);
+
+    return <ApiResponse<MessageTemplateEntity>>{
+      success: true,
+      data: newTemplate,
+      message: 'Success adding template',
+    };
+  }
+
+  async deleteTemplate(id: number) {
+    const templates = await this.messageTemplateRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (templates === null) {
+      throw new NotFoundException('template not found');
+    }
+
+    await this.messageTemplateRepository.delete(id);
+
+    return <ApiResponse<MessageTemplateEntity>>{
+      success: true,
+      data: templates,
+      message: 'Success delete template',
     };
   }
 }
