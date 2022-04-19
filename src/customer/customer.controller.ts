@@ -47,4 +47,22 @@ export class CustomerController {
   ) {
     return this.service.startMessageWithCustomer(id, request.user);
   }
+
+  @Get('categories')
+  @UseGuards(JwtAuthGuard)
+  getCustomerCategories() {
+    return this.service.getCustomerCategories();
+  }
+
+  @Get('interests')
+  @UseGuards(JwtAuthGuard)
+  getCustomerInterests() {
+    return this.service.getCustomerInterests();
+  }
+
+  @Get('types')
+  @UseGuards(JwtAuthGuard)
+  getCustomerTypes() {
+    return this.service.getCustomerTypes();
+  }
 }

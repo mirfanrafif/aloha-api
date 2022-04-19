@@ -69,7 +69,7 @@ export interface CrmCustomer {
   notes: null | string;
   dob: null;
   telephones: string;
-  users: User[];
+  users: CrmUser[];
   types: Type[];
   full_name: string;
   telephones_array: string[];
@@ -91,7 +91,7 @@ export interface Type {
   name: string;
   system_id?: number;
 }
-export interface User {
+export interface CrmUser {
   id: number;
   created_at: Date;
   updated_at: Date;
@@ -117,4 +117,44 @@ export interface CRMCustomerMeta {
   currentPage: number;
   totalPages: number;
   sortBy: Array<string[]>;
+}
+
+export type CustomerCategoriesResponse = {
+  data: CustomerCategoriesData[];
+  meta: Meta;
+  links: Links;
+};
+
+export type CustomerCategoriesData = {
+  id: number;
+  created_at: Date;
+  updated_at: Date;
+  name: string;
+  user: CrmUser;
+};
+
+export interface Links {
+  current: string;
+}
+
+export interface Meta {
+  itemsPerPage: number;
+  totalItems: number;
+  currentPage: number;
+  totalPages: number;
+  sortBy: Array<string[]>;
+}
+
+export interface CustomerInterestsResponse {
+  data: CustomerInterestsData[];
+  meta: Meta;
+  links: Links;
+}
+
+export interface CustomerInterestsData {
+  id: number;
+  created_at: Date;
+  updated_at: Date;
+  name: string;
+  user: CrmUser;
 }

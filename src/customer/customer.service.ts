@@ -23,6 +23,8 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, MoreThan, Repository } from 'typeorm';
 import {
   CustomerAgentArrDto,
+  CustomerCategoriesResponse,
+  CustomerInterestsResponse,
   CustomerResponse,
   DelegateCustomerRequestDto,
 } from './customer.dto';
@@ -41,6 +43,54 @@ export class CustomerService {
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
   ) {}
+
+  getCustomerCategories() {
+    return this.httpService
+      .get<CustomerCategoriesResponse>('/customer_categories', {
+        headers: {
+          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
+        },
+      })
+      .pipe(
+        map((response) => {
+          return response.data;
+        }),
+      );
+  }
+
+  getCustomerInterests() {
+    return this.httpService
+      .get<CustomerInterestsResponse>('/customer_interests', {
+        headers: {
+          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
+        },
+        params: {
+          limit: 100,
+        },
+      })
+      .pipe(
+        map((response) => {
+          return response.data;
+        }),
+      );
+  }
+
+  getCustomerTypes() {
+    return this.httpService
+      .get<CustomerInterestsResponse>('/customer_types', {
+        headers: {
+          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
+        },
+        params: {
+          limit: 100,
+        },
+      })
+      .pipe(
+        map((response) => {
+          return response.data;
+        }),
+      );
+  }
 
   async findAndCreateCustomer({
     phoneNumber,
