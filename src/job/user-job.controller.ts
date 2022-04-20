@@ -48,6 +48,13 @@ export class UserJobController {
     return this.jobService.assignAgentToJob(jobAssignBody);
   }
 
+  @Post('unassign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  unassignAgentToJob(@Body() jobAssignBody: JobAssignRequestDto) {
+    return this.jobService.unassignAgentToJob(jobAssignBody);
+  }
+
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)

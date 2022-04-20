@@ -82,6 +82,37 @@ export class UserJobService {
     };
   }
 
+  async unassignAgentToJob(
+    body: JobAssignRequestDto,
+  ): Promise<ApiResponse<UserEntity>> {
+    await this.userJobRepository.delete({
+      job: {
+        id: body.jobId,
+      },
+      agent: {
+        id: body.agentId,
+      },
+    });
+
+    const newAgent = await this.userRepository.findOneOrFail({
+      where: {
+        id: body.agentId,
+      },
+      relations: {
+        job: {
+          job: true,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: newAgent,
+      message:
+        'Succesfully assign agent ' + newAgent.id + ' to job ' + body.jobId,
+    };
+  }
+
   async cekJobSesuai(pilihan: number) {
     const userJobs = await this.jobRepository.find({
       relations: {
