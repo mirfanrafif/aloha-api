@@ -72,6 +72,7 @@ export class UserService {
       const customers = user.customer.map((customer) => customer.customer);
       return {
         ...user,
+        password: undefined,
         customer: customers,
       };
     });
