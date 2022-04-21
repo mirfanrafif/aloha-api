@@ -24,7 +24,7 @@ export class MessageEntity {
   message: string;
 
   @Column()
-  status: string;
+  status: MessageStatus;
 
   @Column({ nullable: true })
   file: string;

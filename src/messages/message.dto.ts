@@ -1,6 +1,5 @@
 import {
   IsArray,
-  IsDate,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -199,7 +198,7 @@ export class MessageResponseDto {
   messageId: string;
   message: string;
   customer: CustomerEntity;
-  status: string;
+  status: MessageStatus;
   agent: UserEntity;
   file: string;
   sender_name: string;
@@ -209,31 +208,16 @@ export class MessageResponseDto {
   updated_at: Date;
 }
 
-export class MessageTrackingDto {
-  @IsNotEmpty()
+export type MessageTrackingDto = {
   id: string;
-
-  @IsString()
   message: string;
-
-  @IsNotEmpty()
   phone: string;
-
-  @IsNotEmpty()
   deviceId: string;
-
-  @IsNotEmpty()
   sender: string;
-
-  @IsEnum(MessageStatus)
-  status: string;
-
-  @IsString()
+  status: MessageStatus;
   note: string;
-
-  @IsNotEmpty()
   timestamp: Date;
-}
+};
 
 export class MessageTemplateRequestDto {
   @IsNotEmpty()
