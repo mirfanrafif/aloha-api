@@ -22,6 +22,7 @@ import {
   WablasSendDocumentRequestData,
   WablasSendDocumentRequest,
   BroadcastDocumentMessageRequestDto,
+  MessageType,
 } from '../message.dto';
 import { MessageGateway } from '../message.gateway';
 import { MessageService } from '../message.service';
@@ -176,11 +177,12 @@ export class BroadcastMessageService {
           ) => {
             //save ke database
             const messages =
-              await this.messageService.saveOutgoingDocumentMessage({
+              await this.messageService.saveOutgoingMessageWithAttachment({
                 messageResponses: response.data.data,
                 agent: agent,
                 filename:
                   process.env.BASE_URL + '/message/image/' + file.filename,
+                type: MessageType.image,
               });
 
             //kirim ke frontend lewat websocket
@@ -258,10 +260,11 @@ export class BroadcastMessageService {
           ) => {
             //save ke database
             const messages =
-              await this.messageService.saveOutgoingDocumentMessage({
+              await this.messageService.saveOutgoingMessageWithAttachment({
                 messageResponses: response.data.data,
                 agent: agent,
                 filename: file.filename,
+                type: MessageType.document,
               });
 
             //kirim ke frontend lewat websocket

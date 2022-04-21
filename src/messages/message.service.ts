@@ -436,7 +436,7 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingDocumentMessage({
+            const messages = await this.saveOutgoingMessageWithAttachment({
               messageResponses: response.data.data,
               agent: agent,
               customer: customer,
@@ -516,7 +516,7 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendVideoResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingDocumentMessage({
+            const messages = await this.saveOutgoingMessageWithAttachment({
               messageResponses: response.data.data,
               customer: customer,
               agent: agent,
@@ -593,7 +593,7 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingDocumentMessage({
+            const messages = await this.saveOutgoingMessageWithAttachment({
               messageResponses: response.data.data,
               agent: agent,
               filename:
@@ -669,7 +669,7 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingDocumentMessage({
+            const messages = await this.saveOutgoingMessageWithAttachment({
               messageResponses: response.data.data,
               agent: agent,
               filename: body.url,
@@ -744,7 +744,7 @@ export class MessageService {
   }
 
   //simpan pesan dokumen keluar
-  async saveOutgoingDocumentMessage({
+  async saveOutgoingMessageWithAttachment({
     messageResponses,
     customer,
     agent,
@@ -775,7 +775,7 @@ export class MessageService {
         agent: agent,
         status: messageItem.status,
         fromMe: true,
-        type: MessageType.document,
+        type: type,
       });
       messages.push(message);
     }
