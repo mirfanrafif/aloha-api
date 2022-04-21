@@ -209,28 +209,13 @@ export class MessageResponseDto {
 }
 
 export class MessageTrackingDto {
-  @IsNotEmpty()
   id: string;
-
-  @IsNotEmpty()
   message: string;
-
-  @IsNotEmpty()
   phone: string;
-
-  @IsNotEmpty()
   deviceId: string;
-
-  @IsNotEmpty()
   sender: string;
-
-  @IsNotEmpty()
-  @IsEnum(MessageStatus)
   status: MessageStatus;
-
   note: string;
-
-  @IsNotEmpty()
   timestamp: Date;
 }
 

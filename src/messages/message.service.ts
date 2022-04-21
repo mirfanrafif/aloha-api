@@ -193,7 +193,7 @@ export class MessageService {
   async updateMessageStatus(
     body: MessageTrackingDto,
   ): Promise<ApiResponse<MessageResponseDto>> {
-    console.log(body.status);
+    console.log(body);
     const message = await this.messageRepository.findOneOrFail({
       where: {
         messageId: body.id,
