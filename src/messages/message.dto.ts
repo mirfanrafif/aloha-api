@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsString,
+  IsUrl,
 } from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
@@ -230,4 +231,14 @@ export class StartConversationDto {
   @IsNotEmpty()
   @IsNumber()
   customerId: number;
+}
+
+export class SendDocumentViaUrlDto {
+  @IsNotEmpty()
+  @IsUrl()
+  url: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  customerNumber: string;
 }

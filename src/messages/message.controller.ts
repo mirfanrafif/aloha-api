@@ -25,6 +25,7 @@ import {
   MessageRequestDto,
   MessageResponseDto,
   MessageTrackingDto,
+  SendDocumentViaUrlDto,
   TextMessage,
 } from './message.dto';
 import { MessageService } from './message.service';
@@ -139,6 +140,15 @@ export class MessageController {
     @Request() request,
   ) {
     return this.service.sendDocumentToCustomer(file, data, request.user);
+  }
+
+  @Post('document_url')
+  @UseGuards(JwtAuthGuard)
+  sendDocumentToCustomerViaUrl(
+    @Body() body: SendDocumentViaUrlDto,
+    @Request() request,
+  ) {
+    return this.service.sendDocumentToCustomerViaUrl(body, request.user);
   }
 
   @Post('video')
