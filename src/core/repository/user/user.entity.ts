@@ -11,6 +11,7 @@ import {
 import { MessageEntity } from '../message/message.entity';
 import { CustomerAgent } from '../customer-agent/customer-agent.entity';
 import { UserJobEntity } from '../user-job/user-job.entity';
+import { MessageTemplateEntity } from '../message-template/message-template.entity';
 
 @Entity({
   name: 'users',
@@ -56,6 +57,9 @@ export class UserEntity {
 
   @OneToMany(() => UserJobEntity, (job) => job.agent)
   job: UserJobEntity[];
+
+  @OneToMany(() => MessageTemplateEntity, (template) => template.user)
+  templates: MessageTemplateEntity[];
 }
 
 export type UserEntityType = {

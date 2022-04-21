@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageTemplateEntity } from 'src/core/repository/message-template/message-template.entity';
 import { MESSAGE_TEMPLATE_REPOSITORY } from 'src/core/repository/message-template/message-template.module';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import { MessageTemplateRequestDto } from '../message.dto';
@@ -12,8 +13,17 @@ export class MessageTemplateService {
     private messageTemplateRepository: Repository<MessageTemplateEntity>,
   ) {}
 
-  async getMessageTemplates() {
-    const data = await this.messageTemplateRepository.find();
+  async getMessageTemplates(user: UserEntity) {
+    const data = await this.messageTemplateRepository.find({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+      relations: {
+        user: true,
+      },
+    });
     return <ApiResponse<MessageTemplateEntity[]>>{
       success: true,
       data: data,
@@ -21,10 +31,11 @@ export class MessageTemplateService {
     };
   }
 
-  async addMessageTemplate(body: MessageTemplateRequestDto) {
+  async addMessageTemplate(body: MessageTemplateRequestDto, user: UserEntity) {
     let addData = await this.messageTemplateRepository.create({
       name: body.name,
       template: body.template,
+      user: user,
     });
     addData = await this.messageTemplateRepository.save(addData);
     return <ApiResponse<MessageTemplateEntity>>{

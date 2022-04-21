@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -7,28 +8,36 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Request,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { MessageTemplateService } from './message-template.service';
 import { MessageTemplateRequestDto } from '../message.dto';
 
 @Controller('message-template')
+@UseInterceptors(ClassSerializerInterceptor)
 export class MessageTemplateController {
   constructor(private service: MessageTemplateService) {}
 
   @Get()
-  getMessageTemplate() {
-    return this.service.getMessageTemplates();
+  @UseGuards(JwtAuthGuard)
+  getMessageTemplate(@Request() request) {
+    return this.service.getMessageTemplates(request.user);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  addMessageTemplate(@Body() body: MessageTemplateRequestDto) {
-    return this.service.addMessageTemplate(body);
+  addMessageTemplate(
+    @Body() body: MessageTemplateRequestDto,
+    @Request() request,
+  ) {
+    return this.service.addMessageTemplate(body, request.user);
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   updateMessageTemplate(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: MessageTemplateRequestDto,
@@ -37,6 +46,7 @@ export class MessageTemplateController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   deleteMessageTemplate(@Param('id', ParseIntPipe) id: number) {
     return this.service.deleteTemplate(id);
   }
