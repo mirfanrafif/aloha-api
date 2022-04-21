@@ -1,5 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
 import { catchError, map } from 'rxjs';
 import {
@@ -40,6 +46,7 @@ import {
   CustomerAgentResponseDto,
 } from 'src/customer/customer.dto';
 import { UserService } from 'src/user/user.service';
+import { isEnum } from 'class-validator';
 
 const pageSize = 20;
 
@@ -193,6 +200,9 @@ export class MessageService {
   async updateMessageStatus(
     body: MessageTrackingDto,
   ): Promise<ApiResponse<MessageResponseDto>> {
+    if (!isEnum(body.status, MessageStatus)) {
+      throw new BadRequestException('Wrong type of message status');
+    }
     const message = await this.messageRepository.findOneOrFail({
       where: {
         messageId: body.id,
