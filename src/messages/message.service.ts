@@ -290,7 +290,7 @@ export class MessageService {
       agent: agent,
       status: MessageStatus.RECEIVED,
       fromMe: false,
-      file: fileUrl,
+      file: message.file.length > 0 ? fileUrl : undefined,
       type: message.messageType,
     });
 
