@@ -199,7 +199,7 @@ export class MessageResponseDto {
   messageId: string;
   message: string;
   customer: CustomerEntity;
-  status: MessageStatus;
+  status: string;
   agent: UserEntity;
   file: string;
   sender_name: string;
@@ -226,7 +226,7 @@ export class MessageTrackingDto {
   sender: string;
 
   @IsEnum(MessageStatus)
-  status: MessageStatus;
+  status: string;
 
   @IsString()
   note: string;
