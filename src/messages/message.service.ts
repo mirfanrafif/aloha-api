@@ -493,10 +493,11 @@ export class MessageService {
             response: AxiosResponse<WablasApiResponse<SendVideoResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.saveOutgoingImageMessage({
+            const messages = await this.saveOutgoingVideoMessage({
               messageResponses: response.data.data,
-              agent: agent,
               customer: customer,
+              agent: agent,
+              filename: file.filename,
             });
 
             //kirim ke frontend lewat websocket
@@ -708,7 +709,7 @@ export class MessageService {
         agent: agent,
         status: messageItem.status,
         fromMe: true,
-        type: MessageType.document,
+        type: MessageType.video,
       });
       messages.push(message);
     }
