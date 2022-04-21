@@ -66,7 +66,7 @@ export class MessageService {
 
     //cari customer, kalau tidak ada maka simpan baru di database
     const customer: CustomerEntity =
-      await this.customerService.findAndCreateCustomer({
+      await this.customerService.findOrCreateCustomer({
         phoneNumber: incomingMessage.phone,
         name: incomingMessage.pushName,
       });
@@ -98,7 +98,7 @@ export class MessageService {
           message: helloMessage,
         },
         agent: aloha,
-      });
+      }).then((value) => value.subscribe());
       //mulai conversation
       await this.conversationService.startConversation(data.customer);
 
@@ -333,6 +333,8 @@ export class MessageService {
           async (
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
+            console.log(response.data);
+
             //save ke database
             const messages = await this.saveOutgoingMessage({
               messageResponses: response.data.data,
@@ -359,6 +361,7 @@ export class MessageService {
           },
         ),
         catchError((value: AxiosError<WablasApiResponse<null>>) => {
+          console.log(value.response);
           if (value.response !== undefined) {
             throw new WablasAPIException(
               'Failed to send message to Wablas API. Message : ' +
@@ -622,7 +625,7 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findAndCreateCustomer({
+          : await this.customerService.findOrCreateCustomer({
               phoneNumber: messageItem.phone,
             });
       let message = this.messageRepository.create({
@@ -660,7 +663,7 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findAndCreateCustomer({
+          : await this.customerService.findOrCreateCustomer({
               phoneNumber: messageItem.phone,
             });
       const message = await this.messageRepository.save({
@@ -698,7 +701,7 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findAndCreateCustomer({
+          : await this.customerService.findOrCreateCustomer({
               phoneNumber: messageItem.phone,
             });
       const message = await this.messageRepository.save({
@@ -734,7 +737,7 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findAndCreateCustomer({
+          : await this.customerService.findOrCreateCustomer({
               phoneNumber: messageItem.phone,
             });
       const message = await this.messageRepository.save({

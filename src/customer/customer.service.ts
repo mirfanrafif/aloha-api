@@ -94,7 +94,7 @@ export class CustomerService {
       );
   }
 
-  async findAndCreateCustomer({
+  async findOrCreateCustomer({
     phoneNumber,
     name,
   }: {
@@ -153,7 +153,9 @@ export class CustomerService {
     const agent = await this.userRepository.find({
       where: {
         job: {
-          id: agentJob,
+          job: {
+            id: agentJob,
+          },
         },
       },
       relations: {
