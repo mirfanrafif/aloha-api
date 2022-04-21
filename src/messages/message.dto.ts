@@ -239,6 +239,5 @@ export class SendDocumentViaUrlDto {
   url: string;
 
   @IsNotEmpty()
-  @IsNumber()
   customerNumber: string;
 }
