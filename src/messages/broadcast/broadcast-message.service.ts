@@ -175,12 +175,13 @@ export class BroadcastMessageService {
             response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
             //save ke database
-            const messages = await this.messageService.saveOutgoingImageMessage(
-              {
+            const messages =
+              await this.messageService.saveOutgoingDocumentMessage({
                 messageResponses: response.data.data,
                 agent: agent,
-              },
-            );
+                filename:
+                  process.env.BASE_URL + '/message/image/' + file.filename,
+              });
 
             //kirim ke frontend lewat websocket
             const messageResponse = await Promise.all(
