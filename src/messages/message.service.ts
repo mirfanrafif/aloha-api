@@ -442,6 +442,7 @@ export class MessageService {
               customer: customer,
               filename:
                 process.env.BASE_URL + '/message/image/' + file.filename,
+              type: MessageType.image,
             });
 
             //kirim ke frontend lewat websocket
@@ -521,6 +522,7 @@ export class MessageService {
               agent: agent,
               filename:
                 process.env.BASE_URL + '/message/video/' + file.filename,
+              type: MessageType.video,
             });
 
             //kirim ke frontend lewat websocket
@@ -597,6 +599,7 @@ export class MessageService {
               filename:
                 process.env.BASE_URL + '/message/document/' + file.filename,
               customer: customer,
+              type: MessageType.document,
             });
 
             //kirim ke frontend lewat websocket
@@ -671,6 +674,7 @@ export class MessageService {
               agent: agent,
               filename: body.url,
               customer: customer,
+              type: MessageType.document,
             });
 
             //kirim ke frontend lewat websocket
@@ -745,11 +749,13 @@ export class MessageService {
     customer,
     agent,
     filename,
+    type,
   }: {
     messageResponses: SendMessageResponseData;
     customer?: CustomerEntity;
     agent?: UserEntity;
     filename: string;
+    type: MessageType;
   }): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
