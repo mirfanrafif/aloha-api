@@ -228,7 +228,6 @@ export class MessageTrackingDto {
   @IsEnum(MessageStatus)
   status: MessageStatus;
 
-  @IsNotEmpty()
   note: string;
 
   @IsNotEmpty()
