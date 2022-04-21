@@ -145,7 +145,7 @@ export class MessageService {
       }
 
       //cek apakah ada cs yang bekerja di layanan itu
-      if (pilihanSesuai.agents.length == 0) {
+      if (pilihanSesuai.job.agents.length == 0) {
         await this.sendMessageToCustomer({
           messageRequest: {
             customerNumber: data.customer.phoneNumber,
@@ -163,7 +163,7 @@ export class MessageService {
       //delegasikan customer ke agent yang sesuai
       const customerAgent = await this.customerService.assignCustomerToAgent({
         customer: customer,
-        agentJob: pilihan,
+        agentJob: pilihanSesuai.job.id,
       });
 
       //ubah status jadi connected

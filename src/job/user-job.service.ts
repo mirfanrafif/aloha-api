@@ -121,7 +121,12 @@ export class UserJobService {
         },
       },
     });
-    const pilihanSesuai = userJobs.find((job) => job.id === pilihan);
+    const pilihanSesuai = userJobs
+      .map((value, index) => ({
+        job: value,
+        menu: index + 1,
+      }))
+      .find((job) => job.menu === pilihan);
     return pilihanSesuai;
   }
 
@@ -129,8 +134,8 @@ export class UserJobService {
   async showMenu() {
     const userJobs = await this.jobRepository.find();
     return userJobs
-      .map((job) => {
-        return `${job.id}. ${job.name}`;
+      .map((job, index) => {
+        return `${index + 1}. ${job.name}`;
       })
       .join('\n');
   }
