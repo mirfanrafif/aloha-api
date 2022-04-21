@@ -214,6 +214,8 @@ export class MessageTrackingDto {
   phone: string;
   deviceId: string;
   sender: string;
+  @IsNotEmpty()
+  @IsEnum(MessageStatus)
   status: MessageStatus;
   note: string;
   timestamp: Date;
