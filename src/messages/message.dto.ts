@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsDate,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -209,13 +210,28 @@ export class MessageResponseDto {
 }
 
 export class MessageTrackingDto {
+  @IsNotEmpty()
   id: string;
+
+  @IsString()
   message: string;
+
+  @IsNotEmpty()
   phone: string;
+
+  @IsNotEmpty()
   deviceId: string;
+
+  @IsNotEmpty()
   sender: string;
+
+  @IsEnum(MessageStatus)
   status: MessageStatus;
+
+  @IsString()
   note: string;
+
+  @IsNotEmpty()
   timestamp: Date;
 }
 
