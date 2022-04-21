@@ -208,31 +208,16 @@ export class MessageResponseDto {
   updated_at: Date;
 }
 
-export class MessageTrackingDto {
-  @IsNotEmpty()
+export type MessageTrackingDto = {
   id: string;
-
-  @IsNotEmpty()
   message: string;
-
-  @IsNotEmpty()
   phone: string;
-
-  @IsNotEmpty()
   deviceId: string;
-
-  @IsNotEmpty()
   sender: string;
-
-  @IsNotEmpty()
-  @IsEnum(MessageStatus)
   status: MessageStatus;
-
   note: string;
-
-  @IsNotEmpty()
   timestamp: Date;
-}
+};
 
 export class MessageTemplateRequestDto {
   @IsNotEmpty()
