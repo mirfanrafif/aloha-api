@@ -160,7 +160,7 @@ export class SendImageResponseData {
 export class ImageResponseItem {
   id: string;
   phone: string;
-  caption: string;
+  caption?: string;
   image: string;
   status: MessageStatus;
 }

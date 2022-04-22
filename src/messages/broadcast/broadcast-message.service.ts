@@ -264,7 +264,7 @@ export class BroadcastMessageService {
     agent: UserEntity,
     file: Express.Multer.File,
   ) {
-    const messageResponses = request.data.map<MessageResponseItem>((item) => ({
+    const messageResponses = request.data.map<ImageResponseItem>((item) => ({
       id: '123',
       phone: item.phone,
       image: item.image,
@@ -389,10 +389,11 @@ export class BroadcastMessageService {
     agent: UserEntity,
     file: Express.Multer.File,
   ) {
-    const messageResponses = request.data.map<MessageResponseItem>((item) => ({
+    const messageResponses = request.data.map<ImageResponseItem>((item) => ({
       id: '123',
       phone: item.phone,
       status: MessageStatus.PENDING,
+      image: '',
     }));
 
     const messageEntities =
