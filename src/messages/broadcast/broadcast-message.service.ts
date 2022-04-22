@@ -185,31 +185,18 @@ export class BroadcastMessageService {
     body: BroadcastImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    const categories = JSON.parse(body.categories);
-    const interests = JSON.parse(body.interests);
-    const types = JSON.parse(body.types);
+    const categories = this.validateArray(body.categories);
+    const interests = this.validateArray(body.interests);
+    const types = this.validateArray(body.types);
 
-    console.log(categories);
-    console.log(interests);
-    console.log(types);
-
-    const validateArray = (array: string) => {
-      if (!isArray(array)) {
-        throw new BadRequestException('Provide array please');
-      }
-    };
-
-    validateArray(categories);
-    validateArray(interests);
-    validateArray(types);
-    const customer = await this.getCustomers(
+    const customers = await this.getCustomers(
       categories,
       interests,
       types,
       agent.email,
     );
 
-    const sendImageData: WablasSendImageRequestData[] = customer.map(
+    const sendImageData: WablasSendImageRequestData[] = customers.map(
       (item) => ({
         phone: item.phoneNumber,
         image: process.env.BASE_URL + '/message/image/' + file.filename,
