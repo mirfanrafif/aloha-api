@@ -313,7 +313,7 @@ export class BroadcastMessageService {
       }
       return categories;
     } catch (error) {
-      throw new BadRequestException('JSON Parse error');
+      throw new BadRequestException('JSON Parse error on value ' + array);
     }
   }
 
