@@ -325,17 +325,20 @@ export class BroadcastMessageService {
     agent: UserEntity,
   ) {
     const validateArray = (array: string) => {
-      if (!isArray(array)) {
-        throw new BadRequestException('Provide array please');
+      try {
+        const categories = JSON.parse(array);
+        if (!isArray(array)) {
+          throw new BadRequestException('Provide array please');
+        }
+        return categories;
+      } catch (error) {
+        throw new BadRequestException('JSON Parse error');
       }
     };
 
-    validateArray(body.categories);
-    validateArray(body.interests);
-    validateArray(body.types);
-    const categories = JSON.parse(body.categories);
-    const interests = JSON.parse(body.interests);
-    const types = JSON.parse(body.types);
+    const categories = validateArray(body.categories);
+    const interests = validateArray(body.interests);
+    const types = validateArray(body.types);
 
     const customers = await this.getCustomers(
       categories,
