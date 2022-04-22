@@ -1,6 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AxiosResponse, AxiosError } from 'axios';
+import { isArray } from 'class-validator';
 import { map, catchError, lastValueFrom } from 'rxjs';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import {
@@ -180,10 +185,23 @@ export class BroadcastMessageService {
     body: BroadcastImageMessageRequestDto,
     agent: UserEntity,
   ) {
+    const categories = JSON.parse(body.categories);
+    const interests = JSON.parse(body.categories);
+    const types = JSON.parse(body.categories);
+
+    const validateArray = (array: string[]) => {
+      if (!isArray(array)) {
+        throw new BadRequestException('Provide array please');
+      }
+    };
+
+    validateArray(categories);
+    validateArray(interests);
+    validateArray(types);
     const customer = await this.getCustomers(
-      body.categories,
-      body.interests,
-      body.types,
+      categories,
+      interests,
+      types,
       agent.email,
     );
 
@@ -302,10 +320,23 @@ export class BroadcastMessageService {
     body: BroadcastDocumentMessageRequestDto,
     agent: UserEntity,
   ) {
+    const categories = JSON.parse(body.categories);
+    const interests = JSON.parse(body.categories);
+    const types = JSON.parse(body.categories);
+
+    const validateArray = (array: string[]) => {
+      if (!isArray(array)) {
+        throw new BadRequestException('Provide array please');
+      }
+    };
+
+    validateArray(categories);
+    validateArray(interests);
+    validateArray(types);
     const customers = await this.getCustomers(
-      body.categories,
-      body.interests,
-      body.types,
+      categories,
+      interests,
+      types,
       agent.email,
     );
 

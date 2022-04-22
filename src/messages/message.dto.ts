@@ -60,25 +60,25 @@ export class BroadcastImageMessageRequestDto {
   @IsString()
   message: string;
 
-  @IsArray()
-  categories: string[];
+  @IsNotEmpty()
+  categories: string;
 
-  @IsArray()
-  interests: string[];
+  @IsNotEmpty()
+  interests: string;
 
-  @IsArray()
-  types: string[];
+  @IsNotEmpty()
+  types: string;
 }
 
 export class BroadcastDocumentMessageRequestDto {
-  @IsArray()
-  categories: string[];
+  @IsNotEmpty()
+  categories: string;
 
-  @IsArray()
-  interests: string[];
+  @IsNotEmpty()
+  interests: string;
 
-  @IsArray()
-  types: string[];
+  @IsNotEmpty()
+  types: string;
 }
 
 export class DocumentRequestDto {
