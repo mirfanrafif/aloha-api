@@ -425,7 +425,7 @@ export class BroadcastMessageService {
         },
         agent: agent,
         filename: process.env.BASE_URL + '/message/video/' + file.filename,
-        type: MessageType.document,
+        type: MessageType.video,
       });
 
     //kirim ke frontend lewat websocket
