@@ -33,6 +33,9 @@ import {
   MessageType,
   MessageResponseItem,
   ImageResponseItem,
+  WablasSendVideoRequest,
+  WablasSendVideoRequestData,
+  VideoResponseItem,
 } from '../message.dto';
 import { MessageGateway } from '../message.gateway';
 import { MessageService } from '../message.service';
@@ -293,6 +296,136 @@ export class BroadcastMessageService {
         agent: agent,
         filename: process.env.BASE_URL + '/message/image/' + file.filename,
         type: MessageType.image,
+      });
+
+    //kirim ke frontend lewat websocket
+    for (const message of messageEntities) {
+      const response = this.messageService.mapMessageEntityToResponse(message);
+      await this.gateway.sendMessage({ data: response });
+    }
+    //return result
+    const result: ApiResponse<MessageEntity[]> = {
+      success: true,
+      data: messageEntities,
+      message: 'Success sending message to Wablas API',
+    };
+    return result;
+  }
+
+  //kirim gambar ke customer
+  async broadcastVideoToCustomer(
+    file: Express.Multer.File,
+    body: BroadcastImageMessageRequestDto,
+    agent: UserEntity,
+  ) {
+    // const categories = this.validateArray(body.categories);
+    // const interests = this.validateArray(body.interests);
+    // const types = this.validateArray(body.types);
+
+    const categories = JSON.parse(body.categories);
+    const interests = JSON.parse(body.interests);
+    const types = JSON.parse(body.types);
+
+    const customers = await this.getCustomers(
+      categories,
+      interests,
+      types,
+      agent.email,
+    );
+
+    const sendImageData: WablasSendVideoRequestData[] = customers.map(
+      (item) => ({
+        phone: item.phoneNumber,
+        video: process.env.BASE_URL + '/message/video/' + file.filename,
+        caption: body.message,
+        isGroup: false,
+        retry: false,
+        secret: false,
+      }),
+    );
+    //templating request
+    const request: WablasSendVideoRequest = {
+      data: sendImageData,
+    };
+
+    return await this.sendMockVideoResponseWithAttachment(request, agent, file);
+
+    //buat request ke WABLAS API
+    // return this.http
+    //   .post('/api/v2/send-video', JSON.stringify(request), {
+    //     headers: {
+    //       Authorization: `${process.env.WABLAS_TOKEN}`,
+    //       'Content-Type': 'application/json',
+    //       Accept: 'application/json',
+    //     },
+    //   })
+    //   .pipe(
+    //     map(
+    //       async (
+    //         response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
+    //       ) => {
+    //         //save ke database
+    //         const messages =
+    //           await this.messageService.saveOutgoingMessageWithAttachment({
+    //             messageResponses: response.data.data,
+    //             agent: agent,
+    //             filename:
+    //               process.env.BASE_URL + '/message/image/' + file.filename,
+    //             type: MessageType.video,
+    //           });
+
+    //         //kirim ke frontend lewat websocket
+    //         const messageResponse = await Promise.all(
+    //           messages.map(async (message: MessageEntity) => {
+    //             const response =
+    //               this.messageService.mapMessageEntityToResponse(message);
+    //             await this.gateway.sendMessage({ data: response });
+    //             return response;
+    //           }),
+    //         );
+
+    //         //return result
+    //         const result: ApiResponse<MessageEntity[]> = {
+    //           success: true,
+    //           data: messageResponse,
+    //           message: 'Success sending message to Wablas API',
+    //         };
+    //         return result;
+    //       },
+    //     ),
+    //     catchError((value: AxiosError<WablasApiResponse<any>>) => {
+    //       if (value.response !== undefined) {
+    //         throw new WablasAPIException(
+    //           'Failed to send message to Wablas API. Message : ' +
+    //             value.response.data.message,
+    //         );
+    //       }
+    //       throw new WablasAPIException('Failed to send message to Wablas API.');
+    //     }),
+    //   );
+  }
+
+  async sendMockVideoResponseWithAttachment(
+    request: WablasSendVideoRequest,
+    agent: UserEntity,
+    file: Express.Multer.File,
+  ) {
+    const messageResponses = request.data.map<ImageResponseItem>((item) => ({
+      id: '123',
+      phone: item.phone,
+      image: item.video,
+      status: MessageStatus.PENDING,
+      caption: item.caption ?? '',
+    }));
+
+    const messageEntities =
+      await this.messageService.saveOutgoingMessageWithAttachment({
+        messageResponses: {
+          messages: messageResponses,
+        },
+        agent: agent,
+        filename: process.env.BASE_URL + '/message/video/' + file.filename,
+        type: MessageType.document,
       });
 
     //kirim ke frontend lewat websocket

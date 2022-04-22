@@ -71,6 +71,38 @@ export class MessageBroadcastController {
     return this.service.broadcastImageToCustomer(image, body, user);
   }
 
+  @Post('video')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('video', {
+      storage: diskStorage({
+        destination: 'uploads/messages/video',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  broadcastVideoToCustomer(
+    @UploadedFile() image: Express.Multer.File,
+    @Body() body: BroadcastImageMessageRequestDto,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.service.broadcastVideoToCustomer(image, body, user);
+  }
+
   @Post('document')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
