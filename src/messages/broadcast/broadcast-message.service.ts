@@ -185,9 +185,13 @@ export class BroadcastMessageService {
     body: BroadcastImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    const categories = this.validateArray(body.categories);
-    const interests = this.validateArray(body.interests);
-    const types = this.validateArray(body.types);
+    // const categories = this.validateArray(body.categories);
+    // const interests = this.validateArray(body.interests);
+    // const types = this.validateArray(body.types);
+
+    const categories = JSON.parse(body.categories);
+    const interests = JSON.parse(body.interests);
+    const types = JSON.parse(body.types);
 
     const customers = await this.getCustomers(
       categories,
@@ -323,9 +327,9 @@ export class BroadcastMessageService {
     body: BroadcastDocumentMessageRequestDto,
     agent: UserEntity,
   ) {
-    const categories = this.validateArray(body.categories);
-    const interests = this.validateArray(body.interests);
-    const types = this.validateArray(body.types);
+    const categories = JSON.parse(body.categories);
+    const interests = JSON.parse(body.interests);
+    const types = JSON.parse(body.types);
 
     const customers = await this.getCustomers(
       categories,
