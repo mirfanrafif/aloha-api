@@ -6,6 +6,7 @@ import {
   UseGuards,
   Request,
   UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -20,7 +21,7 @@ import {
   BroadcastImageMessageRequestDto,
   BroadcastDocumentMessageRequestDto,
 } from '../message.dto';
-
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('message/broadcast')
 export class MessageBroadcastController {
   constructor(private service: BroadcastMessageService) {}
