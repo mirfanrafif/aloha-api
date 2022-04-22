@@ -432,7 +432,7 @@ export class BroadcastMessageService {
         },
         agent: agent,
         filename: process.env.BASE_URL + '/message/document/' + file.filename,
-        type: MessageType.image,
+        type: MessageType.document,
       });
 
     //kirim ke frontend lewat websocket
