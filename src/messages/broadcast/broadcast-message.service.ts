@@ -318,27 +318,27 @@ export class BroadcastMessageService {
     return result;
   }
 
+  validateArray(array: string) {
+    try {
+      const categories = JSON.parse(array);
+      if (!isArray(array)) {
+        throw new BadRequestException('Provide array please');
+      }
+      return categories;
+    } catch (error) {
+      throw new BadRequestException('JSON Parse error');
+    }
+  }
+
   //kirim gambar ke customer
   async broadcastDocumentToCustomer(
     file: Express.Multer.File,
     body: BroadcastDocumentMessageRequestDto,
     agent: UserEntity,
   ) {
-    const validateArray = (array: string) => {
-      try {
-        const categories = JSON.parse(array);
-        if (!isArray(array)) {
-          throw new BadRequestException('Provide array please');
-        }
-        return categories;
-      } catch (error) {
-        throw new BadRequestException('JSON Parse error');
-      }
-    };
-
-    const categories = validateArray(body.categories);
-    const interests = validateArray(body.interests);
-    const types = validateArray(body.types);
+    const categories = this.validateArray(body.categories);
+    const interests = this.validateArray(body.interests);
+    const types = this.validateArray(body.types);
 
     const customers = await this.getCustomers(
       categories,
