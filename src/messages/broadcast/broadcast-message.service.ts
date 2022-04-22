@@ -186,8 +186,8 @@ export class BroadcastMessageService {
     agent: UserEntity,
   ) {
     const categories = JSON.parse(body.categories);
-    const interests = JSON.parse(body.categories);
-    const types = JSON.parse(body.categories);
+    const interests = JSON.parse(body.interests);
+    const types = JSON.parse(body.types);
 
     console.log(categories);
     console.log(interests);
@@ -325,8 +325,8 @@ export class BroadcastMessageService {
     agent: UserEntity,
   ) {
     const categories = JSON.parse(body.categories);
-    const interests = JSON.parse(body.categories);
-    const types = JSON.parse(body.categories);
+    const interests = JSON.parse(body.interests);
+    const types = JSON.parse(body.types);
 
     const validateArray = (array: string[]) => {
       if (!isArray(array)) {
