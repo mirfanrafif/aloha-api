@@ -600,7 +600,7 @@ export class MessageService {
       .pipe(
         map(
           async (
-            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
             //save ke database
             const messages = await this.saveOutgoingMessageWithAttachment({
@@ -676,7 +676,7 @@ export class MessageService {
       .pipe(
         map(
           async (
-            response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+            response: AxiosResponse<WablasApiResponse<SendImageResponseData>>,
           ) => {
             //save ke database
             const messages = await this.saveOutgoingMessageWithAttachment({
@@ -761,7 +761,7 @@ export class MessageService {
     filename,
     type,
   }: {
-    messageResponses: SendMessageResponseData;
+    messageResponses: SendImageResponseData;
     customer?: CustomerEntity;
     agent?: UserEntity;
     filename: string;
@@ -779,7 +779,7 @@ export class MessageService {
             });
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
-        message: '',
+        message: messageItem.caption,
         customer: newCustomer,
         file: filename,
         agent: agent,
@@ -792,82 +792,6 @@ export class MessageService {
 
     return messages;
   }
-
-  // //simpan pesan dokumen keluar
-  // async saveOutgoingVideoMessage({
-  //   messageResponses,
-  //   customer,
-  //   agent,
-  //   filename,
-  // }: {
-  //   messageResponses: SendVideoResponseData;
-  //   customer?: CustomerEntity;
-  //   agent?: UserEntity;
-  //   filename: string;
-  // }): Promise<MessageEntity[]> {
-  //   const messages: MessageEntity[] = [];
-
-  //   //for loop insert data
-  //   for (const messageItem of messageResponses.messages) {
-  //     const newCustomer =
-  //       customer !== undefined
-  //         ? customer
-  //         : await this.customerService.findOrCreateCustomer({
-  //             phoneNumber: messageItem.phone,
-  //           });
-  //     const message = await this.messageRepository.save({
-  //       messageId: messageItem.id,
-  //       message: messageItem.caption,
-  //       customer: newCustomer,
-  //       file: filename,
-  //       agent: agent,
-  //       status: messageItem.status,
-  //       fromMe: true,
-  //       type: MessageType.video,
-  //     });
-  //     messages.push(message);
-  //   }
-
-  //   return messages;
-  // }
-
-  // //simpan pesan gambar keluar
-  // async saveOutgoingImageMessage({
-  //   messageResponses,
-  //   customer,
-  //   agent,
-  //   filename,
-  // }: {
-  //   messageResponses: SendImageResponseData;
-  //   customer?: CustomerEntity;
-  //   agent?: UserEntity;
-  //   filename: string;
-  // }): Promise<MessageEntity[]> {
-  //   const messages: MessageEntity[] = [];
-
-  //   //for loop insert data
-  //   for (const messageItem of messageResponses.messages) {
-  //     const newCustomer =
-  //       customer !== undefined
-  //         ? customer
-  //         : await this.customerService.findOrCreateCustomer({
-  //             phoneNumber: messageItem.phone,
-  //           });
-  //     const message = await this.messageRepository.save({
-  //       messageId: messageItem.id,
-  //       message: messageItem.caption,
-  //       file: filename,
-  //       customer: newCustomer,
-  //       agent: agent,
-  //       status: messageItem.status,
-  //       fromMe: true,
-  //       type: MessageType.image,
-  //     });
-  //     messages.push(message);
-  //   }
-
-  //   return messages;
-  // }
 
   //dapatkan pesan sebelumnya berdasarkan customer number
   async getPastMessageByCustomerId(customerId: number, lastMessageId: number) {
