@@ -189,7 +189,7 @@ export class BroadcastMessageService {
     const interests = JSON.parse(body.categories);
     const types = JSON.parse(body.categories);
 
-    const validateArray = (array: string[]) => {
+    const validateArray = (array: string) => {
       if (!isArray(array)) {
         throw new BadRequestException('Provide array please');
       }
