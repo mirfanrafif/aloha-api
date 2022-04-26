@@ -5,9 +5,10 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, map } from 'rxjs';
+import { catchError, lastValueFrom, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -85,6 +86,9 @@ export class MessageService {
       customer: customer,
     });
 
+    const response = await this.mapMessageEntityToResponse(data);
+    await this.gateway.sendMessage({ data: response });
+
     //cek apakah sudah ada percakapan sebelumnya
     const currentConversation =
       await this.conversationService.getCurrentConversationSession(
@@ -105,6 +109,7 @@ export class MessageService {
           customerNumber: data.customer.phoneNumber,
           message: helloMessage,
         },
+        customer: customer,
         agent: aloha,
       }).then((value) => value.subscribe());
       //mulai conversation
@@ -123,6 +128,7 @@ export class MessageService {
             customerNumber: data.customer.phoneNumber,
             message: 'Mohon pilih menu diatas',
           },
+          customer: customer,
           agent: aloha,
         }).then((value) => {
           value.subscribe();
@@ -144,6 +150,7 @@ export class MessageService {
             customerNumber: data.customer.phoneNumber,
             message: 'Mohon pilih menu diatas',
           },
+          customer: customer,
           agent: aloha,
         }).then((value) => {
           value.subscribe();
@@ -160,6 +167,7 @@ export class MessageService {
             message:
               'Mohon maaf tidak ada customer service yang dapat melayani di bidang tersebut',
           },
+          customer: customer,
           agent: aloha,
         }).then((value) => {
           value.subscribe();
@@ -185,6 +193,7 @@ export class MessageService {
             customerAgent.agent.full_name +
             '. Mohon tunggu sebentar',
         },
+        customer: customer,
         agent: aloha,
       }).then((value) => {
         value.subscribe();
@@ -255,7 +264,6 @@ export class MessageService {
 
   async sendIncomingMessageResponse(data: MessageEntity) {
     const response = this.mapMessageEntityToResponse(data);
-    await this.gateway.sendMessage({ data: response });
     const result: ApiResponse<MessageResponseDto> = {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -344,6 +352,22 @@ export class MessageService {
           agent: agent,
         });
       }
+    }
+
+    if (customer === undefined) {
+      const customerFromCrm = await lastValueFrom(
+        this.customerService.getCustomerFromCrmWithPhoneNumber(
+          messageRequest.customerNumber,
+        ),
+      );
+      if (customerFromCrm.length === 0) {
+        throw new NotFoundException(
+          'Customer with phone number ' +
+            messageRequest.customerNumber +
+            ' not found.',
+        );
+      }
+      customer = customerFromCrm[0];
     }
 
     //buat request ke WABLAS API

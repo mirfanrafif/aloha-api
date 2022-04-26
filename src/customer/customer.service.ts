@@ -424,20 +424,48 @@ export class CustomerService {
         ),
       );
   }
+
+  getCustomerFromCrmWithPhoneNumber(phoneNumber: string) {
+    return this.httpService
+      .get<CustomerResponse>('/customers', {
+        params: {
+          'filter.telephones': '$eq:' + phoneNumber,
+          limit: 1,
+        },
+        headers: {
+          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
+        },
+      })
+      .pipe(
+        map<AxiosResponse<CustomerResponse, any>, Promise<CustomerEntity[]>>(
+          async (response) => {
+            if (response.status < 400) {
+              const customers = response.data.data;
+              const newCustomers = await this.saveCustomerFromCrm(customers);
+              return newCustomers;
+            } else {
+              const newCustomers: CustomerEntity[] = [];
+              return newCustomers;
+            }
+          },
+        ),
+      );
+  }
+
   async saveCustomerFromCrm(customers: CrmCustomer[]) {
     const newCustomers: CustomerEntity[] = [];
 
     for (const customer of customers) {
       let phoneNumber = '';
 
-      if (customer.telephones.length == 0) {
+      if (customer.telephones_array.length == 0) {
         continue;
       }
 
-      if (customer.telephones.startsWith('0')) {
-        phoneNumber = '62' + customer.telephones.slice(1);
+      if (customer.telephones_array[0].startsWith('0')) {
+        phoneNumber = '62' + customer.telephones_array[0].slice(1);
       } else {
-        phoneNumber = customer.telephones;
+        phoneNumber = customer.telephones_array[0];
       }
       phoneNumber = phoneNumber.split('-').join('');
 

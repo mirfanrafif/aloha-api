@@ -1,11 +1,16 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
-import { LoginRequestDto, RegisterRequestDto } from './auth.dto';
-import { hash, compare } from 'bcrypt';
+import { LoginRequestDto } from './auth.dto';
+import { compare } from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -15,11 +20,17 @@ export class AuthService {
   ) {}
 
   async login(loginRequest: LoginRequestDto): Promise<ApiResponse<any>> {
-    const user = await this.userRepository.findOneOrFail({
+    const user = await this.userRepository.findOne({
       where: {
         username: loginRequest.username,
       },
     });
+
+    if (user === null)
+      throw new NotFoundException(
+        'User with username ' + loginRequest.username + ' not found.',
+      );
+
     if (user && (await compare(loginRequest.password, user.password))) {
       // const userData = this.getUserData(user);
       const jwtPayload = this.getPayload(user);
