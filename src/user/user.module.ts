@@ -7,9 +7,14 @@ import { UserProfileController } from './profile/user-profile.controller';
 import { UserManageController } from './manage/manage-user.controller';
 import { UserProfileService } from './profile/user-profile.service';
 import { ManageUserService } from './manage/manage-user.service';
+import { CustomerAgentRepositoryModule } from 'src/core/repository/customer-agent/customer-agent.module';
 
 @Module({
-  imports: [UserRepositoryModule, CustomerModule],
+  imports: [
+    UserRepositoryModule,
+    CustomerModule,
+    CustomerAgentRepositoryModule,
+  ],
   controllers: [UserController, UserProfileController, UserManageController],
   providers: [UserService, UserProfileService, ManageUserService],
   exports: [UserService],

@@ -2,6 +2,7 @@ import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -48,6 +49,9 @@ export class UserEntity {
 
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at?: Date;
 
   @OneToMany(() => CustomerAgent, (customer) => customer.agent)
   customer: CustomerAgent[];
