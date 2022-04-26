@@ -15,13 +15,17 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/core/repository/user/user.entity';
+import { CustomerCrmService } from './customer-crm.service';
 import { DelegateCustomerRequestDto } from './customer.dto';
 import { CustomerService } from './customer.service';
 
 @Controller('customer')
 @UseInterceptors(ClassSerializerInterceptor)
 export class CustomerController {
-  constructor(private service: CustomerService) {}
+  constructor(
+    private service: CustomerService,
+    private customerCrmService: CustomerCrmService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
@@ -36,7 +40,7 @@ export class CustomerController {
     @Query('search') search: string,
     @Query('page') page?: number,
   ) {
-    return this.service.searchCustomerFromCrm(search, page);
+    return this.customerCrmService.searchCustomerFromCrm(search, page);
   }
 
   @Post(':id/start')
@@ -51,18 +55,18 @@ export class CustomerController {
   @Get('categories')
   @UseGuards(JwtAuthGuard)
   getCustomerCategories() {
-    return this.service.getCustomerCategories();
+    return this.customerCrmService.getCustomerCategories();
   }
 
   @Get('interests')
   @UseGuards(JwtAuthGuard)
   getCustomerInterests() {
-    return this.service.getCustomerInterests();
+    return this.customerCrmService.getCustomerInterests();
   }
 
   @Get('types')
   @UseGuards(JwtAuthGuard)
   getCustomerTypes() {
-    return this.service.getCustomerTypes();
+    return this.customerCrmService.getCustomerTypes();
   }
 }

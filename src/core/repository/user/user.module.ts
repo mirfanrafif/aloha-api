@@ -3,7 +3,7 @@ import {
   DatabaseModule,
   DATABASE_CONNECTION,
 } from 'src/core/database/database.module';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { UserEntity } from './user.entity';
 
 export const USER_REPOSITORY = 'user_repository';
@@ -13,8 +13,8 @@ export const USER_REPOSITORY = 'user_repository';
   providers: [
     {
       provide: USER_REPOSITORY,
-      useFactory: (connection: Connection) =>
-        connection.getRepository(UserEntity),
+      useFactory: (dataSource: DataSource) =>
+        dataSource.getRepository(UserEntity),
       inject: [DATABASE_CONNECTION],
     },
   ],

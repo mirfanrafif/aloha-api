@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, filter, map } from 'rxjs';
+import { catchError, map } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -20,13 +20,11 @@ import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Like, MoreThan, Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import {
   CrmCustomer,
   CustomerAgentArrDto,
-  CustomerCategoriesResponse,
   CustomerCrmSearchFilter,
-  CustomerInterestsResponse,
   CustomerResponse,
   DelegateCustomerRequestDto,
 } from './customer.dto';
@@ -45,54 +43,6 @@ export class CustomerService {
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
   ) {}
-
-  getCustomerCategories() {
-    return this.httpService
-      .get<CustomerCategoriesResponse>('/customer_categories', {
-        headers: {
-          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
-        },
-      })
-      .pipe(
-        map((response) => {
-          return response.data;
-        }),
-      );
-  }
-
-  getCustomerInterests() {
-    return this.httpService
-      .get<CustomerInterestsResponse>('/customer_interests', {
-        headers: {
-          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
-        },
-        params: {
-          limit: 100,
-        },
-      })
-      .pipe(
-        map((response) => {
-          return response.data;
-        }),
-      );
-  }
-
-  getCustomerTypes() {
-    return this.httpService
-      .get<CustomerInterestsResponse>('/customer_types', {
-        headers: {
-          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
-        },
-        params: {
-          limit: 100,
-        },
-      })
-      .pipe(
-        map((response) => {
-          return response.data;
-        }),
-      );
-  }
 
   async findOrCreateCustomer({
     phoneNumber,
@@ -344,161 +294,6 @@ export class CustomerService {
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
 
     return newListCustomer;
-  }
-
-  async searchCustomerFromCrm(search: string, page?: number) {
-    if (search === undefined) {
-      throw new BadRequestException('Search not defined');
-    }
-
-    return this.httpService
-      .get<CustomerResponse>(`/customers`, {
-        params: {
-          page: page ?? 1,
-          limit: pageSize,
-          search: search,
-        },
-        headers: {
-          Authorization: `Bearer ${process.env.CRM_TOKEN}`,
-        },
-      })
-      .pipe(
-        map(async (response) => {
-          if (response.status < 400) {
-            const customers = response.data.data;
-
-            const newCustomers = await this.saveCustomerFromCrm(customers);
-            return <ApiResponse<CustomerEntity[]>>{
-              success: true,
-              data: newCustomers,
-              message: 'Success getting customer data from CRM API',
-            };
-          }
-        }),
-        catchError(async (err: AxiosError<any>) => {
-          console.log(err);
-          const customers = await this.customerRepository.find({
-            where: {
-              name: Like(search),
-            },
-            take: pageSize,
-            skip: pageSize * ((page ?? 1) - 1),
-            order: {
-              name: 'ASC',
-            },
-          });
-          return <ApiResponse<CustomerEntity[]>>{
-            success: true,
-            data: customers,
-            message:
-              'Failed to get data from CRM API. Error : ' +
-              err.message +
-              '. Getting data from database',
-          };
-        }),
-      );
-  }
-
-  getCustomerWithFilters(filters: CustomerCrmSearchFilter) {
-    return this.httpService
-      .get<CustomerResponse>('/customers', {
-        params: {
-          ...filters,
-        },
-        headers: {
-          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
-        },
-      })
-      .pipe(
-        map<AxiosResponse<CustomerResponse, any>, Promise<CustomerEntity[]>>(
-          async (response) => {
-            if (response.status < 400) {
-              const customers = response.data.data;
-              const newCustomers = await this.saveCustomerFromCrm(customers);
-              return newCustomers;
-            } else {
-              const newCustomers: CustomerEntity[] = [];
-              return newCustomers;
-            }
-          },
-        ),
-      );
-  }
-
-  getCustomerFromCrmWithPhoneNumber(phoneNumber: string) {
-    return this.httpService
-      .get<CustomerResponse>('/customers', {
-        params: {
-          'filter.telephones': '$eq:' + phoneNumber,
-          limit: 1,
-        },
-        headers: {
-          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
-        },
-      })
-      .pipe(
-        map<AxiosResponse<CustomerResponse, any>, Promise<CustomerEntity[]>>(
-          async (response) => {
-            if (response.status < 400) {
-              const customers = response.data.data;
-              const newCustomers = await this.saveCustomerFromCrm(customers);
-              return newCustomers;
-            } else {
-              const newCustomers: CustomerEntity[] = [];
-              return newCustomers;
-            }
-          },
-        ),
-      );
-  }
-
-  async saveCustomerFromCrm(customers: CrmCustomer[]) {
-    const newCustomers: CustomerEntity[] = [];
-
-    for (const customer of customers) {
-      let phoneNumber = '';
-
-      if (customer.telephones_array.length == 0) {
-        continue;
-      }
-
-      if (customer.telephones_array[0].startsWith('0')) {
-        phoneNumber = '62' + customer.telephones_array[0].slice(1);
-      } else {
-        phoneNumber = customer.telephones_array[0];
-      }
-      phoneNumber = phoneNumber.split('-').join('');
-
-      if (
-        newCustomers.find(
-          (findCustomer) => findCustomer.phoneNumber === phoneNumber,
-        ) !== undefined
-      ) {
-        continue;
-      }
-
-      const existingCustomer = await this.customerRepository.findOne({
-        where: [
-          {
-            phoneNumber: phoneNumber,
-          },
-        ],
-      });
-      if (existingCustomer !== null) {
-        newCustomers.push(existingCustomer);
-        continue;
-      }
-
-      let newCustomer = this.customerRepository.create({
-        name: customer.full_name,
-        phoneNumber: phoneNumber,
-        customerCrmId: customer.id,
-      });
-      newCustomer = await this.customerRepository.save(newCustomer);
-      newCustomers.push(newCustomer);
-    }
-
-    return newCustomers;
   }
 
   async getAllCustomer() {

@@ -165,3 +165,8 @@ export class CustomerCrmSearchFilter {
   'filter.users.email'?: string;
   'filter.types.name'?: string;
 }
+
+export interface LoginResponse {
+  access_token: string;
+  user: CrmUser;
+}

@@ -13,6 +13,7 @@ import {
   MessageStatus,
 } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
+import { CustomerCrmService } from 'src/customer/customer-crm.service';
 import { CustomerCrmSearchFilter } from 'src/customer/customer.dto';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -46,6 +47,7 @@ export class BroadcastMessageService {
     private customerService: CustomerService,
     private messageService: MessageService,
     private http: HttpService,
+    private customerCrmService: CustomerCrmService,
     private gateway: MessageGateway,
   ) {}
 
@@ -53,7 +55,6 @@ export class BroadcastMessageService {
     categories: string[],
     interests: string[],
     types: string[],
-    email?: string,
   ) {
     const filter: CustomerCrmSearchFilter = {
       'filter.categories.name':
@@ -66,7 +67,7 @@ export class BroadcastMessageService {
     };
 
     const customer: CustomerEntity[] = await lastValueFrom(
-      this.customerService.getCustomerWithFilters(filter),
+      this.customerCrmService.getCustomerWithFilters(filter),
     );
 
     if (customer === undefined) {
@@ -87,7 +88,6 @@ export class BroadcastMessageService {
       body.categories,
       body.interests,
       body.types,
-      agent.email,
     );
     //mapping request
     const messages = customer.map<WablasSendMessageRequestData>((item) => ({
@@ -196,12 +196,7 @@ export class BroadcastMessageService {
     const interests = JSON.parse(body.interests);
     const types = JSON.parse(body.types);
 
-    const customers = await this.getCustomers(
-      categories,
-      interests,
-      types,
-      agent.email,
-    );
+    const customers = await this.getCustomers(categories, interests, types);
 
     const sendImageData: WablasSendImageRequestData[] = customers.map(
       (item) => ({
@@ -326,12 +321,7 @@ export class BroadcastMessageService {
     const interests = JSON.parse(body.interests);
     const types = JSON.parse(body.types);
 
-    const customers = await this.getCustomers(
-      categories,
-      interests,
-      types,
-      agent.email,
-    );
+    const customers = await this.getCustomers(categories, interests, types);
 
     const sendImageData: WablasSendVideoRequestData[] = customers.map(
       (item) => ({
@@ -464,12 +454,7 @@ export class BroadcastMessageService {
     const interests = JSON.parse(body.interests);
     const types = JSON.parse(body.types);
 
-    const customers = await this.getCustomers(
-      categories,
-      interests,
-      types,
-      agent.email,
-    );
+    const customers = await this.getCustomers(categories, interests, types);
 
     const requestData: WablasSendDocumentRequestData[] = customers.map(
       (customer) => ({
