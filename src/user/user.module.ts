@@ -8,12 +8,14 @@ import { UserManageController } from './manage/manage-user.controller';
 import { UserProfileService } from './profile/user-profile.service';
 import { ManageUserService } from './manage/manage-user.service';
 import { CustomerAgentRepositoryModule } from 'src/core/repository/customer-agent/customer-agent.module';
+import { UserJobRepositoryModule } from 'src/core/repository/user-job/user-job.module';
 
 @Module({
   imports: [
     UserRepositoryModule,
     CustomerModule,
     CustomerAgentRepositoryModule,
+    UserJobRepositoryModule,
   ],
   controllers: [UserController, UserProfileController, UserManageController],
   providers: [UserService, UserProfileService, ManageUserService],

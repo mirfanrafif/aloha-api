@@ -4,6 +4,8 @@ import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -21,6 +23,8 @@ export class ManageUserService {
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
     @Inject(CUSTOMER_AGENT_REPOSITORY)
     private customerAgentRepository: Repository<CustomerAgent>,
+    @Inject(USER_JOB_REPOSITORY)
+    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
   async updateUser(agentId: number, newData: UpdateUserRequestDto) {
@@ -364,6 +368,38 @@ export class ManageUserService {
         sales.full_name +
         ' dan mendelegasikan semua customer ke sales ' +
         delegatedSales.full_name,
+    };
+  }
+
+  async deactivateUser(id: number) {
+    const sales = await this.userJobRepository.find({
+      where: {
+        agent: {
+          id: id,
+        },
+      },
+      relations: {
+        agent: true,
+      },
+    });
+
+    await this.userJobRepository.delete(sales.map((value) => value.id));
+
+    const newSales = await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: {
+        job: {
+          job: true,
+        },
+      },
+    });
+
+    return <ApiResponse<any>>{
+      success: true,
+      data: newSales,
+      message: 'Sukses mendeaktifkan sales ' + newSales?.full_name,
     };
   }
 }

@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -63,5 +64,12 @@ export class UserManageController {
   @Delete()
   deleteUser(@Body() request: DeleteUserRequest) {
     return this.service.deleteUser(request);
+  }
+
+  @Put(':id/deactivate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  deactivateUser(@Param('id', ParseIntPipe) id: number) {
+    return this.service.deactivateUser(id);
   }
 }
