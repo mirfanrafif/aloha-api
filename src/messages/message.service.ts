@@ -354,21 +354,21 @@ export class MessageService {
       }
     }
 
-    if (customer === undefined) {
-      const customerFromCrm = await lastValueFrom(
-        this.customerService.getCustomerFromCrmWithPhoneNumber(
-          messageRequest.customerNumber,
-        ),
-      );
-      if (customerFromCrm.length === 0) {
-        throw new NotFoundException(
-          'Customer with phone number ' +
-            messageRequest.customerNumber +
-            ' not found.',
-        );
-      }
-      customer = customerFromCrm[0];
-    }
+    // if (customer === undefined) {
+    //   const customerFromCrm = await lastValueFrom(
+    //     this.customerService.getCustomerFromCrmWithPhoneNumber(
+    //       messageRequest.customerNumber,
+    //     ),
+    //   );
+    //   if (customerFromCrm.length === 0) {
+    //     throw new NotFoundException(
+    //       'Customer with phone number ' +
+    //         messageRequest.customerNumber +
+    //         ' not found.',
+    //     );
+    //   }
+    //   customer = customerFromCrm[0];
+    // }
 
     //buat request ke WABLAS API
     return this.http
