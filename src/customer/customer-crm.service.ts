@@ -47,7 +47,7 @@ export class CustomerCrmService {
         return response.data.access_token;
       }),
       switchMap((accessToken) =>
-        this.http.get<CustomerCategoriesResponse>('/customer_interests', {
+        this.http.get<CustomerCategoriesResponse>('/customer_categories', {
           headers: {
             Authorization: 'Bearer ' + accessToken,
           },
