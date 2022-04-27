@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
@@ -293,6 +298,12 @@ export class ManageUserService {
         id: request.salesId,
       },
     });
+
+    if (request.delegatedSalesId === request.salesId) {
+      throw new BadRequestException(
+        'Sales ID yang dihapus sama dengan yang didelegasi',
+      );
+    }
 
     if (sales === null) {
       throw new NotFoundException(
