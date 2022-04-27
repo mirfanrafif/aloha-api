@@ -133,10 +133,10 @@ export class CustomerCrmService {
     };
 
     return this.getCustomerFromCrm(params).pipe(
-      map((value) => {
+      map(async (value) => {
         return <ApiResponse<any>>{
           success: true,
-          data: value,
+          data: await value,
           message: 'Success getting customer data from CRM API',
         };
       }),
