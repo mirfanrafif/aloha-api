@@ -156,12 +156,23 @@ export class ManageUserService {
       };
     });
 
+    const allResponseTime = result.map(
+      (item) => item.average_all_response_time,
+    );
+
+    const avgResponseTime =
+      allResponseTime.reduce((prev, cur) => prev + cur) / result.length;
+
+    const lateAnswerCount = result.map((item) => item.all_unread_message_count);
+
     const userEntity = {
       id: userWithMessages.id,
       full_name: userWithMessages.full_name,
       username: userWithMessages.username,
       email: userWithMessages.email,
       role: userWithMessages.role,
+      late_answer_count: lateAnswerCount,
+      average_response_time: avgResponseTime,
       created_at: userWithMessages.created_at,
       updated_at: userWithMessages.updated_at,
       statistics: result,
