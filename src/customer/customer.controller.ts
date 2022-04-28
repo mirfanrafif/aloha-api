@@ -34,6 +34,13 @@ export class CustomerController {
     return this.service.delegateCustomerToAgent(body);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  @Post('undelegate')
+  undelegateCustomerToAgent(@Body() body: DelegateCustomerRequestDto) {
+    return this.service.undelegateCustomerToAgent(body);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   getAllCustomer(

@@ -139,17 +139,25 @@ export class CustomerService {
 
   //Mendelegasi agen dengan customer
   async delegateCustomerToAgent(body: DelegateCustomerRequestDto) {
-    const customer = await this.customerRepository.findOneOrFail({
+    const customer = await this.customerRepository.findOne({
       where: {
         id: body.customerId,
       },
     });
 
-    const agent = await this.userRepository.findOneOrFail({
+    if (customer === null) {
+      throw new NotFoundException('Customer tidak ditemukan');
+    }
+
+    const agent = await this.userRepository.findOne({
       where: {
         id: body.agentId,
       },
     });
+
+    if (agent === null) {
+      throw new NotFoundException('Sales tidak ditemukan');
+    }
 
     const existingCustomerAgent = await this.customerAgentRepository.findOne({
       where: {
@@ -159,6 +167,10 @@ export class CustomerService {
         agent: {
           id: agent.id,
         },
+      },
+      relations: {
+        customer: true,
+        agent: true,
       },
     });
 
@@ -176,6 +188,36 @@ export class CustomerService {
       success: true,
       message: `Succesfully assign customer ${customer.name} to agent ${agent.full_name}`,
       data: result,
+    };
+    return response;
+  }
+  //Mendelegasi agen dengan customer
+  async undelegateCustomerToAgent(body: DelegateCustomerRequestDto) {
+    const existingCustomerAgent = await this.customerAgentRepository.findOne({
+      where: {
+        customer: {
+          id: body.customerId,
+        },
+        agent: {
+          id: body.agentId,
+        },
+      },
+      relations: {
+        customer: true,
+        agent: true,
+      },
+    });
+
+    if (existingCustomerAgent === null) {
+      throw new NotFoundException('Sales tidak memegang customer ini');
+    }
+
+    await this.customerAgentRepository.delete(existingCustomerAgent.id);
+
+    const response: ApiResponse<CustomerAgent> = {
+      success: true,
+      message: `Succesfully unassign customer ${existingCustomerAgent.customer.name} to sales ${existingCustomerAgent.agent.full_name}`,
+      data: existingCustomerAgent,
     };
     return response;
   }
