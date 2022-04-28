@@ -64,8 +64,6 @@ export class UserService {
         },
       },
       where: conditions,
-      take: pageSize,
-      skip: ((page ?? 1) - 1) * 25,
     });
 
     const userResponse = users.map((user) => {
