@@ -373,6 +373,20 @@ export class ManageUserService {
 
     await this.userRepository.softDelete(sales.id);
 
+    //hapus job
+    const userJob = await this.userJobRepository.find({
+      where: {
+        agent: {
+          id: sales.id,
+        },
+      },
+      relations: {
+        agent: true,
+      },
+    });
+
+    await this.userJobRepository.delete(userJob.map((e) => e.id));
+
     return <ApiResponse<any>>{
       success: true,
       data: await this.userRepository.findOne({

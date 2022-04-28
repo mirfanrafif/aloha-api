@@ -17,7 +17,7 @@ import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
-import { LessThan, Repository } from 'typeorm';
+import { DataSource, LessThan, Repository } from 'typeorm';
 import {
   WablasApiResponse,
   MessageRequestDto,
@@ -823,6 +823,7 @@ export class MessageService {
       order: {
         id: 'DESC',
       },
+      withDeleted: true,
     });
 
     const messageResponse = result.map((messageItem) => {
