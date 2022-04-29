@@ -368,8 +368,6 @@ export class MessageService {
           async (
             response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
           ) => {
-            console.log(response.data);
-
             //save ke database
             const messages = await this.saveOutgoingMessage({
               messageResponses: response.data.data,
@@ -396,7 +394,6 @@ export class MessageService {
           },
         ),
         catchError((value: AxiosError<WablasApiResponse<null>>) => {
-          console.log(value.response);
           if (value.response !== undefined) {
             throw new WablasAPIException(
               'Failed to send message to Wablas API. Message : ' +
@@ -431,8 +428,6 @@ export class MessageService {
         },
       ],
     };
-
-    console.log(request);
 
     //buat request ke WABLAS API
     return this.http
@@ -511,8 +506,6 @@ export class MessageService {
         },
       ],
     };
-
-    console.log(request);
 
     //buat request ke WABLAS API
     return this.http

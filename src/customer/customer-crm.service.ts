@@ -37,7 +37,6 @@ export class CustomerCrmService {
       username: this.configService.get('CRM_USERNAME'),
       password: this.configService.get('CRM_PASSWORD'),
     };
-    console.log(loginRequest);
     return this.http.post<LoginResponse>('/auth/login', loginRequest);
   }
 
@@ -141,7 +140,6 @@ export class CustomerCrmService {
         };
       }),
       catchError(async (err: AxiosError<any>) => {
-        console.log(err);
         const customers = await this.customerRepository.find({
           where: {
             name: Like(search),
