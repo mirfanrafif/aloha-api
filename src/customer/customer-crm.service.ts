@@ -120,7 +120,7 @@ export class CustomerCrmService {
     );
   }
 
-  async searchCustomerFromCrm(search: string, page?: number) {
+  async findCustomerByName(search: string, page?: number) {
     if (search === undefined) {
       throw new BadRequestException('Search not defined');
     }
@@ -155,7 +155,7 @@ export class CustomerCrmService {
     );
   }
 
-  getCustomerFromCrmWithPhoneNumber(phoneNumber: string) {
+  findWithPhoneNumber(phoneNumber: string) {
     return this.http
       .get<CustomerResponse>('/customers', {
         params: {
@@ -176,6 +176,24 @@ export class CustomerCrmService {
             const newCustomers: CustomerEntity[] = [];
             return newCustomers;
           }
+        }),
+        catchError(async (err: AxiosError<any>) => {
+          const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
+          if (convertedPhoneNumber === undefined) {
+            const newCustomers: CustomerEntity[] = [];
+            return newCustomers;
+          }
+
+          const customers = await this.customerRepository.find({
+            where: {
+              phoneNumber: Like(convertedPhoneNumber),
+            },
+            take: pageSize,
+            order: {
+              name: 'ASC',
+            },
+          });
+          return customers;
         }),
       );
   }
@@ -210,24 +228,17 @@ export class CustomerCrmService {
     const newCustomers: CustomerEntity[] = [];
 
     for (const customer of customers) {
-      let phoneNumber = '';
-
-      if (customer.telephones_array.length == 0) {
-        continue;
-      }
-
-      if (customer.telephones_array[0].startsWith('0')) {
-        phoneNumber = '62' + customer.telephones_array[0].slice(1);
-      } else {
-        phoneNumber = customer.telephones_array[0];
-      }
-      phoneNumber = phoneNumber.split('-').join('');
-
       if (
         newCustomers.find(
           (findCustomer) => findCustomer.phoneNumber === phoneNumber,
         ) !== undefined
       ) {
+        continue;
+      }
+
+      const phoneNumber = this.convertPhoneNumber(customer.telephones);
+
+      if (phoneNumber === undefined) {
         continue;
       }
 
@@ -253,5 +264,24 @@ export class CustomerCrmService {
     }
 
     return newCustomers;
+  }
+
+  convertPhoneNumber(telephones: string): string | undefined {
+    let phoneNumber = '';
+
+    const telephonesArray = telephones.split(',');
+
+    if (telephonesArray.length == 0) {
+      return;
+    }
+
+    if (telephonesArray[0].startsWith('0')) {
+      phoneNumber = '62' + telephonesArray[0].slice(1);
+    } else {
+      phoneNumber = telephonesArray[0];
+    }
+    phoneNumber = phoneNumber.split('-').join('');
+
+    return phoneNumber;
   }
 }

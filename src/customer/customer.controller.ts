@@ -47,7 +47,7 @@ export class CustomerController {
     @Query('search') search: string,
     @Query('page') page?: number,
   ) {
-    return this.customerCrmService.searchCustomerFromCrm(search, page);
+    return this.customerCrmService.findCustomerByName(search, page);
   }
 
   @Post(':id/start')

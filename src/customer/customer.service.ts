@@ -21,6 +21,7 @@ import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, Repository } from 'typeorm';
+import { CustomerCrmService } from './customer-crm.service';
 import {
   CrmCustomer,
   CustomerAgentArrDto,
@@ -42,6 +43,7 @@ export class CustomerService {
     private customerAgentRepository: Repository<CustomerAgent>,
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
+    private customerCrmService: CustomerCrmService,
   ) {}
 
   async findOrCreateCustomer({
@@ -49,7 +51,7 @@ export class CustomerService {
     name,
   }: {
     phoneNumber: string;
-    name?: string;
+    name: string;
   }): Promise<CustomerEntity> {
     const findCustomer = await this.customerRepository.findOne({
       where: {
@@ -70,11 +72,19 @@ export class CustomerService {
   }
 
   async findCustomer({ phoneNumber }: { phoneNumber: string }) {
-    return await this.customerRepository.findOneOrFail({
+    const customer = await this.customerRepository.findOne({
       where: {
         phoneNumber: phoneNumber,
       },
     });
+
+    if (customer === null) {
+      throw new NotFoundException(
+        'Customer with phone number ' + phoneNumber + ' nout found',
+      );
+    }
+
+    return customer;
   }
 
   //Mencari agen yang menangani customer tersebut
@@ -386,5 +396,9 @@ export class CustomerService {
       data: customerAgent,
       message: 'Success starting conversation with customer ' + customer.name,
     };
+  }
+
+  searchCustomerWithPhoneNumber(phoneNumber: string) {
+    return this.customerCrmService.findWithPhoneNumber(phoneNumber);
   }
 }

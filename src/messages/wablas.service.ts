@@ -1,6 +1,8 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import {
+  SendDocumentResponse,
+  SendImageVideoResponse,
   SendMessageResponseData,
   WablasApiResponse,
   WablasSendDocumentRequest,
@@ -28,7 +30,7 @@ export class WablasService {
   }
 
   sendImage(request: WablasSendImageRequest) {
-    return this.http.post<WablasApiResponse<SendMessageResponseData>>(
+    return this.http.post<WablasApiResponse<SendImageVideoResponse>>(
       '/api/v2/send-image',
       JSON.stringify(request),
       {
@@ -42,7 +44,7 @@ export class WablasService {
   }
 
   sendDocument(request: WablasSendDocumentRequest) {
-    return this.http.post<WablasApiResponse<SendMessageResponseData>>(
+    return this.http.post<WablasApiResponse<SendDocumentResponse>>(
       '/api/v2/send-document',
       JSON.stringify(request),
       {
@@ -56,7 +58,7 @@ export class WablasService {
   }
 
   sendVideo(request: WablasSendVideoRequest) {
-    return this.http.post<WablasApiResponse<SendMessageResponseData>>(
+    return this.http.post<WablasApiResponse<SendImageVideoResponse>>(
       '/api/v2/send-video',
       JSON.stringify(request),
       {

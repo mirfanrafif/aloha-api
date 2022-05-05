@@ -14,6 +14,7 @@ import { MessageTemplateController } from './template/message-template.controlle
 import { MessageTemplateService } from './template/message-template.service';
 import { MessageBroadcastController } from './broadcast/broadcast-message.controller';
 import { BroadcastMessageService } from './broadcast/broadcast-message.service';
+import { WablasService } from './wablas.service';
 
 @Module({
   providers: [
@@ -22,6 +23,7 @@ import { BroadcastMessageService } from './broadcast/broadcast-message.service';
     ConversationService,
     MessageTemplateService,
     BroadcastMessageService,
+    WablasService,
   ],
   controllers: [
     MessageController,

@@ -153,11 +153,11 @@ export class MessageResponseItem {
   status: MessageStatus;
 }
 
-export class SendImageResponseData {
-  messages: ImageResponseItem[];
+export class SendImageVideoResponse {
+  messages: SendImageVideoResponseItem[];
 }
 
-export class ImageResponseItem {
+export class SendImageVideoResponseItem {
   id: string;
   phone: string;
   caption?: string;
@@ -166,7 +166,7 @@ export class ImageResponseItem {
 }
 
 export class SendVideoResponseData {
-  messages: ImageResponseItem[];
+  messages: SendImageVideoResponseItem[];
 }
 
 export class VideoResponseItem {
@@ -239,4 +239,16 @@ export class SendDocumentViaUrlDto {
 
   @IsNotEmpty()
   customerNumber: string;
+}
+
+export interface SendDocumentResponse {
+  quota: number;
+  messages: Message[];
+}
+
+export interface Message {
+  id: string;
+  phone: string;
+  message: null;
+  status: MessageStatus;
 }
