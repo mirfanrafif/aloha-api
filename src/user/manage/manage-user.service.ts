@@ -93,7 +93,9 @@ export class ManageUserService {
       relations: {
         customer: {
           customer: {
-            messages: true,
+            messages: {
+              agent: true,
+            },
           },
         },
       },
