@@ -1,5 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { AxiosResponse } from 'axios';
+import { Observable } from 'rxjs';
 import {
   SendDocumentResponse,
   SendImageVideoResponse,
@@ -15,7 +17,11 @@ import {
 export class WablasService {
   constructor(private http: HttpService) {}
 
-  sendMessage(request: WablasSendMessageRequest) {
+  sendMessage(
+    request: WablasSendMessageRequest,
+  ): Observable<
+    AxiosResponse<WablasApiResponse<SendMessageResponseData>, any>
+  > {
     return this.http.post<WablasApiResponse<SendMessageResponseData>>(
       '/api/v2/send-message',
       JSON.stringify(request),
@@ -29,7 +35,9 @@ export class WablasService {
     );
   }
 
-  sendImage(request: WablasSendImageRequest) {
+  sendImage(
+    request: WablasSendImageRequest,
+  ): Observable<AxiosResponse<WablasApiResponse<SendImageVideoResponse>, any>> {
     return this.http.post<WablasApiResponse<SendImageVideoResponse>>(
       '/api/v2/send-image',
       JSON.stringify(request),
@@ -43,7 +51,9 @@ export class WablasService {
     );
   }
 
-  sendDocument(request: WablasSendDocumentRequest) {
+  sendDocument(
+    request: WablasSendDocumentRequest,
+  ): Observable<AxiosResponse<WablasApiResponse<SendDocumentResponse>, any>> {
     return this.http.post<WablasApiResponse<SendDocumentResponse>>(
       '/api/v2/send-document',
       JSON.stringify(request),
@@ -57,7 +67,9 @@ export class WablasService {
     );
   }
 
-  sendVideo(request: WablasSendVideoRequest) {
+  sendVideo(
+    request: WablasSendVideoRequest,
+  ): Observable<AxiosResponse<WablasApiResponse<SendImageVideoResponse>, any>> {
     return this.http.post<WablasApiResponse<SendImageVideoResponse>>(
       '/api/v2/send-video',
       JSON.stringify(request),

@@ -6,8 +6,8 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AxiosError } from 'axios';
-import { catchError, map, switchMap } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
+import { catchError, map, Observable, switchMap } from 'rxjs';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -32,7 +32,7 @@ export class CustomerCrmService {
     private configService: ConfigService,
   ) {}
 
-  login() {
+  login(): Observable<AxiosResponse<LoginResponse, any>> {
     const loginRequest = {
       username: this.configService.get('CRM_USERNAME'),
       password: this.configService.get('CRM_PASSWORD'),
