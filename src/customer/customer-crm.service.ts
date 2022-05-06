@@ -156,49 +156,51 @@ export class CustomerCrmService {
   }
 
   findWithPhoneNumber(phoneNumber: string) {
-    return this.http
-      .get<CustomerResponse>('/customers', {
-        params: {
-          'filter.telephones': '$eq:' + phoneNumber,
-          limit: 1,
-        },
-        headers: {
-          Authorization: 'Bearer ' + process.env.CRM_TOKEN,
-        },
-      })
-      .pipe(
-        map(async (response) => {
-          if (response.status > 400) {
-            throw new Error('Error when searching customer from CRM');
-          }
+    return this.login().pipe(
+      map((response) => response.data.access_token),
+      switchMap((accessToken) =>
+        this.http.get<CustomerResponse>('/customers', {
+          params: {
+            'filter.telephones': '$eq:' + phoneNumber,
+            limit: 1,
+          },
+          headers: {
+            Authorization: 'Bearer ' + accessToken,
+          },
+        }),
+      ),
+      map(async (response) => {
+        if (response.status > 400) {
+          throw new Error('Error when searching customer from CRM');
+        }
 
-          if (response.data.data.length === 0) {
-            throw new Error('Error when searching customer from CRM');
-          }
+        if (response.data.data.length === 0) {
+          throw new Error('Error when searching customer from CRM');
+        }
 
-          const customers = response.data.data;
-          const newCustomers = await this.saveCustomerFromCrm(customers);
+        const customers = response.data.data;
+        const newCustomers = await this.saveCustomerFromCrm(customers);
+        return newCustomers;
+      }),
+      catchError(async (err) => {
+        const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
+        if (convertedPhoneNumber === undefined) {
+          const newCustomers: CustomerEntity[] = [];
           return newCustomers;
-        }),
-        catchError(async (err) => {
-          const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
-          if (convertedPhoneNumber === undefined) {
-            const newCustomers: CustomerEntity[] = [];
-            return newCustomers;
-          }
+        }
 
-          const customers = await this.customerRepository.find({
-            where: {
-              phoneNumber: Like(convertedPhoneNumber),
-            },
-            take: pageSize,
-            order: {
-              name: 'ASC',
-            },
-          });
-          return customers;
-        }),
-      );
+        const customers = await this.customerRepository.find({
+          where: {
+            phoneNumber: Like(convertedPhoneNumber),
+          },
+          take: pageSize,
+          order: {
+            name: 'ASC',
+          },
+        });
+        return customers;
+      }),
+    );
   }
 
   getCustomerFromCrm(params) {
