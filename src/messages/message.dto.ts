@@ -241,14 +241,14 @@ export class SendDocumentViaUrlDto {
   customerNumber: string;
 }
 
-export interface SendDocumentResponse {
+export type SendDocumentResponse = {
   quota: number;
   messages: Message[];
-}
+};
 
-export interface Message {
+export type Message = {
   id: string;
   phone: string;
   message: null;
   status: MessageStatus;
-}
+};
