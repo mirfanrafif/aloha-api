@@ -72,7 +72,13 @@ export class ManageUserService {
 
   async getStats(id: number, start: string, end: string) {
     const dateStart = new Date(start);
+    dateStart.setHours(0);
+    dateStart.setHours(0);
+
     const dateEnd = new Date(end);
+    dateEnd.setHours(23);
+    dateEnd.setMinutes(59);
+
     const userWithMessages = await this.userRepository.findOne({
       where: {
         id: id,
