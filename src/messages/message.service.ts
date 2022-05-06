@@ -5,10 +5,9 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, lastValueFrom, map } from 'rxjs';
+import { catchError, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -17,7 +16,7 @@ import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
-import { DataSource, LessThan, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import {
   WablasApiResponse,
   MessageRequestDto,
@@ -33,7 +32,6 @@ import {
   MessageTrackingDto,
   WablasSendVideoRequest,
   ImageMessageRequestDto,
-  SendVideoResponseData,
   SendDocumentViaUrlDto,
   SendDocumentResponse,
 } from './message.dto';
@@ -357,6 +355,13 @@ export class MessageService {
       }
     }
 
+    const newCustomer =
+      customer !== undefined
+        ? customer
+        : await this.customerService.searchCustomerWithPhoneNumber(
+            messageRequest.customerNumber,
+          );
+
     //buat request ke WABLAS API
     return this.wablasService.sendMessage(request).pipe(
       map(
@@ -366,7 +371,7 @@ export class MessageService {
           //save ke database
           const messages = await this.saveOutgoingMessage({
             messageResponses: response.data.data,
-            customer: customer,
+            customer: newCustomer,
             agent: agent,
           });
 
@@ -406,9 +411,9 @@ export class MessageService {
     body: MessageRequestDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.findCustomer({
-      phoneNumber: body.customerNumber,
-    });
+    const customer = await this.customerService.searchCustomerWithPhoneNumber(
+      body.customerNumber,
+    );
 
     //templating request
     const request: WablasSendImageRequest = {
@@ -545,9 +550,9 @@ export class MessageService {
     body: DocumentRequestDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.findCustomer({
-      phoneNumber: body.customerNumber,
-    });
+    const customer = await this.customerService.searchCustomerWithPhoneNumber(
+      body.customerNumber,
+    );
 
     //templating request
     const request: WablasSendDocumentRequest = {
@@ -682,23 +687,17 @@ export class MessageService {
     agent,
   }: {
     messageResponses: SendMessageResponseData;
-    customer?: CustomerEntity;
+    customer: CustomerEntity;
     agent?: UserEntity;
   }): Promise<MessageEntity[]> {
     const messages: MessageEntity[] = [];
 
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
-      const newCustomer =
-        customer !== undefined
-          ? customer
-          : await this.customerService.searchCustomerWithPhoneNumber(
-              messageItem.phone,
-            );
       let message = this.messageRepository.create({
         messageId: messageItem.id,
         message: messageItem.message,
-        customer: newCustomer,
+        customer: customer,
         agent: agent,
         status: messageItem.status,
         fromMe: true,
@@ -720,7 +719,7 @@ export class MessageService {
     type,
   }: {
     messageResponses: SendImageVideoResponse;
-    customer?: CustomerEntity;
+    customer: CustomerEntity;
     agent?: UserEntity;
     filename: string;
     type: MessageType;
@@ -729,16 +728,10 @@ export class MessageService {
 
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
-      const newCustomer =
-        customer !== undefined
-          ? customer
-          : await this.customerService.searchCustomerWithPhoneNumber(
-              messageItem.phone,
-            );
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: messageItem.caption ?? '',
-        customer: newCustomer,
+        customer: customer,
         file: filename,
         agent: agent,
         status: messageItem.status,
@@ -760,7 +753,7 @@ export class MessageService {
     type,
   }: {
     messageResponses: SendDocumentResponse;
-    customer?: CustomerEntity;
+    customer: CustomerEntity;
     agent?: UserEntity;
     filename: string;
     type: MessageType;
@@ -769,16 +762,10 @@ export class MessageService {
 
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
-      const newCustomer =
-        customer !== undefined
-          ? customer
-          : await this.customerService.searchCustomerWithPhoneNumber(
-              messageItem.phone,
-            );
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: '',
-        customer: newCustomer,
+        customer: customer,
         file: filename,
         agent: agent,
         status: messageItem.status,
