@@ -221,8 +221,14 @@ export class ManageUserService {
 
       //jika pesan sebelumnya bukan dari aloha, maka dianggap menjawab pesan
       else if (
+        // index lebih dari 0 untuk cek sebelumnya
         index > 0 &&
-        !messages[index - 1].fromMe &&
+        // //pesan sebelumnya dari sales
+        // !messages[index - 1].fromMe &&
+
+        //jika ada pertanyaan
+        customerFirstQuestionIndex > -1 &&
+        //pesannya dari sales tersebut
         message.agent !== null &&
         message.agent.id == agentId
       ) {
