@@ -45,6 +45,7 @@ CREATE TABLE `users` (
   `profile_photo` varchar(255) DEFAULT NULL,
   `created_at` timestamp(6) NULL DEFAULT current_timestamp(6),
   `updated_at` timestamp(6) NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_fe0bb3f6520ee0469504521e71` (`username`),
   UNIQUE KEY `IDX_97672ac88f789774dd47f7c8be` (`email`)
