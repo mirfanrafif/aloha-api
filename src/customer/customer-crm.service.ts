@@ -260,6 +260,8 @@ export class CustomerCrmService {
     const newCustomers: CustomerEntity[] = [];
 
     for (const customer of customers) {
+      const phoneNumber = this.convertPhoneNumber(customer.telephones);
+
       if (
         newCustomers.find(
           (findCustomer) => findCustomer.phoneNumber === phoneNumber,
@@ -267,8 +269,6 @@ export class CustomerCrmService {
       ) {
         continue;
       }
-
-      const phoneNumber = this.convertPhoneNumber(customer.telephones);
 
       if (phoneNumber === undefined) {
         continue;
