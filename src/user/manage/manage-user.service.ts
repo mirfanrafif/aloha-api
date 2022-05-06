@@ -127,7 +127,7 @@ export class ManageUserService {
       const dateMessagesGroup = this.groupingByDate(customer);
       const responseTimes = dateMessagesGroup.map((item) => {
         //cari response time pada tanggal sekian
-        const responseTime = this.calculateDailyResponseTime(item);
+        const responseTime = this.calculateDailyResponseTime(item, id);
         return responseTime;
       });
 
@@ -190,7 +190,10 @@ export class ManageUserService {
     return userEntity;
   }
 
-  private calculateDailyResponseTime(dateMessage: DateMessages) {
+  private calculateDailyResponseTime(
+    dateMessage: DateMessages,
+    agentId: number,
+  ) {
     const messages = dateMessage.messages;
     const responseTimes: ResponseTime[] = [];
     let unreadMessageCount = 0;
@@ -200,9 +203,11 @@ export class ManageUserService {
     messages.forEach((message, index) => {
       //jika customer bertanya
       if (!message.fromMe) {
+        //jika tidak ada pertanyaan sebelumnya
         if (customerFirstQuestionIndex == -1) {
           customerFirstQuestionIndex = index;
         }
+        //jika jam tersebut termasuk jam kerja
         if (
           message.created_at.getHours() >= 8 &&
           message.created_at.getHours() < 21
@@ -214,10 +219,10 @@ export class ManageUserService {
 
       //jika pesan sebelumnya bukan dari aloha, maka dianggap menjawab pesan
       else if (
-        index != 0 &&
-        !messages[index - 1].fromMe //&&
-        // message.agent !== null &&
-        // message.agent.id == agentId
+        index > 0 &&
+        !messages[index - 1].fromMe &&
+        message.agent !== null &&
+        message.agent.id == agentId
       ) {
         const customerQuestionDate = Math.abs(
           messages[customerFirstQuestionIndex].created_at.getTime() / 1000,
@@ -274,10 +279,11 @@ export class ManageUserService {
     const responseTimeSeconds = responseTime % 60;
     const formattedResponseTime =
       responseTimeHours.toString() +
-      ':' +
+      ' jam, ' +
       responseTimeMinutes.toString() +
-      ':' +
-      responseTimeSeconds.toString();
+      ' menit, ' +
+      Math.round(responseTimeSeconds).toString() +
+      ' detik';
     return formattedResponseTime;
   }
 
