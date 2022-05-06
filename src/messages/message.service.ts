@@ -692,9 +692,9 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findCustomer({
-              phoneNumber: messageItem.phone,
-            });
+          : await this.customerService.searchCustomerWithPhoneNumber(
+              messageItem.phone,
+            );
       let message = this.messageRepository.create({
         messageId: messageItem.id,
         message: messageItem.message,
@@ -732,9 +732,9 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findCustomer({
-              phoneNumber: messageItem.phone,
-            });
+          : await this.customerService.searchCustomerWithPhoneNumber(
+              messageItem.phone,
+            );
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: messageItem.caption ?? '',
@@ -772,9 +772,9 @@ export class MessageService {
       const newCustomer =
         customer !== undefined
           ? customer
-          : await this.customerService.findCustomer({
-              phoneNumber: messageItem.phone,
-            });
+          : await this.customerService.searchCustomerWithPhoneNumber(
+              messageItem.phone,
+            );
       const message = await this.messageRepository.save({
         messageId: messageItem.id,
         message: '',

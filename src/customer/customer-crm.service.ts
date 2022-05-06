@@ -168,16 +168,19 @@ export class CustomerCrmService {
       })
       .pipe(
         map(async (response) => {
-          if (response.status < 400) {
-            const customers = response.data.data;
-            const newCustomers = await this.saveCustomerFromCrm(customers);
-            return newCustomers;
-          } else {
-            const newCustomers: CustomerEntity[] = [];
-            return newCustomers;
+          if (response.status > 400) {
+            throw new Error('Error when searching customer from CRM');
           }
+
+          if (response.data.data.length === 0) {
+            throw new Error('Error when searching customer from CRM');
+          }
+
+          const customers = response.data.data;
+          const newCustomers = await this.saveCustomerFromCrm(customers);
+          return newCustomers;
         }),
-        catchError(async (err: AxiosError<any>) => {
+        catchError(async (err) => {
           const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
           if (convertedPhoneNumber === undefined) {
             const newCustomers: CustomerEntity[] = [];

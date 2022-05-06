@@ -6,8 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, map } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -23,10 +22,7 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, Repository } from 'typeorm';
 import { CustomerCrmService } from './customer-crm.service';
 import {
-  CrmCustomer,
   CustomerAgentArrDto,
-  CustomerCrmSearchFilter,
-  CustomerResponse,
   DelegateCustomerRequestDto,
 } from './customer.dto';
 
@@ -398,7 +394,16 @@ export class CustomerService {
     };
   }
 
-  searchCustomerWithPhoneNumber(phoneNumber: string) {
-    return this.customerCrmService.findWithPhoneNumber(phoneNumber);
+  async searchCustomerWithPhoneNumber(phoneNumber: string) {
+    const customers = await lastValueFrom(
+      this.customerCrmService.findWithPhoneNumber(phoneNumber),
+    );
+    if (customers.length === 0) {
+      throw new NotFoundException(
+        'Customer with phone number ' + phoneNumber + ' not found',
+      );
+    }
+
+    return customers[0];
   }
 }
