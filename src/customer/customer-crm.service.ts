@@ -169,18 +169,45 @@ export class CustomerCrmService {
           },
         }),
       ),
+      //simpan ke database jika ada isinya, kalo gaada return array kosong
       map(async (response) => {
         if (response.status > 400) {
-          throw new Error('Error when searching customer from CRM');
+          const customers: CustomerEntity[] = [];
+          return customers;
         }
 
         if (response.data.data.length === 0) {
-          throw new Error('Error when searching customer from CRM');
+          const customers: CustomerEntity[] = [];
+          return customers;
         }
 
         const customers = response.data.data;
         const newCustomers = await this.saveCustomerFromCrm(customers);
         return newCustomers;
+      }),
+      //cari di db kalo hasil search di crm kosong
+      map(async (customers) => {
+        let newCustomers = await customers;
+        if (newCustomers.length === 0) {
+          const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
+          if (convertedPhoneNumber === undefined) {
+            const newCustomers: CustomerEntity[] = [];
+            return newCustomers;
+          }
+
+          newCustomers = await this.customerRepository.find({
+            where: {
+              phoneNumber: Like(convertedPhoneNumber),
+            },
+            take: pageSize,
+            order: {
+              name: 'ASC',
+            },
+          });
+          return newCustomers;
+        }
+
+        return customers;
       }),
       catchError(async (err) => {
         const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
