@@ -9,7 +9,6 @@ import { compare, hash } from 'bcrypt';
 // import {} from 'bcrypt';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
 
-const pageSize = 25;
 @Injectable()
 export class UserService {
   constructor(
@@ -45,7 +44,7 @@ export class UserService {
     });
   }
 
-  async getAllUsers(search?: string, page?: number) {
+  async getAllUsers(search?: string) {
     const conditions: any = {
       role: Not(Role.sistem),
     };

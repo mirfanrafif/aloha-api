@@ -26,7 +26,6 @@ import {
   DelegateCustomerRequestDto,
 } from './customer.dto';
 
-const pageSize = 20;
 @Injectable()
 export class CustomerService {
   constructor(

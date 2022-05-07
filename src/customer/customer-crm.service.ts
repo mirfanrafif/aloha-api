@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import { catchError, map, Observable, switchMap } from 'rxjs';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
@@ -139,7 +139,7 @@ export class CustomerCrmService {
           message: 'Success getting customer data from CRM API',
         };
       }),
-      catchError(async (err: AxiosError<any>) => {
+      catchError(async () => {
         const customers = await this.customerRepository.find({
           where: {
             name: Like(search),
@@ -209,7 +209,7 @@ export class CustomerCrmService {
 
         return customers;
       }),
-      catchError(async (err) => {
+      catchError(async () => {
         const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
         if (convertedPhoneNumber === undefined) {
           const newCustomers: CustomerEntity[] = [];

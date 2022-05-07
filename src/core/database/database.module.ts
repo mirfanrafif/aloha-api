@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { createConnection, DataSource } from 'typeorm';
+import { createConnection } from 'typeorm';
 import { MessageEntity } from '../repository/message/message.entity';
 import { CustomerAgent } from '../repository/customer-agent/customer-agent.entity';
 import { UserEntity } from '../repository/user/user.entity';

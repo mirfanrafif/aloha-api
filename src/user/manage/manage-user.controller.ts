@@ -6,7 +6,6 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Post,
   Put,
   Query,
   UseGuards,

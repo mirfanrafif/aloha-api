@@ -14,7 +14,6 @@ import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { agent } from 'supertest';
 import { Between, In, Repository } from 'typeorm';
 import {
   ChangeSalesPasswordDto,
@@ -129,7 +128,7 @@ export class ManageUserService {
       const dateMessagesGroup = this.groupingByDate(customer);
       const responseTimes = dateMessagesGroup.map((item) => {
         //cari response time pada tanggal sekian
-        const responseTime = this.calculateDailyResponseTime(item, id);
+        const responseTime = this.calculateDailyResponseTime(item);
         return responseTime;
       });
 
@@ -194,7 +193,7 @@ export class ManageUserService {
 
   private calculateDailyResponseTime(
     dateMessage: DateMessages,
-    agentId: number,
+    // agentId: number,
   ) {
     const messages = dateMessage.messages;
     const responseTimes: ResponseTime[] = [];
@@ -242,7 +241,7 @@ export class ManageUserService {
         //hitung response time
         const responseTime = salesReplyDate - customerQuestionDate;
 
-        //jika lebih dari 600 detik maka dianggap telat
+        //jika lebih dari 600 detik / 10 menit maka dianggap telat
         if (responseTime > 600) {
           lateResponseCount++;
         }
