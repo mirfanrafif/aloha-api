@@ -230,7 +230,7 @@ export class ManageUserService {
         customerFirstQuestionIndex > -1 &&
         //pesannya dari sales tersebut
         message.agent !== null &&
-        message.agent.id == agentId
+        message.agent.role !== Role.sistem
       ) {
         const customerQuestionDate = Math.abs(
           messages[customerFirstQuestionIndex].created_at.getTime() / 1000,
