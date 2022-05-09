@@ -17,18 +17,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Roles } from 'src/auth/role.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import {
-  BroadcastMessageRequest,
   DocumentRequestDto,
   ImageMessageRequestDto,
   MessageRequestDto,
   MessageResponseDto,
   MessageTrackingDto,
-  StartConversationDto,
+  SendDocumentViaUrlDto,
   TextMessage,
 } from './message.dto';
 import { MessageService } from './message.service';
@@ -74,26 +71,12 @@ export class MessageController {
   @UseGuards(JwtAuthGuard)
   async getCustomerByAgentId(
     @Request() request,
-    @Query('search') customerNumber?: string,
-    @Query('last_customer_id') lastCustomerId?: number,
+    @Query('search') name?: string,
   ): Promise<ApiResponse<any>> {
-    if (customerNumber !== undefined) {
-      return this.service.searchCustomer(customerNumber, request.user);
+    if (name !== undefined) {
+      return this.service.searchCustomer(name, request.user);
     }
-    return await this.service.getMessageByAgentId(request.user, lastCustomerId);
-  }
-
-  @Post('broadcast')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
-  broadcastMessageToCustomer(
-    @Body() body: BroadcastMessageRequest,
-    @Request() request,
-  ) {
-    return this.service.broadcastMessageToCustomer(
-      body,
-      request.user as UserEntity,
-    );
+    return await this.service.getMessageByAgentId(request.user);
   }
 
   @Post('image')
@@ -159,6 +142,46 @@ export class MessageController {
     return this.service.sendDocumentToCustomer(file, data, request.user);
   }
 
+  @Post('document_url')
+  @UseGuards(JwtAuthGuard)
+  sendDocumentToCustomerViaUrl(
+    @Body() body: SendDocumentViaUrlDto,
+    @Request() request,
+  ) {
+    return this.service.sendDocumentToCustomerViaUrl(body, request.user);
+  }
+
+  @Post('video')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('video', {
+      storage: diskStorage({
+        destination: 'uploads/messages/video',
+        filename: (request, file, cb) => {
+          //file name biar keliatan random aja sih
+          const timestamp = Date.now().toString();
+          const filename =
+            file.originalname.split('.')[0].slice(0, 16) +
+            '-' +
+            timestamp +
+            extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  sendVideoToCustomer(
+    @UploadedFile() video: Express.Multer.File,
+    @Body() body: ImageMessageRequestDto,
+    @Request() request,
+  ) {
+    const user: UserEntity = request.user;
+    return this.service.sendVideoToCustomer(video, body, user);
+  }
+
   @Get('image/:file_name')
   getMessageImage(@Param('file_name') fileName: string, @Res() res) {
     res.sendFile(fileName, { root: 'uploads/messages/image' });
@@ -167,5 +190,10 @@ export class MessageController {
   @Get('document/:document_name')
   getMessageDocument(@Param('document_name') filename: string, @Res() res) {
     res.sendFile(filename, { root: 'uploads/messages/document' });
+  }
+
+  @Get('video/:video_name')
+  getMessageVideo(@Param('video_name') filename: string, @Res() res) {
+    res.sendFile(filename, { root: 'uploads/messages/video' });
   }
 }

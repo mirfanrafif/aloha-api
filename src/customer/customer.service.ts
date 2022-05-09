@@ -6,8 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AxiosError } from 'axios';
-import { catchError, map } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -20,14 +19,13 @@ import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Like, MoreThan, Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
+import { CustomerCrmService } from './customer-crm.service';
 import {
   CustomerAgentArrDto,
-  CustomerResponse,
   DelegateCustomerRequestDto,
 } from './customer.dto';
 
-const pageSize = 20;
 @Injectable()
 export class CustomerService {
   constructor(
@@ -40,14 +38,15 @@ export class CustomerService {
     private customerAgentRepository: Repository<CustomerAgent>,
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
+    private customerCrmService: CustomerCrmService,
   ) {}
 
-  async findAndCreateCustomer({
+  async findOrCreateCustomer({
     phoneNumber,
     name,
   }: {
     phoneNumber: string;
-    name?: string;
+    name: string;
   }): Promise<CustomerEntity> {
     const findCustomer = await this.customerRepository.findOne({
       where: {
@@ -68,11 +67,19 @@ export class CustomerService {
   }
 
   async findCustomer({ phoneNumber }: { phoneNumber: string }) {
-    return await this.customerRepository.findOneOrFail({
+    const customer = await this.customerRepository.findOne({
       where: {
         phoneNumber: phoneNumber,
       },
     });
+
+    if (customer === null) {
+      throw new NotFoundException(
+        'Customer with phone number ' + phoneNumber + ' nout found',
+      );
+    }
+
+    return customer;
   }
 
   //Mencari agen yang menangani customer tersebut
@@ -101,7 +108,9 @@ export class CustomerService {
     const agent = await this.userRepository.find({
       where: {
         job: {
-          id: agentJob,
+          job: {
+            id: agentJob,
+          },
         },
       },
       relations: {
@@ -135,17 +144,25 @@ export class CustomerService {
 
   //Mendelegasi agen dengan customer
   async delegateCustomerToAgent(body: DelegateCustomerRequestDto) {
-    const customer = await this.customerRepository.findOneOrFail({
+    const customer = await this.customerRepository.findOne({
       where: {
         id: body.customerId,
       },
     });
 
-    const agent = await this.userRepository.findOneOrFail({
+    if (customer === null) {
+      throw new NotFoundException('Customer tidak ditemukan');
+    }
+
+    const agent = await this.userRepository.findOne({
       where: {
         id: body.agentId,
       },
     });
+
+    if (agent === null) {
+      throw new NotFoundException('Sales tidak ditemukan');
+    }
 
     const existingCustomerAgent = await this.customerAgentRepository.findOne({
       where: {
@@ -155,6 +172,10 @@ export class CustomerService {
         agent: {
           id: agent.id,
         },
+      },
+      relations: {
+        customer: true,
+        agent: true,
       },
     });
 
@@ -175,15 +196,39 @@ export class CustomerService {
     };
     return response;
   }
+  //Mendelegasi agen dengan customer
+  async undelegateCustomerToAgent(body: DelegateCustomerRequestDto) {
+    const existingCustomerAgent = await this.customerAgentRepository.findOne({
+      where: {
+        customer: {
+          id: body.customerId,
+        },
+        agent: {
+          id: body.agentId,
+        },
+      },
+      relations: {
+        customer: true,
+        agent: true,
+      },
+    });
+
+    if (existingCustomerAgent === null) {
+      throw new NotFoundException('Sales tidak memegang customer ini');
+    }
+
+    await this.customerAgentRepository.delete(existingCustomerAgent.id);
+
+    const response: ApiResponse<CustomerAgent> = {
+      success: true,
+      message: `Succesfully unassign customer ${existingCustomerAgent.customer.name} to sales ${existingCustomerAgent.agent.full_name}`,
+      data: existingCustomerAgent,
+    };
+    return response;
+  }
 
   //mengambil data customer berdasarkan agen (halaman list pesan)
-  async getCustomerByAgent({
-    agent,
-    lastCustomerId,
-  }: {
-    agent: UserEntity;
-    lastCustomerId?: number;
-  }) {
+  async getCustomerByAgent({ agent }: { agent: UserEntity }) {
     let conditions: any = {};
 
     if (agent.role === Role.agent) {
@@ -194,19 +239,12 @@ export class CustomerService {
         },
       };
     }
-    if (lastCustomerId !== undefined) {
-      conditions = {
-        ...conditions,
-        id: MoreThan(lastCustomerId),
-      };
-    }
     const listCustomer = await this.customerAgentRepository.find({
       where: conditions,
       relations: {
         agent: true,
         customer: true,
       },
-      take: pageSize,
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
@@ -276,13 +314,7 @@ export class CustomerService {
     return true;
   }
 
-  async searchCustomer({
-    customerNumber,
-    agent,
-  }: {
-    customerNumber: string;
-    agent: UserEntity;
-  }) {
+  async searchCustomer({ name, agent }: { name: string; agent: UserEntity }) {
     let conditions: any = {};
 
     if (agent.role == Role.agent) {
@@ -297,97 +329,18 @@ export class CustomerService {
       where: {
         ...conditions,
         customer: {
-          phoneNumber: customerNumber,
+          name: Like(`%${name}%`),
         },
       },
       relations: {
         agent: true,
         customer: true,
       },
-      take: pageSize,
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
 
     return newListCustomer;
-  }
-
-  async searchCustomerFromCrm(search: string, page?: number) {
-    if (search === undefined) {
-      throw new BadRequestException('Search not defined');
-    }
-
-    return this.httpService
-      .get<CustomerResponse>(`/customers`, {
-        params: {
-          page: page ?? 1,
-          limit: pageSize,
-          search: search,
-        },
-        headers: {
-          Authorization: `Bearer ${process.env.CRM_TOKEN}`,
-        },
-      })
-      .pipe(
-        map(async (response) => {
-          if (response.status < 400) {
-            const customers = response.data.data;
-
-            const newCustomers: CustomerEntity[] = [];
-
-            for (const customer of customers) {
-              const existingCustomer = await this.customerRepository.findOne({
-                where: [
-                  {
-                    customerCrmId: customer.id,
-                  },
-                  {
-                    phoneNumber: customer.telephones,
-                  },
-                ],
-              });
-              if (existingCustomer !== null) {
-                newCustomers.push(existingCustomer);
-                continue;
-              }
-
-              let newCustomer = this.customerRepository.create({
-                name: customer.full_name,
-                phoneNumber: customer.telephones,
-                customerCrmId: customer.id,
-              });
-              newCustomer = await this.customerRepository.save(newCustomer);
-              newCustomers.push(newCustomer);
-            }
-            return <ApiResponse<CustomerEntity[]>>{
-              success: true,
-              data: newCustomers,
-              message: 'Success getting customer data from CRM API',
-            };
-          }
-        }),
-        catchError(async (err: AxiosError<any>) => {
-          console.log(err);
-          const customers = await this.customerRepository.find({
-            where: {
-              name: Like(search),
-            },
-            take: pageSize,
-            skip: pageSize * ((page ?? 1) - 1),
-            order: {
-              name: 'ASC',
-            },
-          });
-          return <ApiResponse<CustomerEntity[]>>{
-            success: true,
-            data: customers,
-            message:
-              'Failed to get data from CRM API. Error : ' +
-              err.message +
-              '. Getting data from database',
-          };
-        }),
-      );
   }
 
   async getAllCustomer() {
@@ -438,5 +391,18 @@ export class CustomerService {
       data: customerAgent,
       message: 'Success starting conversation with customer ' + customer.name,
     };
+  }
+
+  async searchCustomerWithPhoneNumber(phoneNumber: string) {
+    const customers = await lastValueFrom(
+      this.customerCrmService.findWithPhoneNumber(phoneNumber),
+    );
+    if (customers.length === 0) {
+      throw new NotFoundException(
+        'Customer with phone number ' + phoneNumber + ' not found',
+      );
+    }
+
+    return customers[0];
   }
 }

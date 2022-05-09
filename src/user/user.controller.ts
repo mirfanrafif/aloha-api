@@ -28,8 +28,8 @@ export class UserController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin)
-  getAllUsers(@Query('search') search?: string, @Query('page') page?: number) {
-    return this.userService.getAllUsers(search, page);
+  getAllUsers(@Query('search') search?: string) {
+    return this.userService.getAllUsers(search);
   }
 
   @Post()

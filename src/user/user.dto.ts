@@ -52,3 +52,11 @@ export class ChangeSalesPasswordDto {
   @IsNotEmpty()
   newPassword: string;
 }
+
+export class DeleteUserRequest {
+  @IsNotEmpty()
+  salesId: number;
+
+  @IsNotEmpty()
+  delegatedSalesId: number;
+}

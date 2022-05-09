@@ -9,7 +9,6 @@ import { compare, hash } from 'bcrypt';
 // import {} from 'bcrypt';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
 
-const pageSize = 25;
 @Injectable()
 export class UserService {
   constructor(
@@ -25,10 +24,9 @@ export class UserService {
     });
   }
 
-  async getCustomerByAgentId(user: UserEntity, lastCustomerId?: number) {
+  async getCustomerByAgentId(user: UserEntity) {
     const messages = await this.customerService.getCustomerByAgent({
       agent: user,
-      lastCustomerId,
     });
     const result = {
       success: true,
@@ -46,7 +44,7 @@ export class UserService {
     });
   }
 
-  async getAllUsers(search?: string, page?: number) {
+  async getAllUsers(search?: string) {
     const conditions: any = {
       role: Not(Role.sistem),
     };
@@ -57,15 +55,27 @@ export class UserService {
 
     const users = await this.userRepository.find({
       relations: {
-        job: true,
+        job: {
+          job: true,
+        },
+        customer: {
+          customer: true,
+        },
       },
       where: conditions,
-      take: pageSize,
-      skip: ((page ?? 1) - 1) * 25,
     });
-    return <ApiResponse<UserEntity[]>>{
+
+    const userResponse = users.map((user) => {
+      const customers = user.customer.map((customer) => customer.customer);
+      return {
+        ...user,
+        password: undefined,
+        customer: customers,
+      };
+    });
+    return <ApiResponse<any[]>>{
       success: true,
-      data: users,
+      data: userResponse,
       message: 'Success getting users',
     };
   }

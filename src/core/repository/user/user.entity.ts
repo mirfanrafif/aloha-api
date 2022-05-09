@@ -2,8 +2,8 @@ import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -11,6 +11,7 @@ import {
 import { MessageEntity } from '../message/message.entity';
 import { CustomerAgent } from '../customer-agent/customer-agent.entity';
 import { UserJobEntity } from '../user-job/user-job.entity';
+import { MessageTemplateEntity } from '../message-template/message-template.entity';
 
 @Entity({
   name: 'users',
@@ -48,14 +49,20 @@ export class UserEntity {
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
 
+  @DeleteDateColumn()
+  deleted_at?: Date;
+
   @OneToMany(() => CustomerAgent, (customer) => customer.agent)
   customer: CustomerAgent[];
 
   @OneToMany(() => MessageEntity, (message) => message.agent)
   messages: MessageEntity[];
 
-  @ManyToOne(() => UserJobEntity, (category) => category.agents)
-  job?: UserJobEntity;
+  @OneToMany(() => UserJobEntity, (job) => job.agent)
+  job: UserJobEntity[];
+
+  @OneToMany(() => MessageTemplateEntity, (template) => template.user)
+  templates: MessageTemplateEntity[];
 }
 
 export type UserEntityType = {

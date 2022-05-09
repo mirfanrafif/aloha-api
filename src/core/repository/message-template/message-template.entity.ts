@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserEntity } from '../user/user.entity';
 
 @Entity({
   name: 'message_template',
@@ -24,4 +27,10 @@ export class MessageTemplateEntity {
 
   @UpdateDateColumn({ type: 'timestamp' })
   updated_at: string;
+
+  @ManyToOne(() => UserEntity, (user) => user.templates)
+  @JoinColumn({
+    name: 'agent_id',
+  })
+  user: UserEntity;
 }

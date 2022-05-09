@@ -1,4 +1,11 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
@@ -7,6 +14,7 @@ export enum MessageType {
   text = 'text',
   document = 'document',
   image = 'image',
+  video = 'video',
 }
 
 export type Group = {
@@ -46,6 +54,31 @@ export class ImageMessageRequestDto {
 
   @IsString()
   message: string;
+}
+
+export class BroadcastImageMessageRequestDto {
+  @IsString()
+  message: string;
+
+  @IsNotEmpty()
+  categories: string;
+
+  @IsNotEmpty()
+  interests: string;
+
+  @IsNotEmpty()
+  types: string;
+}
+
+export class BroadcastDocumentMessageRequestDto {
+  @IsNotEmpty()
+  categories: string;
+
+  @IsNotEmpty()
+  interests: string;
+
+  @IsNotEmpty()
+  types: string;
 }
 
 export class DocumentRequestDto {
@@ -90,6 +123,19 @@ export type WablasSendImageRequestData = {
   isGroup: boolean;
 };
 
+export type WablasSendVideoRequest = {
+  data: WablasSendVideoRequestData[];
+};
+
+export type WablasSendVideoRequestData = {
+  phone: string;
+  video: string;
+  caption: string;
+  secret: boolean;
+  retry: boolean;
+  isGroup: boolean;
+};
+
 export class WablasApiResponse<T> {
   status: boolean;
   message: string;
@@ -107,22 +153,43 @@ export class MessageResponseItem {
   status: MessageStatus;
 }
 
-export class SendImageResponseData {
-  messages: ImageResponseItem[];
+export class SendImageVideoResponse {
+  messages: SendImageVideoResponseItem[];
 }
 
-export class ImageResponseItem {
+export class SendImageVideoResponseItem {
+  id: string;
+  phone: string;
+  caption?: string;
+  image: string;
+  status: MessageStatus;
+}
+
+export class SendVideoResponseData {
+  messages: SendImageVideoResponseItem[];
+}
+
+export class VideoResponseItem {
   id: string;
   phone: string;
   message?: string;
   caption: string;
-  image: string;
+  video: string;
   status: MessageStatus;
 }
 
 export class BroadcastMessageRequest {
   @IsNotEmpty()
   message: string;
+
+  @IsArray()
+  categories: string[];
+
+  @IsArray()
+  interests: string[];
+
+  @IsArray()
+  types: string[];
 }
 
 export class MessageResponseDto {
@@ -164,3 +231,24 @@ export class StartConversationDto {
   @IsNumber()
   customerId: number;
 }
+
+export class SendDocumentViaUrlDto {
+  @IsNotEmpty()
+  @IsUrl()
+  url: string;
+
+  @IsNotEmpty()
+  customerNumber: string;
+}
+
+export type SendDocumentResponse = {
+  quota: number;
+  messages: Message[];
+};
+
+export type Message = {
+  id: string;
+  phone: string;
+  message: null;
+  status: MessageStatus;
+};

@@ -2,9 +2,10 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { JobEntity } from 'src/core/repository/job/job.entity';
+import { JOB_REPOSITORY } from 'src/core/repository/job/job.module';
 import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
 import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
@@ -16,9 +17,11 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class UserJobService {
   constructor(
-    @Inject(USER_JOB_REPOSITORY)
-    private jobRepository: Repository<UserJobEntity>,
+    @Inject(JOB_REPOSITORY)
+    private jobRepository: Repository<JobEntity>,
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
+    @Inject(USER_JOB_REPOSITORY)
+    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
   async assignAgentToJob(
@@ -29,18 +32,16 @@ export class UserJobService {
         id: body.agentId,
       },
       relations: {
-        job: true,
+        job: {
+          job: true,
+        },
       },
     });
     if (agent === null) {
       throw new NotFoundException(`Agent with id ${body.agentId} not found`);
     }
 
-    if (agent.job === undefined) {
-      throw new InternalServerErrorException('job not found');
-    }
-
-    if (agent.job !== null && agent.job.id === body.jobId) {
+    if (agent.job.find((job) => job.job.id === body.jobId) !== undefined) {
       throw new BadRequestException(
         `Agent with id ${body.agentId} is already assigned to job ${body.jobId}`,
       );
@@ -56,22 +57,75 @@ export class UserJobService {
       throw new NotFoundException(`Job with id ${body.jobId} not found`);
     }
 
-    agent.job = job;
-    const newAgent = await this.userRepository.save(agent);
+    await this.userJobRepository.save({
+      agent: agent,
+      job: job,
+      priority: 0,
+    });
+
+    const newAgent = await this.userRepository.findOneOrFail({
+      where: {
+        id: body.agentId,
+      },
+      relations: {
+        job: {
+          job: true,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: newAgent,
+      message: 'Succesfully assign agent ' + agent.id + ' to job ' + body.jobId,
+    };
+  }
+
+  async unassignAgentToJob(
+    body: JobAssignRequestDto,
+  ): Promise<ApiResponse<UserEntity>> {
+    await this.userJobRepository.delete({
+      job: {
+        id: body.jobId,
+      },
+      agent: {
+        id: body.agentId,
+      },
+    });
+
+    const newAgent = await this.userRepository.findOneOrFail({
+      where: {
+        id: body.agentId,
+      },
+      relations: {
+        job: {
+          job: true,
+        },
+      },
+    });
 
     return {
       success: true,
       data: newAgent,
       message:
-        'Succesfully assign agent ' + agent.id + ' to job ' + agent.job.id,
+        'Succesfully assign agent ' + newAgent.id + ' to job ' + body.jobId,
     };
   }
 
   async cekJobSesuai(pilihan: number) {
     const userJobs = await this.jobRepository.find({
-      relations: ['agents'],
+      relations: {
+        agents: {
+          agent: true,
+        },
+      },
     });
-    const pilihanSesuai = userJobs.find((job) => job.id === pilihan);
+    const pilihanSesuai = userJobs
+      .map((value, index) => ({
+        job: value,
+        menu: index + 1,
+      }))
+      .find((job) => job.menu === pilihan);
     return pilihanSesuai;
   }
 
@@ -79,8 +133,8 @@ export class UserJobService {
   async showMenu() {
     const userJobs = await this.jobRepository.find();
     return userJobs
-      .map((job) => {
-        return `${job.id}. ${job.name}`;
+      .map((job, index) => {
+        return `${index + 1}. ${job.name}`;
       })
       .join('\n');
   }
@@ -103,10 +157,12 @@ export class UserJobService {
         id: id,
       },
       relations: {
-        agents: true,
+        agents: {
+          agent: true,
+        },
       },
     });
-    const result: ApiResponse<UserJobEntity> = {
+    const result: ApiResponse<JobEntity> = {
       success: true,
       data: job,
       message: 'Success getting job and agents',
@@ -123,7 +179,7 @@ export class UserJobService {
     job.name = request.name;
     job.description = request.description;
     const newJob = await this.jobRepository.save(job);
-    return <ApiResponse<UserJobEntity>>{
+    return <ApiResponse<JobEntity>>{
       success: true,
       data: newJob,
       message: 'Success update job with id ' + id,
@@ -143,7 +199,7 @@ export class UserJobService {
       throw new BadRequestException('Job is not empty. Move agents to new job');
     }
     await this.jobRepository.delete(job.id);
-    return <ApiResponse<UserJobEntity>>{
+    return <ApiResponse<JobEntity>>{
       success: true,
       data: job,
       message: 'Success delete job with id ' + id,

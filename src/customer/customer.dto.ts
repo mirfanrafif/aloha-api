@@ -46,13 +46,13 @@ export class CustomerAgentResponseDto {
   updated_at: Date;
 }
 
-export interface CustomerResponse {
+export type CustomerResponse = {
   data: CrmCustomer[];
   meta: CRMCustomerMeta;
   links: Links;
-}
+};
 
-export interface CrmCustomer {
+export type CrmCustomer = {
   status: Status;
   is_active: boolean;
   id: number;
@@ -69,11 +69,11 @@ export interface CrmCustomer {
   notes: null | string;
   dob: null;
   telephones: string;
-  users: User[];
+  users: CrmUser[];
   types: Type[];
   full_name: string;
   telephones_array: string[];
-}
+};
 
 export enum Status {
   Kontak = 'Kontak',
@@ -84,14 +84,14 @@ export enum Title {
   Ibu = 'Ibu',
 }
 
-export interface Type {
+export type Type = {
   id: number;
   created_at: Date;
   updated_at: Date;
   name: string;
   system_id?: number;
-}
-export interface User {
+};
+export type CrmUser = {
   id: number;
   created_at: Date;
   updated_at: Date;
@@ -103,18 +103,64 @@ export interface User {
   is_active: boolean;
   role: Type;
   full_name: string;
-}
+};
 
-export interface Links {
-  current: string;
-  next: string;
-  last: string;
-}
-
-export interface CRMCustomerMeta {
+export type CRMCustomerMeta = {
   itemsPerPage: number;
   totalItems: number;
   currentPage: number;
   totalPages: number;
   sortBy: Array<string[]>;
+};
+
+export type CustomerCategoriesResponse = {
+  data: CustomerCategoriesData[];
+  meta: Meta;
+  links: Links;
+};
+
+export type CustomerCategoriesData = {
+  id: number;
+  created_at: Date;
+  updated_at: Date;
+  name: string;
+  user: CrmUser;
+};
+
+export type Links = {
+  current: string;
+};
+
+export type Meta = {
+  itemsPerPage: number;
+  totalItems: number;
+  currentPage: number;
+  totalPages: number;
+  sortBy: Array<string[]>;
+};
+
+export type CustomerInterestsResponse = {
+  data: CustomerInterestsData[];
+  meta: Meta;
+  links: Links;
+};
+
+export type CustomerInterestsData = {
+  id: number;
+  created_at: Date;
+  updated_at: Date;
+  name: string;
+  user: CrmUser;
+};
+
+export class CustomerCrmSearchFilter {
+  'filter.categories.name'?: string;
+  'filter.interests.name'?: string;
+  'filter.users.email'?: string;
+  'filter.types.name'?: string;
 }
+
+export type LoginResponse = {
+  access_token: string;
+  user: CrmUser;
+};

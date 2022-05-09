@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -14,7 +15,11 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/core/repository/user/user.entity';
-import { ChangeSalesPasswordDto, UpdateUserRequestDto } from '../user.dto';
+import {
+  ChangeSalesPasswordDto,
+  DeleteUserRequest,
+  UpdateUserRequestDto,
+} from '../user.dto';
 import { ManageUserService } from './manage-user.service';
 
 @Controller('user/manage')
@@ -51,5 +56,19 @@ export class UserManageController {
     @Query('end') end: string,
   ) {
     return this.service.getStats(id, start, end);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  @Delete()
+  deleteUser(@Body() request: DeleteUserRequest) {
+    return this.service.deleteUser(request);
+  }
+
+  @Put(':id/deactivate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
+  deactivateUser(@Param('id', ParseIntPipe) id: number) {
+    return this.service.deactivateUser(id);
   }
 }

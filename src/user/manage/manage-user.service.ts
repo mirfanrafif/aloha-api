@@ -1,17 +1,34 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { hash } from 'bcrypt';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Between, Repository } from 'typeorm';
-import { ChangeSalesPasswordDto, UpdateUserRequestDto } from '../user.dto';
+import { Between, In, Repository } from 'typeorm';
+import {
+  ChangeSalesPasswordDto,
+  DeleteUserRequest,
+  UpdateUserRequestDto,
+} from '../user.dto';
 
 @Injectable()
 export class ManageUserService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
+    @Inject(CUSTOMER_AGENT_REPOSITORY)
+    private customerAgentRepository: Repository<CustomerAgent>,
+    @Inject(USER_JOB_REPOSITORY)
+    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
   async updateUser(agentId: number, newData: UpdateUserRequestDto) {
@@ -54,7 +71,13 @@ export class ManageUserService {
 
   async getStats(id: number, start: string, end: string) {
     const dateStart = new Date(start);
+    dateStart.setHours(0);
+    dateStart.setHours(0);
+
     const dateEnd = new Date(end);
+    dateEnd.setHours(23);
+    dateEnd.setMinutes(59);
+
     const userWithMessages = await this.userRepository.findOne({
       where: {
         id: id,
@@ -69,7 +92,9 @@ export class ManageUserService {
       relations: {
         customer: {
           customer: {
-            messages: true,
+            messages: {
+              agent: true,
+            },
           },
         },
       },
@@ -77,6 +102,9 @@ export class ManageUserService {
         customer: {
           customer: {
             id: 'ASC',
+            messages: {
+              id: 'ASC',
+            },
           },
         },
       },
@@ -123,17 +151,29 @@ export class ManageUserService {
               .reduce((prev, value) => prev + value)
           : 0;
 
+      const answeredMessages = allResponseTime.length;
+
       return {
         id: customer.id,
         name: customer.name,
         phoneNumber: customer.phoneNumber,
         created_at: customer.created_at,
         updated_at: customer.updated_at,
+        answered_messages: answeredMessages,
         average_all_response_time: avgAllResponseTime,
         all_unread_message_count: allUnreadMessagesCount,
         dailyReport: responseTimes,
       };
     });
+
+    const allResponseTime = result.map(
+      (item) => item.average_all_response_time,
+    );
+
+    const avgResponseTime =
+      allResponseTime.reduce((prev, cur) => prev + cur) / result.length;
+
+    const lateAnswerCount = result.map((item) => item.all_unread_message_count);
 
     const userEntity = {
       id: userWithMessages.id,
@@ -141,6 +181,8 @@ export class ManageUserService {
       username: userWithMessages.username,
       email: userWithMessages.email,
       role: userWithMessages.role,
+      late_answer_count: lateAnswerCount,
+      average_response_time: avgResponseTime,
       created_at: userWithMessages.created_at,
       updated_at: userWithMessages.updated_at,
       statistics: result,
@@ -149,7 +191,10 @@ export class ManageUserService {
     return userEntity;
   }
 
-  private calculateDailyResponseTime(dateMessage: DateMessages) {
+  private calculateDailyResponseTime(
+    dateMessage: DateMessages,
+    // agentId: number,
+  ) {
     const messages = dateMessage.messages;
     const responseTimes: ResponseTime[] = [];
     let unreadMessageCount = 0;
@@ -159,9 +204,11 @@ export class ManageUserService {
     messages.forEach((message, index) => {
       //jika customer bertanya
       if (!message.fromMe) {
+        //jika tidak ada pertanyaan sebelumnya
         if (customerFirstQuestionIndex == -1) {
           customerFirstQuestionIndex = index;
         }
+        //jika jam tersebut termasuk jam kerja
         if (
           message.created_at.getHours() >= 8 &&
           message.created_at.getHours() < 21
@@ -173,10 +220,16 @@ export class ManageUserService {
 
       //jika pesan sebelumnya bukan dari aloha, maka dianggap menjawab pesan
       else if (
-        index != 0 &&
-        !messages[index - 1].fromMe //&&
-        // message.agent !== null &&
-        // message.agent.id == agentId
+        // index lebih dari 0 untuk cek sebelumnya
+        index > 0 &&
+        // //pesan sebelumnya dari sales
+        // !messages[index - 1].fromMe &&
+
+        //jika ada pertanyaan
+        customerFirstQuestionIndex > -1 &&
+        //pesannya dari sales tersebut
+        message.agent !== null &&
+        message.agent.role !== Role.sistem
       ) {
         const customerQuestionDate = Math.abs(
           messages[customerFirstQuestionIndex].created_at.getTime() / 1000,
@@ -188,7 +241,7 @@ export class ManageUserService {
         //hitung response time
         const responseTime = salesReplyDate - customerQuestionDate;
 
-        //jika lebih dari 600 detik maka dianggap telat
+        //jika lebih dari 600 detik / 10 menit maka dianggap telat
         if (responseTime > 600) {
           lateResponseCount++;
         }
@@ -233,10 +286,11 @@ export class ManageUserService {
     const responseTimeSeconds = responseTime % 60;
     const formattedResponseTime =
       responseTimeHours.toString() +
-      ':' +
+      ' jam, ' +
       responseTimeMinutes.toString() +
-      ':' +
-      responseTimeSeconds.toString();
+      ' menit, ' +
+      Math.round(responseTimeSeconds).toString() +
+      ' detik';
     return formattedResponseTime;
   }
 
@@ -269,6 +323,142 @@ export class ManageUserService {
       }
     });
     return result;
+  }
+
+  async deleteUser(request: DeleteUserRequest) {
+    const sales = await this.userRepository.findOne({
+      where: {
+        id: request.salesId,
+      },
+    });
+
+    if (request.delegatedSalesId === request.salesId) {
+      throw new BadRequestException(
+        'Sales ID yang dihapus sama dengan yang didelegasi',
+      );
+    }
+
+    if (sales === null) {
+      throw new NotFoundException(
+        'Sales with id ' + request.salesId + ' not found',
+      );
+    }
+
+    //delegate all customer to new sales
+    const delegatedSales = await this.userRepository.findOne({
+      where: {
+        id: request.delegatedSalesId,
+      },
+    });
+
+    if (delegatedSales === null) {
+      throw new NotFoundException(
+        'Delegated sales with id ' + request.salesId + ' not found',
+      );
+    }
+
+    //ambil customer yang ada di sales yang akan dihapus dan yang akan didelegasikan
+    const customers = await this.customerAgentRepository.find({
+      where: {
+        agent: {
+          id: In([sales.id, delegatedSales.id]),
+        },
+      },
+      relations: {
+        agent: true,
+        customer: true,
+      },
+    });
+
+    const salesCustomer: CustomerAgent[] = customers.filter(
+      (value) => value.agent.id === sales.id,
+    );
+    const delegatedSalesCustomers: CustomerAgent[] = customers.filter(
+      (value) => value.agent.id === delegatedSales.id,
+    );
+
+    for (const customer of salesCustomer) {
+      //jika delegated sales nya sudah handle si customer itu
+      if (
+        delegatedSalesCustomers.find(
+          (value) => value.customer.id === customer.customer.id,
+        ) !== undefined
+      ) {
+        await this.customerAgentRepository.delete(customer.id);
+      } else {
+        customer.agent = delegatedSales;
+        delegatedSalesCustomers.push(customer);
+      }
+    }
+
+    await this.customerAgentRepository.save(delegatedSalesCustomers);
+
+    await this.userRepository.softDelete(sales.id);
+
+    //hapus job
+    const userJob = await this.userJobRepository.find({
+      where: {
+        agent: {
+          id: sales.id,
+        },
+      },
+      relations: {
+        agent: true,
+      },
+    });
+
+    await this.userJobRepository.delete(userJob.map((e) => e.id));
+
+    return <ApiResponse<any>>{
+      success: true,
+      data: await this.userRepository.findOne({
+        where: {
+          id: delegatedSales.id,
+        },
+        relations: {
+          customer: {
+            customer: true,
+          },
+        },
+      }),
+      message:
+        'Sukses menghapus sales ' +
+        sales.full_name +
+        ' dan mendelegasikan semua customer ke sales ' +
+        delegatedSales.full_name,
+    };
+  }
+
+  async deactivateUser(id: number) {
+    const sales = await this.userJobRepository.find({
+      where: {
+        agent: {
+          id: id,
+        },
+      },
+      relations: {
+        agent: true,
+      },
+    });
+
+    await this.userJobRepository.delete(sales.map((value) => value.id));
+
+    const newSales = await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: {
+        job: {
+          job: true,
+        },
+      },
+    });
+
+    return <ApiResponse<any>>{
+      success: true,
+      data: newSales,
+      message: 'Sukses mendeaktifkan sales ' + newSales?.full_name,
+    };
   }
 }
 

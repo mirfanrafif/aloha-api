@@ -3,10 +3,11 @@ import { createConnection } from 'typeorm';
 import { MessageEntity } from '../repository/message/message.entity';
 import { CustomerAgent } from '../repository/customer-agent/customer-agent.entity';
 import { UserEntity } from '../repository/user/user.entity';
-import { UserJobEntity } from '../repository/user-job/user-job.entity';
+import { JobEntity } from '../repository/job/job.entity';
 import { ConversationEntity } from '../repository/conversation/conversation.entity';
 import { CustomerEntity } from '../repository/customer/customer.entity';
 import { MessageTemplateEntity } from '../repository/message-template/message-template.entity';
+import { UserJobEntity } from '../repository/user-job/user-job.entity';
 
 export const DATABASE_CONNECTION = 'database_connection';
 
@@ -26,6 +27,7 @@ export const DATABASE_CONNECTION = 'database_connection';
             UserEntity,
             CustomerAgent,
             MessageEntity,
+            JobEntity,
             UserJobEntity,
             ConversationEntity,
             CustomerEntity,
