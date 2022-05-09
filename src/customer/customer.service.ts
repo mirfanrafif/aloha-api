@@ -240,18 +240,35 @@ export class CustomerService {
         agent: {
           agent: true,
         },
-        messages: true,
+        messages: {
+          agent: true,
+          customer: true,
+        },
       },
       where: {
         name: name !== undefined ? Like(`%${name}%`) : undefined,
+        agent: {
+          agent:
+            handlerAgent.role === Role.agent
+              ? {
+                  id: handlerAgent.id,
+                }
+              : undefined,
+        },
+      },
+      order: {
+        id: 'ASC',
+        messages: {
+          id: 'DESC',
+        },
       },
     });
 
-    if (handlerAgent.role === Role.agent) {
-      listCustomer.filter((customer) =>
-        customer.agent.map((sales) => sales.agent.id).includes(handlerAgent.id),
-      );
-    }
+    // if (handlerAgent.role === Role.agent) {
+    //   listCustomer.filter((customer) =>
+    //     customer.agent.map((sales) => sales.agent.id).includes(handlerAgent.id),
+    //   );
+    // }
 
     return listCustomer;
   }

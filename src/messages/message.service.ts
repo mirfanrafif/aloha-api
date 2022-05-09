@@ -843,25 +843,9 @@ export class MessageService {
   ): Promise<CustomerAgentResponseDto[]> {
     const result = await Promise.all(
       listCustomer.map(async (customer) => {
-        const messages = await this.messageRepository.find({
-          where: {
-            customer: {
-              id: customer.id,
-            },
-          },
-          order: {
-            id: 'DESC',
-          },
-          relations: {
-            customer: true,
-            agent: true,
-          },
-          take: 10,
-        });
-
         const lastMessageResponse =
-          messages != null && messages.length > 0
-            ? this.mapMessageEntityToResponse(messages[0])
+          customer.messages != null && customer.messages.length > 0
+            ? this.mapMessageEntityToResponse(customer.messages[0])
             : null;
 
         const newCustomer: CustomerAgentResponseDto = {
@@ -870,7 +854,7 @@ export class MessageService {
           phoneNumber: customer.phoneNumber,
           agent: customer.agent,
           last_message: lastMessageResponse,
-          unread: this.findUnreadMessage(messages),
+          unread: this.findUnreadMessage(customer.messages),
           created_at: customer.created_at,
           updated_at: customer.updated_at,
           customerCrmId: customer.customerCrmId,
