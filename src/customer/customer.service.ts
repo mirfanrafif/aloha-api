@@ -228,57 +228,32 @@ export class CustomerService {
   }
 
   //mengambil data customer berdasarkan agen (halaman list pesan)
-  async getCustomerByAgent({ agent }: { agent: UserEntity }) {
-    let conditions: any = {};
-
-    if (agent.role === Role.agent) {
-      conditions = {
-        ...conditions,
-        agent: {
-          id: agent.id,
-        },
-      };
-    }
-    const listCustomer = await this.customerAgentRepository.find({
-      where: conditions,
+  async getCustomerByAgent({
+    handlerAgent,
+    name,
+  }: {
+    handlerAgent: UserEntity;
+    name?: string;
+  }) {
+    const listCustomer = await this.customerRepository.find({
       relations: {
-        agent: true,
-        customer: true,
+        agent: {
+          agent: true,
+        },
+        messages: true,
+      },
+      where: {
+        name: name !== undefined ? Like(`%${name}%`) : undefined,
       },
     });
 
-    const newListCustomer = this.mappingCustomerAgent(listCustomer);
-
-    return newListCustomer;
-  }
-
-  /*
-  karena pada 1 customer terdapat beberapa sales, maka harus dimapping 
-  agar data customer tersebut tidak duplikat, tetapi salesnya disimpan
-  dalam sebuah array
-   */
-  mappingCustomerAgent(listCustomer: CustomerAgent[]) {
-    const newListCustomer: CustomerAgentArrDto[] = [];
-
-    listCustomer.forEach((customerItem) => {
-      const customerIndex = newListCustomer.findIndex(
-        (value) => value.customer.id == customerItem.customer.id,
+    if (handlerAgent.role === Role.agent) {
+      listCustomer.filter((customer) =>
+        customer.agent.map((sales) => sales.agent.id).includes(handlerAgent.id),
       );
+    }
 
-      if (customerIndex > -1) {
-        newListCustomer[customerIndex].agent.push(customerItem.agent);
-        return;
-      }
-      newListCustomer.push({
-        id: customerItem.id,
-        agent: [customerItem.agent],
-        customer: customerItem.customer,
-        created_at: customerItem.created_at,
-        updated_at: customerItem.updated_at,
-      });
-    });
-
-    return newListCustomer;
+    return listCustomer;
   }
 
   /*
@@ -312,35 +287,6 @@ export class CustomerService {
     }
 
     return true;
-  }
-
-  async searchCustomer({ name, agent }: { name: string; agent: UserEntity }) {
-    let conditions: any = {};
-
-    if (agent.role == Role.agent) {
-      conditions = {
-        ...conditions,
-        agent: {
-          id: agent.id,
-        },
-      };
-    }
-    const listCustomer = await this.customerAgentRepository.find({
-      where: {
-        ...conditions,
-        customer: {
-          name: Like(`%${name}%`),
-        },
-      },
-      relations: {
-        agent: true,
-        customer: true,
-      },
-    });
-
-    const newListCustomer = this.mappingCustomerAgent(listCustomer);
-
-    return newListCustomer;
   }
 
   async getAllCustomer() {

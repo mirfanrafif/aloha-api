@@ -24,18 +24,6 @@ export class UserService {
     });
   }
 
-  async getCustomerByAgentId(user: UserEntity) {
-    const messages = await this.customerService.getCustomerByAgent({
-      agent: user,
-    });
-    const result = {
-      success: true,
-      data: messages,
-      message: `Success getting customer list by agent id ${user.id}`,
-    };
-    return result;
-  }
-
   getAloha() {
     return this.userRepository.findOneOrFail({
       where: {
