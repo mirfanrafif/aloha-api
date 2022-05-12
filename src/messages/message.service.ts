@@ -34,6 +34,7 @@ import {
   ImageMessageRequestDto,
   SendDocumentViaUrlDto,
   SendDocumentResponse,
+  Group,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -41,13 +42,13 @@ import { ConversationStatus } from 'src/core/repository/conversation/conversatio
 import { ConversationService } from './conversation.service';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { UserJobService } from 'src/job/user-job.service';
-import {
-  CustomerAgentArrDto,
-  CustomerAgentResponseDto,
-} from 'src/customer/customer.dto';
+import { CustomerAgentResponseDto } from 'src/customer/customer.dto';
 import { UserService } from 'src/user/user.service';
 import { isEnum } from 'class-validator';
 import { WablasService } from './wablas.service';
+import { Client, GroupChat, MessageTypes } from 'whatsapp-web.js';
+import { WHATSAPP_CLIENT } from './whatsapp/whatsapp.module';
+import { fstat, writeFile } from 'fs';
 
 const pageSize = 20;
 
@@ -63,7 +64,84 @@ export class MessageService {
     private userJobService: UserJobService,
     private userService: UserService,
     private wablasService: WablasService,
-  ) {}
+    @Inject(WHATSAPP_CLIENT)
+    private whatsappClient: Client,
+  ) {
+    whatsappClient.on('message', async (message) => {
+      if (message.type !== undefined && message.type === MessageTypes.TEXT) {
+        const contact = await message.getContact();
+        const chat = await message.getChat();
+        const file = await message.downloadMedia();
+
+        const getType = () => {
+          switch (message.type) {
+            case MessageTypes.TEXT:
+              return MessageType.text;
+            case MessageTypes.DOCUMENT:
+              return MessageType.document;
+            case MessageTypes.IMAGE:
+              return MessageType.image;
+            case MessageTypes.VIDEO:
+              return MessageType.video;
+            default:
+              break;
+          }
+        };
+
+        const messageType = getType();
+
+        if (messageType === undefined) {
+          return;
+        }
+
+        const fileName: string =
+          file.filename !== undefined && file.filename !== null
+            ? file.filename
+            : 'file-' + contact.number;
+
+        const group: Group = {
+          desc: '',
+          owner: '',
+          subject: '',
+        };
+
+        if (chat.isGroup) {
+          const groupChat = chat as GroupChat;
+          group.desc = groupChat.description;
+          group.subject = groupChat.name;
+          group.owner = '';
+          console.log(groupChat.owner);
+        }
+
+        const binary = new Buffer(file.data, 'base64').toString('binary');
+
+        writeFile(fileName, binary, (err) => {
+          console.log(err);
+        });
+
+        const incomingMessage: TextMessage = {
+          id: message.id.id,
+          message: message.body,
+          messageType: messageType,
+          isGroup: chat.isGroup,
+          file: fileName,
+          group: group,
+          mimeType: file.mimetype,
+          phone: contact.number,
+          pushName: contact.pushname,
+          sender: 0,
+          timestamp: message.timestamp,
+        };
+
+        console.log(
+          'hello, ada pesan baru dari ' +
+            contact.pushname +
+            ': ' +
+            message.body,
+        );
+      }
+    });
+  }
 
   async handleIncomingMessage(incomingMessage: TextMessage) {
     //message from group
