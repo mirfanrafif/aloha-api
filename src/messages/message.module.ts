@@ -15,6 +15,11 @@ import { MessageTemplateService } from './template/message-template.service';
 import { MessageBroadcastController } from './broadcast/broadcast-message.controller';
 import { BroadcastMessageService } from './broadcast/broadcast-message.service';
 import { WablasService } from './wablas.service';
+import { Client } from 'whatsapp-web.js';
+import * as qrcode from 'qrcode-terminal';
+import { MessageType } from './message.dto';
+
+export const WHATSAPP_CLIENT = 'whatsapp_client';
 
 @Module({
   providers: [
@@ -24,6 +29,48 @@ import { WablasService } from './wablas.service';
     MessageTemplateService,
     BroadcastMessageService,
     WablasService,
+    {
+      provide: WHATSAPP_CLIENT,
+      useFactory: (service: MessageService) => {
+        const client = new Client({});
+
+        client.once('qr', (qr) => {
+          // Generate and scan this code with your phone
+          qrcode.generate(qr, { small: true });
+        });
+
+        client.on('ready', () => {
+          console.log('Client is ready!');
+        });
+
+        client.on('message', async (message) => {
+          console.log('hello, ada pesan baru: ' + message.body);
+          const contact = await message.getContact();
+          service.handleIncomingMessage({
+            id: message.id.id,
+            file: '',
+            isGroup: false,
+            message: message.body,
+            phone: message.from,
+            group: {
+              desc: '',
+              owner: '',
+              subject: '',
+            },
+            messageType: MessageType.text,
+            mimeType: '',
+            pushName: contact.pushname,
+            sender: 1,
+            timestamp: message.timestamp,
+          });
+        });
+
+        client.initialize();
+
+        return client;
+      },
+      inject: [MessageService],
+    },
   ],
   controllers: [
     MessageController,
