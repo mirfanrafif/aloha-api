@@ -407,7 +407,9 @@ export class ManageUserService {
       },
     });
 
-    await this.userJobRepository.delete(userJob.map((e) => e.id));
+    if (userJob.length > 0) {
+      await this.userJobRepository.delete(userJob.map((e) => e.id));
+    }
 
     return <ApiResponse<any>>{
       success: true,
