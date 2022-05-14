@@ -443,7 +443,9 @@ export class ManageUserService {
       },
     });
 
-    await this.userJobRepository.delete(sales.map((value) => value.id));
+    if (sales.length > 0) {
+      await this.userJobRepository.delete(sales.map((value) => value.id));
+    }
 
     const newSales = await this.userRepository.findOne({
       where: {
