@@ -8,8 +8,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable, switchMap } from 'rxjs';
+import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import {
+  ConversationEntity,
+  ConversationStatus,
+} from 'src/core/repository/conversation/conversation.entity';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
+import { UserEntity } from 'src/core/repository/user/user.entity';
+import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, Repository } from 'typeorm';
 import {
@@ -30,6 +39,12 @@ export class CustomerCrmService {
     @Inject(CUSTOMER_REPOSITORY)
     private customerRepository: Repository<CustomerEntity>,
     private configService: ConfigService,
+    @Inject(USER_REPOSITORY)
+    private userRepository: Repository<UserEntity>,
+    @Inject(CUSTOMER_AGENT_REPOSITORY)
+    private customerSalesRepository: Repository<CustomerAgent>,
+    @Inject(CONVERSATION_REPOSITORY)
+    private conversationRepository: Repository<ConversationEntity>,
   ) {}
 
   login(): Observable<AxiosResponse<LoginResponse, any>> {
@@ -286,11 +301,79 @@ export class CustomerCrmService {
         continue;
       }
 
-      let newCustomer = this.customerRepository.create({
-        name: customer.full_name,
-        phoneNumber: phoneNumber,
-        customerCrmId: customer.id,
+      let newCustomer =
+        existingCustomer !== null
+          ? existingCustomer
+          : await this.customerRepository.create({
+              name: customer.full_name,
+              phoneNumber: phoneNumber,
+              customerCrmId: customer.id,
+            });
+
+      for (const sales of customer.users) {
+        //cari sales yang bersangkutan dari crm di aloha
+        const alohaSales = await this.userRepository.findOne({
+          where: {
+            username: sales.username,
+          },
+        });
+
+        //jika data sales tidak ada di aloha, maka buatkan baru
+        const newSales =
+          alohaSales !== null
+            ? alohaSales
+            : await this.userRepository.save({
+                full_name: sales.full_name,
+                username: sales.username,
+                email: sales.email,
+                password: '',
+              });
+
+        //cek customer sudah di assign ke sales
+        const customerAgent = await this.customerSalesRepository.findOne({
+          where: {
+            customer: {
+              id: newCustomer.id,
+            },
+            agent: {
+              id: newSales.id,
+            },
+          },
+          relations: {
+            agent: true,
+            customer: true,
+          },
+        });
+
+        //jika belum ada, assign dia ke sales yang sama seperti di crm
+        if (customerAgent === null) {
+          await this.customerSalesRepository.save({
+            customer: newCustomer,
+            agent: newSales,
+          });
+        }
+      }
+
+      //cek conversation
+      const conversation = await this.conversationRepository.findOne({
+        where: {
+          customer: {
+            id: newCustomer.id,
+          },
+        },
+        relations: {
+          customer: true,
+        },
       });
+
+      //jika belum ada, maka connect langsung conversationnya
+      if (conversation === null) {
+        await this.conversationRepository.save({
+          status: ConversationStatus.CONNECTED,
+          customer: newCustomer,
+        });
+      }
+
       newCustomer = await this.customerRepository.save(newCustomer);
       newCustomers.push(newCustomer);
     }
