@@ -228,28 +228,49 @@ export class CustomerService {
   }
 
   //mengambil data customer berdasarkan agen (halaman list pesan)
-  async getCustomerByAgent({ agent }: { agent: UserEntity }) {
-    let conditions: any = {};
-
-    if (agent.role === Role.agent) {
-      conditions = {
-        ...conditions,
-        agent: {
-          id: agent.id,
-        },
-      };
-    }
-    const listCustomer = await this.customerAgentRepository.find({
-      where: conditions,
+  async getCustomerByAgent({
+    handlerAgent,
+    name,
+  }: {
+    handlerAgent: UserEntity;
+    name?: string;
+  }) {
+    const listCustomer = await this.customerRepository.find({
       relations: {
-        agent: true,
-        customer: true,
+        agent: {
+          agent: true,
+        },
+        messages: {
+          agent: true,
+          customer: true,
+        },
+      },
+      where: {
+        name: name !== undefined ? Like(`%${name}%`) : undefined,
+        agent: {
+          agent:
+            handlerAgent.role === Role.agent
+              ? {
+                  id: handlerAgent.id,
+                }
+              : undefined,
+        },
+      },
+      order: {
+        id: 'ASC',
+        messages: {
+          id: 'DESC',
+        },
       },
     });
 
-    const newListCustomer = this.mappingCustomerAgent(listCustomer);
+    // if (handlerAgent.role === Role.agent) {
+    //   listCustomer.filter((customer) =>
+    //     customer.agent.map((sales) => sales.agent.id).includes(handlerAgent.id),
+    //   );
+    // }
 
-    return newListCustomer;
+    return listCustomer;
   }
 
   /*

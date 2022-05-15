@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { MessageResponseDto } from 'src/messages/message.dto';
@@ -32,18 +33,14 @@ export class CustomerAgentArrDto {
 
 export class CustomerAgentResponseDto {
   id: number;
-
-  customer: CustomerEntity;
-
-  agent: UserEntity[];
-
-  unread: number;
-
-  lastMessage: MessageResponseDto | null;
-
+  name: string;
+  phoneNumber: string;
   created_at: Date;
-
   updated_at: Date;
+  unread: number;
+  last_message: MessageResponseDto | null;
+  agent: CustomerAgent[];
+  customerCrmId: number;
 }
 
 export type CustomerResponse = {

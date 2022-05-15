@@ -821,9 +821,10 @@ export class MessageService {
   }
 
   //cari customer by user id / list pesan
-  async getMessageByAgentId(user: UserEntity) {
+  async getMessageByAgentId(user: UserEntity, name?: string) {
     const messages = await this.customerService.getCustomerByAgent({
-      agent: user,
+      handlerAgent: user,
+      name: name,
     });
 
     const customerWithLastMessage = await this.findLastMessage(messages);
@@ -852,39 +853,25 @@ export class MessageService {
 
   //cari pesan terakhir
   async findLastMessage(
-    listCustomer: CustomerAgentArrDto[],
+    listCustomer: CustomerEntity[],
   ): Promise<CustomerAgentResponseDto[]> {
     const result = await Promise.all(
-      listCustomer.map(async (customerAgent) => {
-        const messages = await this.messageRepository.find({
-          where: {
-            customer: {
-              id: customerAgent.customer.id,
-            },
-          },
-          order: {
-            id: 'DESC',
-          },
-          relations: {
-            customer: true,
-            agent: true,
-          },
-          take: 10,
-        });
-
+      listCustomer.map(async (customer) => {
         const lastMessageResponse =
-          messages != null && messages.length > 0
-            ? this.mapMessageEntityToResponse(messages[0])
+          customer.messages != null && customer.messages.length > 0
+            ? this.mapMessageEntityToResponse(customer.messages[0])
             : null;
 
         const newCustomer: CustomerAgentResponseDto = {
-          id: customerAgent.id,
-          customer: customerAgent.customer,
-          agent: customerAgent.agent,
-          unread: this.findUnreadMessage(messages),
-          lastMessage: lastMessageResponse,
-          created_at: customerAgent.created_at,
-          updated_at: customerAgent.updated_at,
+          id: customer.id,
+          name: customer.name,
+          phoneNumber: customer.phoneNumber,
+          agent: customer.agent,
+          last_message: lastMessageResponse,
+          unread: this.findUnreadMessage(customer.messages),
+          created_at: customer.created_at,
+          updated_at: customer.updated_at,
+          customerCrmId: customer.customerCrmId,
         };
         return newCustomer;
       }),
