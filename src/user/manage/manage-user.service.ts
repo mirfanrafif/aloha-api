@@ -393,6 +393,8 @@ export class ManageUserService {
 
     await this.customerAgentRepository.save(delegatedSalesCustomers);
 
+    await this.userRepository.softDelete(sales.id);
+
     //hapus job
     const userJob = await this.userJobRepository.find({
       where: {
@@ -408,8 +410,6 @@ export class ManageUserService {
     if (userJob.length > 0) {
       await this.userJobRepository.delete(userJob.map((e) => e.id));
     }
-
-    await this.userRepository.softDelete(sales.id);
 
     return <ApiResponse<any>>{
       success: true,
