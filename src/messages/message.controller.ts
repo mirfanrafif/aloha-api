@@ -73,10 +73,7 @@ export class MessageController {
     @Request() request,
     @Query('search') name?: string,
   ): Promise<ApiResponse<any>> {
-    if (name !== undefined) {
-      return this.service.searchCustomer(name, request.user);
-    }
-    return await this.service.getMessageByAgentId(request.user);
+    return await this.service.getMessageByAgentId(request.user, name);
   }
 
   @Post('image')
