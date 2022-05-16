@@ -17,7 +17,7 @@ import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, Repository } from 'typeorm';
@@ -313,9 +313,14 @@ export class CustomerCrmService {
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
         const alohaSales = await this.userRepository.findOne({
-          where: {
-            username: sales.username,
-          },
+          where: [
+            {
+              username: sales.username,
+            },
+            {
+              email: sales.email,
+            },
+          ],
         });
 
         //jika data sales tidak ada di aloha, maka buatkan baru
@@ -327,6 +332,7 @@ export class CustomerCrmService {
                 username: sales.username,
                 email: sales.email,
                 password: '',
+                role: Role.agent,
               });
 
         //cek customer sudah di assign ke sales

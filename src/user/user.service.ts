@@ -26,7 +26,7 @@ export class UserService {
 
   async getCustomerByAgentId(user: UserEntity) {
     const messages = await this.customerService.getCustomerByAgent({
-      agent: user,
+      handlerAgent: user,
     });
     const result = {
       success: true,
