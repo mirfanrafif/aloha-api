@@ -33,14 +33,18 @@ export class CustomerAgentArrDto {
 
 export class CustomerAgentResponseDto {
   id: number;
-  name: string;
-  phoneNumber: string;
-  created_at: Date;
-  updated_at: Date;
+
+  customer: CustomerEntity;
+
+  agent: UserEntity[];
+
   unread: number;
-  last_message: MessageResponseDto | null;
-  agent: CustomerAgent[];
-  customerCrmId: number;
+
+  lastMessage: MessageResponseDto | null;
+
+  created_at: Date;
+
+  updated_at: Date;
 }
 
 export type CustomerResponse = {

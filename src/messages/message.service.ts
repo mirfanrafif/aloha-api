@@ -823,8 +823,7 @@ export class MessageService {
   //cari customer by user id / list pesan
   async getMessageByAgentId(user: UserEntity, name?: string) {
     const messages = await this.customerService.getCustomerByAgent({
-      handlerAgent: user,
-      name: name,
+      agent: user,
     });
 
     const customerWithLastMessage = await this.findLastMessage(messages);
@@ -837,27 +836,55 @@ export class MessageService {
     return result;
   }
 
+  async searchCustomer(name: string, user: UserEntity) {
+    const customer = await this.customerService.searchCustomer({
+      agent: user,
+      name: name,
+    });
+    const customerWithLastMessage = await this.findLastMessage(customer);
+    const result = {
+      success: true,
+      data: customerWithLastMessage,
+      message: `Success searching customer with phone number ${name}`,
+    };
+    return result;
+  }
+
   //cari pesan terakhir
   async findLastMessage(
-    listCustomer: CustomerEntity[],
+    listCustomer: CustomerAgentArrDto[],
   ): Promise<CustomerAgentResponseDto[]> {
     const result = await Promise.all(
-      listCustomer.map(async (customer) => {
+      listCustomer.map(async (customerAgent) => {
+        const messages = await this.messageRepository.find({
+          where: {
+            customer: {
+              id: customerAgent.customer.id,
+            },
+          },
+          order: {
+            id: 'DESC',
+          },
+          relations: {
+            customer: true,
+            agent: true,
+          },
+          take: 10,
+        });
+
         const lastMessageResponse =
-          customer.messages != null && customer.messages.length > 0
-            ? this.mapMessageEntityToResponse(customer.messages[0])
+          messages != null && messages.length > 0
+            ? this.mapMessageEntityToResponse(messages[0])
             : null;
 
         const newCustomer: CustomerAgentResponseDto = {
-          id: customer.id,
-          name: customer.name,
-          phoneNumber: customer.phoneNumber,
-          agent: customer.agent,
-          last_message: lastMessageResponse,
-          unread: this.findUnreadMessage(customer.messages),
-          created_at: customer.created_at,
-          updated_at: customer.updated_at,
-          customerCrmId: customer.customerCrmId,
+          id: customerAgent.id,
+          customer: customerAgent.customer,
+          agent: customerAgent.agent,
+          unread: this.findUnreadMessage(messages),
+          lastMessage: lastMessageResponse,
+          created_at: customerAgent.created_at,
+          updated_at: customerAgent.updated_at,
         };
         return newCustomer;
       }),
