@@ -379,6 +379,9 @@ export class CustomerCrmService {
           status: ConversationStatus.CONNECTED,
           customer: newCustomer,
         });
+      } else {
+        conversation.status = ConversationStatus.CONNECTED;
+        await this.conversationRepository.save(conversation);
       }
 
       newCustomers.push(newCustomer);
