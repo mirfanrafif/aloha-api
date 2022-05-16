@@ -277,6 +277,7 @@ export class CustomerCrmService {
     for (const customer of customers) {
       const phoneNumber = this.convertPhoneNumber(customer.telephones);
 
+      //jika sudah ada di list, maka continue
       if (
         newCustomers.find(
           (findCustomer) => findCustomer.phoneNumber === phoneNumber,
@@ -285,30 +286,29 @@ export class CustomerCrmService {
         continue;
       }
 
+      //jika phone numbernya undefined, maka continue
+
       if (phoneNumber === undefined) {
         continue;
       }
 
-      const existingCustomer = await this.customerRepository.findOne({
+      //buat data customer
+      let newCustomer = await this.customerRepository.findOne({
         where: [
           {
             phoneNumber: phoneNumber,
           },
         ],
       });
-      if (existingCustomer !== null) {
-        newCustomers.push(existingCustomer);
-        continue;
-      }
 
-      let newCustomer =
-        existingCustomer !== null
-          ? existingCustomer
-          : await this.customerRepository.create({
-              name: customer.full_name,
-              phoneNumber: phoneNumber,
-              customerCrmId: customer.id,
-            });
+      //jika belum ada data customer ini di database, maka tambahkan
+      if (newCustomer === null) {
+        newCustomer = await this.customerRepository.create({
+          name: customer.full_name,
+          phoneNumber: phoneNumber,
+          customerCrmId: customer.id,
+        });
+      }
 
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
