@@ -6,7 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
+import { last, lastValueFrom } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -48,14 +48,11 @@ export class CustomerService {
     phoneNumber: string;
     name: string;
   }): Promise<CustomerEntity> {
-    const findCustomer = await this.customerRepository.findOne({
-      where: {
-        phoneNumber: phoneNumber,
-      },
-    });
-
-    if (findCustomer !== null) {
-      return findCustomer;
+    const findCustomer = await lastValueFrom(
+      this.customerCrmService.findWithPhoneNumber(phoneNumber),
+    );
+    if (findCustomer.length > 0) {
+      return findCustomer[0];
     }
 
     const newCustomer = await this.customerRepository.save({
