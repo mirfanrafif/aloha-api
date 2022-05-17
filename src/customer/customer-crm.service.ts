@@ -310,7 +310,7 @@ export class CustomerCrmService {
       const newCustomer =
         existingCustomer !== null
           ? existingCustomer
-          : await this.customerRepository.create({
+          : await this.customerRepository.save({
               name: customer.full_name,
               phoneNumber: phoneNumber,
               customerCrmId: customer.id,
