@@ -294,14 +294,9 @@ export class CustomerCrmService {
 
       //buat data customer
       const existingCustomer = await this.customerRepository.findOne({
-        where: [
-          {
-            phoneNumber: phoneNumber,
-          },
-          {
-            customerCrmId: customer.id,
-          },
-        ],
+        where: {
+          phoneNumber: phoneNumber,
+        },
       });
 
       if (existingCustomer !== null) {
