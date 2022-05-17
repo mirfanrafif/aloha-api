@@ -333,14 +333,9 @@ export class CustomerCrmService {
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
         const alohaSales = await this.userRepository.findOne({
-          where: [
-            {
-              username: sales.username,
-            },
-            {
-              email: sales.email,
-            },
-          ],
+          where: {
+            username: sales.username,
+          },
         });
 
         //jika data sales tidak ada di aloha, maka buatkan baru
