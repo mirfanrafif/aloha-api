@@ -328,7 +328,11 @@ export class CustomerCrmService {
         },
       });
 
-      this.customerSalesRepository.delete(customerSales.map((item) => item.id));
+      if (customerSales.length > 0) {
+        this.customerSalesRepository.delete(
+          customerSales.map((item) => item.id),
+        );
+      }
 
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
