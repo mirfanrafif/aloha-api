@@ -50,7 +50,9 @@ export class MessageRequestDto {
 }
 
 export class BulkMessageRequestDto {
-  @ValidateNested()
+  @ValidateNested({
+    each: true,
+  })
   messages: MessageRequestDto[];
 }
 
