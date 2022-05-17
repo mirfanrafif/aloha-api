@@ -314,23 +314,23 @@ export class CustomerCrmService {
               customerCrmId: customer.id,
             });
 
-      const customerSales = await this.customerSalesRepository.find({
-        where: {
-          customer: {
-            id: newCustomer.id,
-          },
-        },
-        relations: {
-          customer: true,
-          agent: true,
-        },
-      });
+      // const customerSales = await this.customerSalesRepository.find({
+      //   where: {
+      //     customer: {
+      //       id: newCustomer.id,
+      //     },
+      //   },
+      //   relations: {
+      //     customer: true,
+      //     agent: true,
+      //   },
+      // });
 
-      if (customerSales.length > 0) {
-        this.customerSalesRepository.delete(
-          customerSales.map((item) => item.id),
-        );
-      }
+      // if (customerSales.length > 0) {
+      //   this.customerSalesRepository.delete(
+      //     customerSales.map((item) => item.id),
+      //   );
+      // }
 
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
