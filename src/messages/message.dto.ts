@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsString,
   IsUrl,
+  ValidateNested,
 } from 'class-validator';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { MessageStatus } from 'src/core/repository/message/message.entity';
@@ -46,6 +47,11 @@ export class MessageRequestDto {
 
   @IsNotEmpty()
   message: string;
+}
+
+export class BulkMessageRequestDto {
+  @ValidateNested()
+  messages: MessageRequestDto[];
 }
 
 export class ImageMessageRequestDto {

@@ -25,7 +25,7 @@ export class MessageGateway {
 
   async sendMessage({ data }: { data: MessageResponseDto }) {
     const customer = data.customer;
-    const agents = await this.customerService.findAgentByCustomerNumber({
+    const agents = await this.customerService.findAgentByCustomer({
       customer: customer,
     });
     const agentIds = agents.map((item) => item.agent.id.toString());

@@ -80,7 +80,7 @@ export class CustomerService {
   }
 
   //Mencari agen yang menangani customer tersebut
-  async findAgentByCustomerNumber({ customer }: { customer: CustomerEntity }) {
+  async findAgentByCustomer({ customer }: { customer: CustomerEntity }) {
     const agents = await this.customerAgentRepository.find({
       where: {
         customer: {
@@ -311,7 +311,13 @@ export class CustomerService {
     return true;
   }
 
-  async searchCustomer({ name, agent }: { name: string; agent: UserEntity }) {
+  async searchCustomerByName({
+    name,
+    agent,
+  }: {
+    name: string;
+    agent: UserEntity;
+  }) {
     let conditions: any = {};
 
     if (agent.role == Role.agent) {
@@ -338,6 +344,14 @@ export class CustomerService {
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
 
     return newListCustomer;
+  }
+
+  async searchCustomerByPhoneNumberDb(phone: string) {
+    return await this.customerRepository.findOne({
+      where: {
+        phoneNumber: phone,
+      },
+    });
   }
 
   async getAllCustomer() {
