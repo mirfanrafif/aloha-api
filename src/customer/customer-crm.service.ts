@@ -298,6 +298,9 @@ export class CustomerCrmService {
           {
             phoneNumber: phoneNumber,
           },
+          {
+            customerCrmId: customer.id,
+          },
         ],
       });
 
