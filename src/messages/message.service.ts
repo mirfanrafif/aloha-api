@@ -992,7 +992,10 @@ export class MessageService {
         };
         return newCustomer;
       }),
-    );
+    ).catch((err) => {
+      console.log(err);
+      return [];
+    });
     return result;
   }
 
