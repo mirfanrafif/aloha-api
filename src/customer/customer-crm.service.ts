@@ -301,6 +301,11 @@ export class CustomerCrmService {
         ],
       });
 
+      if (existingCustomer !== null) {
+        existingCustomer.name = customer.full_name;
+        await this.customerRepository.save(existingCustomer);
+      }
+
       //jika belum ada data customer ini di database, maka tambahkan
       const newCustomer =
         existingCustomer !== null
@@ -310,6 +315,20 @@ export class CustomerCrmService {
               phoneNumber: phoneNumber,
               customerCrmId: customer.id,
             });
+
+      const customerSales = await this.customerSalesRepository.find({
+        where: {
+          customer: {
+            id: newCustomer.id,
+          },
+        },
+        relations: {
+          customer: true,
+          agent: true,
+        },
+      });
+
+      this.customerSalesRepository.delete(customerSales.map((item) => item.id));
 
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
