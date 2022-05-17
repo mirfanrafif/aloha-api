@@ -481,9 +481,9 @@ export class MessageService {
     body: ImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.findCustomer({
-      phoneNumber: body.customerNumber,
-    });
+    const customer = await this.customerService.searchCustomerWithPhoneNumber(
+      body.customerNumber,
+    );
 
     //templating request
     const request: WablasSendVideoRequest = {
@@ -618,9 +618,9 @@ export class MessageService {
     body: SendDocumentViaUrlDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.findCustomer({
-      phoneNumber: body.customerNumber,
-    });
+    const customer = await this.customerService.searchCustomerWithPhoneNumber(
+      body.customerNumber,
+    );
 
     //templating request
     const request: WablasSendDocumentRequest = {
@@ -821,7 +821,7 @@ export class MessageService {
   }
 
   //cari customer by user id / list pesan
-  async getMessageByAgentId(user: UserEntity, name?: string) {
+  async getMessageByAgentId(user: UserEntity) {
     const messages = await this.customerService.getCustomerByAgent({
       agent: user,
     });
