@@ -333,11 +333,18 @@ export class MessageService {
     agent?: UserEntity;
     customer?: CustomerEntity;
   }) {
+    const newCustomer =
+      customer !== undefined
+        ? customer
+        : await this.customerService.searchCustomerWithPhoneNumber(
+            messageRequest.customerNumber,
+          );
+
     //templating request
     const request: WablasSendMessageRequest = {
       data: [
         {
-          phone: messageRequest.customerNumber,
+          phone: newCustomer.phoneNumber,
           message: messageRequest.message,
           secret: false,
           retry: false,
@@ -356,13 +363,6 @@ export class MessageService {
         });
       }
     }
-
-    const newCustomer =
-      customer !== undefined
-        ? customer
-        : await this.customerService.searchCustomerWithPhoneNumber(
-            messageRequest.customerNumber,
-          );
 
     //buat request ke WABLAS API
     return this.wablasService.sendMessage(request).pipe(
@@ -417,20 +417,26 @@ export class MessageService {
   }) {
     //templating request
     const request: WablasSendMessageRequest = {
-      data: bulkMessageRequest.messages.map((message) => ({
-        message: message.message,
-        isGroup: false,
-        phone: message.customerNumber,
-        retry: true,
-        secret: false,
-      })),
+      data: await Promise.all(
+        bulkMessageRequest.messages.map(async (message) => {
+          const customer =
+            await this.customerService.searchCustomerWithPhoneNumber(
+              message.customerNumber,
+            );
+
+          return {
+            message: message.message,
+            isGroup: false,
+            phone: customer.phoneNumber,
+            retry: true,
+            secret: false,
+          };
+        }),
+      ),
     };
 
     //ambil dulu data2 customer yang di blast dari crm, lalu simpan ke aloha
     for (const message of bulkMessageRequest.messages) {
-      await this.customerService.searchCustomerWithPhoneNumber(
-        message.customerNumber,
-      );
     }
 
     //buat request ke WABLAS API
