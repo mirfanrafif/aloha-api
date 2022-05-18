@@ -294,13 +294,19 @@ export class CustomerCrmService {
 
       //buat data customer
       const existingCustomer = await this.customerRepository.findOne({
-        where: {
-          phoneNumber: phoneNumber,
-        },
+        where: [
+          {
+            phoneNumber: phoneNumber,
+          },
+          {
+            customerCrmId: customer.id,
+          },
+        ],
       });
 
       if (existingCustomer !== null) {
         existingCustomer.name = customer.full_name;
+        existingCustomer.phoneNumber = phoneNumber;
         await this.customerRepository.save(existingCustomer);
       }
 
@@ -420,7 +426,10 @@ export class CustomerCrmService {
     } else {
       phoneNumber = telephonesArray[0];
     }
+
+    if (phoneNumber.length === 0) return;
     phoneNumber = phoneNumber.split('-').join('');
+    phoneNumber = phoneNumber.split(' ').join('');
 
     return phoneNumber;
   }
