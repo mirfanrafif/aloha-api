@@ -105,7 +105,9 @@ export class MessageService {
       //tampilkan menu
       const jobs = await this.userJobService.showMenu();
       const helloMessage =
-        'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' + jobs;
+        'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' +
+        jobs +
+        '\n*Tulis angkanya saja';
       //kirim pesan pertama ke customer
       this.sendMessageToCustomer({
         messageRequest: {
@@ -123,9 +125,10 @@ export class MessageService {
     //jika sudah mulai percakapan maka pilih menu
     if (currentConversation.status === ConversationStatus.STARTED) {
       //cek apakah pilihan sudah benar
-      const findPilihan = /\d/gi.exec(data.message);
-      if (findPilihan === null) {
-        //jika pilihan tidak benar, maka kirim mohon pilih menu diatas
+      const findPilihan = /\d+/gi.test(data.message);
+      if (findPilihan === false) {
+        // jika pilihan tidak benar, maka kirim mohon pilih menu diatas
+        // console.log('mohon pilih menu diatas');
         this.sendMessageToCustomer({
           messageRequest: {
             customerNumber: data.customer.phoneNumber,
@@ -141,7 +144,7 @@ export class MessageService {
       }
 
       //dapatkan pilihan
-      const pilihan = Number.parseInt(findPilihan[0]);
+      const pilihan = Number.parseInt(data.message);
 
       //cek apakah ada job yang sesuai
       const pilihanSesuai = await this.userJobService.cekJobSesuai(pilihan);
