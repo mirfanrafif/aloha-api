@@ -292,28 +292,32 @@ export class CustomerCrmService {
         continue;
       }
 
-      //buat data customer
-      const existingCustomer = await this.customerRepository.findOne({
-        where: [
-          {
-            phoneNumber: phoneNumber,
-          },
-          {
-            customerCrmId: customer.id,
-          },
-        ],
+      const findCustomerWithPhone = await this.customerRepository.findOne({
+        where: {
+          phoneNumber: phoneNumber,
+        },
       });
 
-      if (existingCustomer !== null) {
-        existingCustomer.name = customer.full_name;
-        existingCustomer.phoneNumber = phoneNumber;
-        await this.customerRepository.save(existingCustomer);
+      //buat data customer
+      const findCustomerWithCrmId =
+        findCustomerWithPhone !== null
+          ? findCustomerWithPhone
+          : await this.customerRepository.findOne({
+              where: {
+                customerCrmId: customer.id,
+              },
+            });
+
+      if (findCustomerWithCrmId !== null) {
+        findCustomerWithCrmId.name = customer.full_name;
+        findCustomerWithCrmId.phoneNumber = phoneNumber;
+        await this.customerRepository.save(findCustomerWithCrmId);
       }
 
       //jika belum ada data customer ini di database, maka tambahkan
       const newCustomer =
-        existingCustomer !== null
-          ? existingCustomer
+        findCustomerWithCrmId !== null
+          ? findCustomerWithCrmId
           : await this.customerRepository.save({
               name: customer.full_name,
               phoneNumber: phoneNumber,
