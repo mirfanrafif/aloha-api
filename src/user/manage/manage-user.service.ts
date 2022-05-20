@@ -126,7 +126,7 @@ export class ManageUserService {
     const newCustomers = [...customers]
       .filter(
         (customer) =>
-          customer.created_at >= dateStart && customer.customerCrmId !== null,
+          customer.created_at >= dateStart && customer.customerCrmId === null,
       )
       .map((customer) => ({
         id: customer.id,
