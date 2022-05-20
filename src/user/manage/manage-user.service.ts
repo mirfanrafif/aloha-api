@@ -124,14 +124,16 @@ export class ManageUserService {
     const customers = userWithMessages.customer.map((item) => item.customer);
 
     const newCustomers = [...customers]
-      .filter((customer) => customer.customerCrmId === null)
+      .filter(
+        (customer) =>
+          customer.created_at >= dateStart && customer.customerCrmId !== null,
+      )
       .map((customer) => ({
         id: customer.id,
         name: customer.name,
         phoneNumber: customer.phoneNumber,
         created_at: customer.created_at,
         updated_at: customer.updated_at,
-        customerCrmId: customer.customerCrmId,
       }));
 
     const result = customers.map((customer) => {
@@ -170,7 +172,6 @@ export class ManageUserService {
         phoneNumber: customer.phoneNumber,
         created_at: customer.created_at,
         updated_at: customer.updated_at,
-        new_customers: newCustomers,
         answered_messages: answeredMessages,
         average_all_response_time: avgAllResponseTime,
         all_unread_message_count: allUnreadMessagesCount,
@@ -198,6 +199,7 @@ export class ManageUserService {
       created_at: userWithMessages.created_at,
       updated_at: userWithMessages.updated_at,
       statistics: result,
+      newCustomers: newCustomers,
     };
 
     return userEntity;

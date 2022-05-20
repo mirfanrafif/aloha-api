@@ -40,6 +40,7 @@ export class CustomerEntity {
   @Column({
     unique: true,
     name: 'customer_crm_id',
+    nullable: true,
   })
   customerCrmId: number;
 }
