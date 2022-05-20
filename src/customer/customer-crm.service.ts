@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
+import { hash } from 'bcrypt';
 import { catchError, map, Observable, switchMap } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
@@ -323,24 +324,6 @@ export class CustomerCrmService {
               phoneNumber: phoneNumber,
               customerCrmId: customer.id,
             });
-
-      // const customerSales = await this.customerSalesRepository.find({
-      //   where: {
-      //     customer: {
-      //       id: newCustomer.id,
-      //     },
-      //   },
-      //   relations: {
-      //     customer: true,
-      //     agent: true,
-      //   },
-      // });
-
-      // if (customerSales.length > 0) {
-      //   this.customerSalesRepository.delete(
-      //     customerSales.map((item) => item.id),
-      //   );
-      // }
 
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
