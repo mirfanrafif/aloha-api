@@ -383,6 +383,7 @@ export class CustomerCrmService {
         } else if (alohaSales !== null && alohaSales.deleted_at !== undefined) {
           const oldSalesJob = alohaSales.job;
           if (oldSalesJob.length > 0) {
+            //cari sales dengan job yang sama
             const userJob = await this.userJobRepository.find({
               where: {
                 job: {
@@ -409,6 +410,8 @@ export class CustomerCrmService {
               }
             });
 
+            //coba cek apakah customer sudah di assign ke sales dengan job tersebut
+            //dan yang customernya paling sedikit
             const customerAgent = await this.customerSalesRepository.findOne({
               where: {
                 customer: {
