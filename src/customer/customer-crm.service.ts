@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
-import { hash } from 'bcrypt';
 import { catchError, map, Observable, switchMap } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
@@ -18,6 +17,8 @@ import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
+import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -46,6 +47,8 @@ export class CustomerCrmService {
     private customerSalesRepository: Repository<CustomerAgent>,
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
+    @Inject(USER_JOB_REPOSITORY)
+    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
   login(): Observable<AxiosResponse<LoginResponse, any>> {
@@ -331,6 +334,12 @@ export class CustomerCrmService {
           where: {
             username: sales.username,
           },
+          relations: {
+            job: {
+              job: true,
+            },
+          },
+          withDeleted: true,
         });
 
         //jika data sales tidak ada di aloha, maka buatkan baru
@@ -345,28 +354,84 @@ export class CustomerCrmService {
                 role: Role.agent,
               });
 
-        //cek customer sudah di assign ke sales
-        const customerAgent = await this.customerSalesRepository.findOne({
-          where: {
-            customer: {
-              id: newCustomer.id,
+        //jika sales belum dihapus, maka cek apakah sudah di assign ke sales ini apa belum
+        if (alohaSales !== null && alohaSales.deleted_at === undefined) {
+          //cek customer sudah di assign ke sales
+          const customerAgent = await this.customerSalesRepository.findOne({
+            where: {
+              customer: {
+                id: newCustomer.id,
+              },
+              agent: {
+                id: newSales.id,
+              },
             },
-            agent: {
-              id: newSales.id,
+            relations: {
+              agent: true,
+              customer: true,
             },
-          },
-          relations: {
-            agent: true,
-            customer: true,
-          },
-        });
-
-        //jika belum ada, assign dia ke sales yang sama seperti di crm
-        if (customerAgent === null) {
-          await this.customerSalesRepository.save({
-            customer: newCustomer,
-            agent: newSales,
           });
+
+          //jika belum ada, assign dia ke sales yang sama seperti di crm
+          if (customerAgent === null) {
+            await this.customerSalesRepository.save({
+              customer: newCustomer,
+              agent: newSales,
+            });
+          }
+          //jika sales dihapus, maka assign ke sales yang role nya sama dengan si sales itu
+        } else if (alohaSales !== null && alohaSales.deleted_at !== undefined) {
+          const oldSalesJob = alohaSales.job;
+          if (oldSalesJob.length > 0) {
+            const userJob = await this.userJobRepository.find({
+              where: {
+                job: {
+                  id: oldSalesJob[0].id,
+                },
+              },
+              relations: {
+                agent: {
+                  customer: true,
+                },
+              },
+            });
+
+            //cari sales siapa yang customer nya paling sedikit
+            let userWithMinimumCustomer = 0;
+
+            const salesWithCurrentJob = userJob.map((value) => value.agent);
+
+            salesWithCurrentJob.forEach((value, index) => {
+              if (
+                value.customer.length < salesWithCurrentJob[0].customer.length
+              ) {
+                userWithMinimumCustomer = index;
+              }
+            });
+
+            const customerAgent = await this.customerSalesRepository.findOne({
+              where: {
+                customer: {
+                  id: newCustomer.id,
+                },
+                agent: {
+                  id: salesWithCurrentJob[userWithMinimumCustomer].id,
+                },
+              },
+              relations: {
+                agent: true,
+                customer: true,
+              },
+            });
+
+            //jika belum ada, assign dia ke sales yang sama seperti di crm
+            if (customerAgent === null) {
+              await this.customerSalesRepository.save({
+                customer: newCustomer,
+                agent: salesWithCurrentJob[userWithMinimumCustomer],
+              });
+            }
+          }
         }
       }
 
