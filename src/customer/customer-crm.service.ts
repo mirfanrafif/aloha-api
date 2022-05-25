@@ -366,6 +366,7 @@ export class CustomerCrmService {
           }
           //jika sales dihapus, maka assign ke sales yang role nya sama dengan si sales itu
         } else if (alohaSales !== null && alohaSales.deleted_at !== undefined) {
+          //cari sales yang menghandle customer tersebut
           const customerAgent = await this.customerSalesRepository.findOne({
             where: {
               customer: {
@@ -381,7 +382,7 @@ export class CustomerCrmService {
             },
           });
 
-          //jika belum ada, assign dia ke sales yang sama seperti di crm
+          //jika belum ada, assign dia ke sales yang customer nya paling sedikit
           if (customerAgent === null) {
             const oldSalesJob = alohaSales.job;
             if (oldSalesJob.length > 0) {
