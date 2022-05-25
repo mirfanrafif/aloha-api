@@ -342,18 +342,6 @@ export class CustomerCrmService {
           withDeleted: true,
         });
 
-        //jika data sales tidak ada di aloha, maka buatkan baru
-        const newSales =
-          alohaSales !== null
-            ? alohaSales
-            : await this.userRepository.save({
-                full_name: sales.full_name,
-                username: sales.username,
-                email: sales.email,
-                password: '',
-                role: Role.agent,
-              });
-
         //jika sales belum dihapus, maka cek apakah sudah di assign ke sales ini apa belum
         if (alohaSales !== null && alohaSales.deleted_at === undefined) {
           //cek customer sudah di assign ke sales
@@ -363,7 +351,7 @@ export class CustomerCrmService {
                 id: newCustomer.id,
               },
               agent: {
-                id: newSales.id,
+                id: alohaSales.id,
               },
             },
             relations: {
@@ -376,7 +364,7 @@ export class CustomerCrmService {
           if (customerAgent === null) {
             await this.customerSalesRepository.save({
               customer: newCustomer,
-              agent: newSales,
+              agent: alohaSales,
             });
           }
           //jika sales dihapus, maka assign ke sales yang role nya sama dengan si sales itu
@@ -434,6 +422,42 @@ export class CustomerCrmService {
                 agent: salesWithCurrentJob[userWithMinimumCustomer],
               });
             }
+          }
+        } else if (alohaSales === null) {
+          // jika data sales tidak ada di aloha, maka buatkan baru
+          const newSales =
+            alohaSales !== null
+              ? alohaSales
+              : await this.userRepository.save({
+                  full_name: sales.full_name,
+                  username: sales.username,
+                  email: sales.email,
+                  password: '',
+                  role: Role.agent,
+                });
+
+          //cek customer sudah di assign ke sales
+          const customerAgent = await this.customerSalesRepository.findOne({
+            where: {
+              customer: {
+                id: newCustomer.id,
+              },
+              agent: {
+                id: newSales.id,
+              },
+            },
+            relations: {
+              agent: true,
+              customer: true,
+            },
+          });
+
+          //jika belum ada, assign dia ke sales yang sama seperti di crm
+          if (customerAgent === null) {
+            await this.customerSalesRepository.save({
+              customer: newCustomer,
+              agent: newSales,
+            });
           }
         }
       }
