@@ -365,7 +365,7 @@ export class CustomerCrmService {
             });
           }
           //jika sales dihapus, maka assign ke sales yang role nya sama dengan si sales itu
-        } else if (alohaSales !== null && alohaSales.deleted_at !== undefined) {
+        } else if (alohaSales !== null && alohaSales.deleted_at !== null) {
           //cari sales yang menghandle customer tersebut
           const customerAgent = await this.customerSalesRepository.findOne({
             where: {
