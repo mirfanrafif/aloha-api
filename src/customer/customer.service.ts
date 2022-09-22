@@ -236,11 +236,12 @@ export class CustomerService {
         },
       };
     }
-    const listCustomer = await this.customerAgentRepository.find({
+    const listCustomer = await this.customerRepository.find({
       where: conditions,
       relations: {
-        agent: true,
-        customer: true,
+        agent: {
+          agent: true,
+        },
       },
     });
 
@@ -254,24 +255,23 @@ export class CustomerService {
   agar data customer tersebut tidak duplikat, tetapi salesnya disimpan
   dalam sebuah array
    */
-  mappingCustomerAgent(listCustomer: CustomerAgent[]) {
+  mappingCustomerAgent(listCustomer: CustomerEntity[]) {
     const newListCustomer: CustomerAgentArrDto[] = [];
 
     listCustomer.forEach((customerItem) => {
-      const customerIndex = newListCustomer.findIndex(
-        (value) => value.customer.id == customerItem.customer.id,
-      );
-
-      if (customerIndex > -1) {
-        newListCustomer[customerIndex].agent.push(customerItem.agent);
-        return;
-      }
+      const sales = customerItem.agent.map((value) => value.agent);
       newListCustomer.push({
-        id: customerItem.id,
-        agent: [customerItem.agent],
-        customer: customerItem.customer,
-        created_at: customerItem.created_at,
-        updated_at: customerItem.updated_at,
+        agent: sales,
+        id: customerItem.agent.length > 0 ? customerItem.agent[0].id : 0,
+        customer: customerItem,
+        created_at:
+          customerItem.agent.length > 0
+            ? customerItem.agent[0].created_at
+            : new Date(),
+        updated_at:
+          customerItem.agent.length > 0
+            ? customerItem.agent[0].updated_at
+            : new Date(),
       });
     });
 
@@ -328,16 +328,15 @@ export class CustomerService {
         },
       };
     }
-    const listCustomer = await this.customerAgentRepository.find({
+    const listCustomer = await this.customerRepository.find({
       where: {
         ...conditions,
-        customer: {
-          name: Like(`%${name}%`),
-        },
+        name: Like(`%${name}%`),
       },
       relations: {
-        agent: true,
-        customer: true,
+        agent: {
+          agent: true,
+        },
       },
     });
 
