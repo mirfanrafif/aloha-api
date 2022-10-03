@@ -6,7 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
+import { last, lastValueFrom } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -48,14 +48,11 @@ export class CustomerService {
     phoneNumber: string;
     name: string;
   }): Promise<CustomerEntity> {
-    const findCustomer = await this.customerRepository.findOne({
-      where: {
-        phoneNumber: phoneNumber,
-      },
-    });
-
-    if (findCustomer !== null) {
-      return findCustomer;
+    const findCustomer = await lastValueFrom(
+      this.customerCrmService.findWithPhoneNumber(phoneNumber),
+    );
+    if (findCustomer.length > 0) {
+      return findCustomer[0];
     }
 
     const newCustomer = await this.customerRepository.save({
@@ -83,7 +80,7 @@ export class CustomerService {
   }
 
   //Mencari agen yang menangani customer tersebut
-  async findAgentByCustomerNumber({ customer }: { customer: CustomerEntity }) {
+  async findAgentByCustomer({ customer }: { customer: CustomerEntity }) {
     const agents = await this.customerAgentRepository.find({
       where: {
         customer: {
@@ -239,11 +236,12 @@ export class CustomerService {
         },
       };
     }
-    const listCustomer = await this.customerAgentRepository.find({
+    const listCustomer = await this.customerRepository.find({
       where: conditions,
       relations: {
-        agent: true,
-        customer: true,
+        agent: {
+          agent: true,
+        },
       },
     });
 
@@ -257,24 +255,23 @@ export class CustomerService {
   agar data customer tersebut tidak duplikat, tetapi salesnya disimpan
   dalam sebuah array
    */
-  mappingCustomerAgent(listCustomer: CustomerAgent[]) {
+  mappingCustomerAgent(listCustomer: CustomerEntity[]) {
     const newListCustomer: CustomerAgentArrDto[] = [];
 
     listCustomer.forEach((customerItem) => {
-      const customerIndex = newListCustomer.findIndex(
-        (value) => value.customer.id == customerItem.customer.id,
-      );
-
-      if (customerIndex > -1) {
-        newListCustomer[customerIndex].agent.push(customerItem.agent);
-        return;
-      }
+      const sales = customerItem.agent.map((value) => value.agent);
       newListCustomer.push({
-        id: customerItem.id,
-        agent: [customerItem.agent],
-        customer: customerItem.customer,
-        created_at: customerItem.created_at,
-        updated_at: customerItem.updated_at,
+        agent: sales,
+        id: customerItem.agent.length > 0 ? customerItem.agent[0].id : 0,
+        customer: customerItem,
+        created_at:
+          customerItem.agent.length > 0
+            ? customerItem.agent[0].created_at
+            : new Date(),
+        updated_at:
+          customerItem.agent.length > 0
+            ? customerItem.agent[0].updated_at
+            : new Date(),
       });
     });
 
@@ -314,7 +311,13 @@ export class CustomerService {
     return true;
   }
 
-  async searchCustomer({ name, agent }: { name: string; agent: UserEntity }) {
+  async searchCustomerByName({
+    name,
+    agent,
+  }: {
+    name: string;
+    agent: UserEntity;
+  }) {
     let conditions: any = {};
 
     if (agent.role == Role.agent) {
@@ -325,22 +328,29 @@ export class CustomerService {
         },
       };
     }
-    const listCustomer = await this.customerAgentRepository.find({
+    const listCustomer = await this.customerRepository.find({
       where: {
         ...conditions,
-        customer: {
-          name: Like(`%${name}%`),
-        },
+        name: Like(`%${name}%`),
       },
       relations: {
-        agent: true,
-        customer: true,
+        agent: {
+          agent: true,
+        },
       },
     });
 
     const newListCustomer = this.mappingCustomerAgent(listCustomer);
 
     return newListCustomer;
+  }
+
+  async searchCustomerByPhoneNumberDb(phone: string) {
+    return await this.customerRepository.findOne({
+      where: {
+        phoneNumber: phone,
+      },
+    });
   }
 
   async getAllCustomer() {

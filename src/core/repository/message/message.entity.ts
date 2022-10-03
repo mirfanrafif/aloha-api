@@ -49,10 +49,10 @@ export class MessageEntity {
 }
 
 export enum MessageStatus {
+  PENDING = 'pending',
   SENT = 'sent',
   READ = 'read',
   CANCEL = 'cancel',
   RECEIVED = 'received',
   REJECT = 'reject',
-  PENDING = 'pending',
 }

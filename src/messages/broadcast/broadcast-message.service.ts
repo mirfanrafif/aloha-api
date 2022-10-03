@@ -109,44 +109,44 @@ export class BroadcastMessageService {
       data: messages,
     };
 
-    return await this.mockSendBroadcastMessasge(request, agent);
+    // return await this.mockSendBroadcastMessasge(request, agent);
 
-    // //buat request ke WABLAS API
-    // return this.wablasService.sendMessage(request).pipe(
-    //   map(
-    //     async (
-    //       response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
-    //     ) => {
-    //       //save ke database
-    //       const messages = await this.saveOutgoingBroadcastMessage({
-    //         messageResponses: response.data.data,
-    //         agent: agent,
-    //       });
-    //       //kirim ke frontend lewat websocket
-    //       for (const message of messages) {
-    //         const response =
-    //           this.messageService.mapMessageEntityToResponse(message);
-    //         await this.gateway.sendMessage({ data: response });
-    //       }
-    //       //return result
-    //       const result: ApiResponse<MessageEntity[]> = {
-    //         success: true,
-    //         data: messages,
-    //         message: 'Success sending message to Wablas API',
-    //       };
-    //       return result;
-    //     },
-    //   ),
-    //   catchError((value: AxiosError<WablasApiResponse<any>>) => {
-    //     if (value.response !== undefined) {
-    //       throw new WablasAPIException(
-    //         'Failed to send message to Wablas API. Message : ' +
-    //           value.response.data.message,
-    //       );
-    //     }
-    //     throw new WablasAPIException('Failed to send message to Wablas API.');
-    //   }),
-    // );
+    //buat request ke WABLAS API
+    return this.wablasService.sendMessage(request).pipe(
+      map(
+        async (
+          response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+        ) => {
+          //save ke database
+          const messages = await this.saveOutgoingBroadcastMessage({
+            messageResponses: response.data.data,
+            agent: agent,
+          });
+          //kirim ke frontend lewat websocket
+          for (const message of messages) {
+            const response =
+              this.messageService.mapMessageEntityToResponse(message);
+            await this.gateway.sendMessage({ data: response });
+          }
+          //return result
+          const result: ApiResponse<MessageEntity[]> = {
+            success: true,
+            data: messages,
+            message: 'Success sending message to Wablas API',
+          };
+          return result;
+        },
+      ),
+      catchError((value: AxiosError<WablasApiResponse<any>>) => {
+        if (value.response !== undefined) {
+          throw new WablasAPIException(
+            'Failed to send message to Wablas API. Message : ' +
+              value.response.data.message,
+          );
+        }
+        throw new WablasAPIException('Failed to send message to Wablas API.');
+      }),
+    );
   }
 
   //simpan pesan keluar
@@ -250,7 +250,7 @@ export class BroadcastMessageService {
       data: sendImageData,
     };
 
-    return await this.sendMockImageWithAttachment(request, agent, file);
+    // return await this.sendMockImageWithAttachment(request, agent, file);
 
     //buat request ke WABLAS API
     return this.wablasService.sendImage(request).pipe(
@@ -367,7 +367,7 @@ export class BroadcastMessageService {
       data: sendImageData,
     };
 
-    return await this.sendMockVideoResponseWithAttachment(request, agent, file);
+    // return await this.sendMockVideoResponseWithAttachment(request, agent, file);
 
     // buat request ke WABLAS API
     return this.http
@@ -542,11 +542,11 @@ export class BroadcastMessageService {
       data: requestData,
     };
 
-    return await this.sendMockDocumentResponseWithAttachment(
-      request,
-      agent,
-      file,
-    );
+    // return await this.sendMockDocumentResponseWithAttachment(
+    //   request,
+    //   agent,
+    //   file,
+    // );
 
     //buat request ke WABLAS API
     return this.wablasService.sendDocument(request).pipe(

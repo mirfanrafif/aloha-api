@@ -8,6 +8,7 @@ export class DbexceptionFilter implements ExceptionFilter {
     exception: EntityNotFoundError | QueryFailedError,
     host: ArgumentsHost,
   ) {
+    console.log(exception);
     if (exception instanceof EntityNotFoundError) {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();

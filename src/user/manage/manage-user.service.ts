@@ -123,6 +123,19 @@ export class ManageUserService {
 
     const customers = userWithMessages.customer.map((item) => item.customer);
 
+    const newCustomers = [...customers]
+      .filter(
+        (customer) =>
+          customer.created_at >= dateStart && customer.customerCrmId === null,
+      )
+      .map((customer) => ({
+        id: customer.id,
+        name: customer.name,
+        phoneNumber: customer.phoneNumber,
+        created_at: customer.created_at,
+        updated_at: customer.updated_at,
+      }));
+
     const result = customers.map((customer) => {
       //pisah berdasarkan tanggal
       const dateMessagesGroup = this.groupingByDate(customer);
@@ -186,6 +199,7 @@ export class ManageUserService {
       created_at: userWithMessages.created_at,
       updated_at: userWithMessages.updated_at,
       statistics: result,
+      newCustomers: newCustomers,
     };
 
     return userEntity;
@@ -393,8 +407,6 @@ export class ManageUserService {
 
     await this.customerAgentRepository.save(delegatedSalesCustomers);
 
-    await this.userRepository.softDelete(sales.id);
-
     //hapus job
     const userJob = await this.userJobRepository.find({
       where: {
@@ -407,7 +419,11 @@ export class ManageUserService {
       },
     });
 
-    await this.userJobRepository.delete(userJob.map((e) => e.id));
+    if (userJob.length > 0) {
+      await this.userJobRepository.delete(userJob.map((e) => e.id));
+    }
+
+    await this.userRepository.softDelete(sales.id);
 
     return <ApiResponse<any>>{
       success: true,
@@ -441,7 +457,9 @@ export class ManageUserService {
       },
     });
 
-    await this.userJobRepository.delete(sales.map((value) => value.id));
+    if (sales.length > 0) {
+      await this.userJobRepository.delete(sales.map((value) => value.id));
+    }
 
     const newSales = await this.userRepository.findOne({
       where: {

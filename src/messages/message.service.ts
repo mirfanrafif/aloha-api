@@ -34,6 +34,8 @@ import {
   ImageMessageRequestDto,
   SendDocumentViaUrlDto,
   SendDocumentResponse,
+  BulkMessageRequestDto,
+  MessageResponseItem,
 } from './message.dto';
 import { MessageGateway } from './message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
@@ -103,7 +105,9 @@ export class MessageService {
       //tampilkan menu
       const jobs = await this.userJobService.showMenu();
       const helloMessage =
-        'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' + jobs;
+        'Halo dengan Raja Dinar. Apakah ada yang bisa kami bantu?\n' +
+        jobs +
+        '\n*Tulis angkanya saja';
       //kirim pesan pertama ke customer
       this.sendMessageToCustomer({
         messageRequest: {
@@ -121,9 +125,10 @@ export class MessageService {
     //jika sudah mulai percakapan maka pilih menu
     if (currentConversation.status === ConversationStatus.STARTED) {
       //cek apakah pilihan sudah benar
-      const findPilihan = /\d/gi.exec(data.message);
-      if (findPilihan === null) {
-        //jika pilihan tidak benar, maka kirim mohon pilih menu diatas
+      const findPilihan = /\d+/gi.test(data.message);
+      if (findPilihan === false) {
+        // jika pilihan tidak benar, maka kirim mohon pilih menu diatas
+        // console.log('mohon pilih menu diatas');
         this.sendMessageToCustomer({
           messageRequest: {
             customerNumber: data.customer.phoneNumber,
@@ -139,7 +144,7 @@ export class MessageService {
       }
 
       //dapatkan pilihan
-      const pilihan = Number.parseInt(findPilihan[0]);
+      const pilihan = Number.parseInt(data.message);
 
       //cek apakah ada job yang sesuai
       const pilihanSesuai = await this.userJobService.cekJobSesuai(pilihan);
@@ -331,11 +336,18 @@ export class MessageService {
     agent?: UserEntity;
     customer?: CustomerEntity;
   }) {
+    const newCustomer =
+      customer !== undefined
+        ? customer
+        : await this.customerService.searchCustomerWithPhoneNumber(
+            messageRequest.customerNumber,
+          );
+
     //templating request
     const request: WablasSendMessageRequest = {
       data: [
         {
-          phone: messageRequest.customerNumber,
+          phone: newCustomer.phoneNumber,
           message: messageRequest.message,
           secret: false,
           retry: false,
@@ -355,13 +367,6 @@ export class MessageService {
       }
     }
 
-    const newCustomer =
-      customer !== undefined
-        ? customer
-        : await this.customerService.searchCustomerWithPhoneNumber(
-            messageRequest.customerNumber,
-          );
-
     //buat request ke WABLAS API
     return this.wablasService.sendMessage(request).pipe(
       map(
@@ -374,6 +379,84 @@ export class MessageService {
             customer: newCustomer,
             agent: agent,
           });
+
+          //kirim ke frontend lewat websocket
+          const messageResponses = await Promise.all(
+            messages.map(async (message: MessageEntity) => {
+              const response = this.mapMessageEntityToResponse(message);
+              await this.gateway.sendMessage({ data: response });
+              return response;
+            }),
+          );
+
+          //return result
+          const result: ApiResponse<MessageResponseDto[]> = {
+            success: true,
+            data: messageResponses,
+            message: 'Success sending message to Wablas API',
+          };
+          return result;
+        },
+      ),
+      catchError((value: AxiosError<WablasApiResponse<null>>) => {
+        if (value.response !== undefined) {
+          throw new WablasAPIException(
+            'Failed to send message to Wablas API. Message : ' +
+              value.response.data.message,
+          );
+        }
+        throw new WablasAPIException('Failed to send message to Wablas API');
+      }),
+    );
+  }
+
+  //kirim pesan ke customer
+  async sendBulkMessage({
+    bulkMessageRequest,
+    agent,
+  }: {
+    bulkMessageRequest: BulkMessageRequestDto;
+    agent: UserEntity;
+  }) {
+    //templating request
+    const request: WablasSendMessageRequest = {
+      data: await Promise.all(
+        bulkMessageRequest.messages.map(async (message) => {
+          const customer =
+            await this.customerService.searchCustomerWithPhoneNumber(
+              message.customerNumber,
+            );
+
+          return {
+            message: message.message,
+            isGroup: false,
+            phone: customer.phoneNumber,
+            retry: true,
+            secret: false,
+          };
+        }),
+      ),
+    };
+
+    //ambil dulu data2 customer yang di blast dari crm, lalu simpan ke aloha
+    for (const message of bulkMessageRequest.messages) {
+    }
+
+    //buat request ke WABLAS API
+    return this.wablasService.sendMessage(request).pipe(
+      map(
+        async (
+          response: AxiosResponse<WablasApiResponse<SendMessageResponseData>>,
+        ) => {
+          //save ke database
+          const messages = await Promise.all(
+            response.data.data.messages.map((item) => {
+              return this.saveOutgoingBulkMessage({
+                messageItem: item,
+                agent: agent,
+              });
+            }),
+          );
 
           //kirim ke frontend lewat websocket
           const messageResponses = await Promise.all(
@@ -481,9 +564,9 @@ export class MessageService {
     body: ImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.findCustomer({
-      phoneNumber: body.customerNumber,
-    });
+    const customer = await this.customerService.searchCustomerWithPhoneNumber(
+      body.customerNumber,
+    );
 
     //templating request
     const request: WablasSendVideoRequest = {
@@ -618,9 +701,9 @@ export class MessageService {
     body: SendDocumentViaUrlDto,
     agent: UserEntity,
   ) {
-    const customer = await this.customerService.findCustomer({
-      phoneNumber: body.customerNumber,
-    });
+    const customer = await this.customerService.searchCustomerWithPhoneNumber(
+      body.customerNumber,
+    );
 
     //templating request
     const request: WablasSendDocumentRequest = {
@@ -708,6 +791,36 @@ export class MessageService {
     }
 
     return messages;
+  }
+
+  //simpan pesan keluar
+  private async saveOutgoingBulkMessage({
+    messageItem,
+    agent,
+  }: {
+    messageItem: MessageResponseItem;
+    agent?: UserEntity;
+  }): Promise<MessageEntity> {
+    const customer = await this.customerService.searchCustomerByPhoneNumberDb(
+      messageItem.phone,
+    );
+
+    if (customer === null) {
+      throw new BadRequestException(
+        'Customer with number ' + messageItem.phone,
+      );
+    }
+
+    const message = this.messageRepository.save({
+      messageId: messageItem.id,
+      message: messageItem.message,
+      customer: customer,
+      agent: agent,
+      status: messageItem.status,
+      fromMe: true,
+      type: MessageType.text,
+    });
+    return message;
   }
 
   //simpan pesan dokumen keluar
@@ -837,7 +950,7 @@ export class MessageService {
   }
 
   async searchCustomer(name: string, user: UserEntity) {
-    const customer = await this.customerService.searchCustomer({
+    const customer = await this.customerService.searchCustomerByName({
       agent: user,
       name: name,
     });
@@ -888,7 +1001,10 @@ export class MessageService {
         };
         return newCustomer;
       }),
-    );
+    ).catch((err) => {
+      console.log(err);
+      return [];
+    });
     return result;
   }
 

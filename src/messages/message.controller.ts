@@ -20,6 +20,7 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import {
+  BulkMessageRequestDto,
   DocumentRequestDto,
   ImageMessageRequestDto,
   MessageRequestDto,
@@ -51,6 +52,16 @@ export class MessageController {
     const user: UserEntity = request.user;
     return this.service.sendMessageToCustomer({
       messageRequest: data,
+      agent: user,
+    });
+  }
+
+  @Post('bulk-message')
+  @UseGuards(JwtAuthGuard)
+  sendBulkMessage(@Request() request, @Body() data: BulkMessageRequestDto) {
+    const user: UserEntity = request.user;
+    return this.service.sendBulkMessage({
+      bulkMessageRequest: data,
       agent: user,
     });
   }
