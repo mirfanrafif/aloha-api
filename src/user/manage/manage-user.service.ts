@@ -423,6 +423,10 @@ export class ManageUserService {
       await this.userJobRepository.delete(userJob.map((e) => e.id));
     }
 
+    sales.movedTo = request.delegatedSalesId;
+
+    await this.userRepository.save(sales);
+
     await this.userRepository.softDelete(sales.id);
 
     return <ApiResponse<any>>{

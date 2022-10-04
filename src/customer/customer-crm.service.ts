@@ -364,75 +364,57 @@ export class CustomerCrmService {
               agent: alohaSales,
             });
           }
-          //jika sales dihapus, maka assign ke sales yang role nya sama dengan si sales itu
+          //jika sales dihapus, maka assign ke sales penggantis
         } else if (alohaSales !== null && alohaSales.deleted_at !== null) {
-          //cari sales yang menghandle customer tersebut
-          const customerAgent = await this.customerSalesRepository.findOne({
+          //cari sales yang pengganti dari sales yang dihapus
+          const replacementSales = await this.userRepository.findOne({
             where: {
-              customer: {
-                id: newCustomer.id,
-              },
-              agent: {
-                id: alohaSales.id,
-              },
-            },
-            relations: {
-              agent: true,
-              customer: true,
+              id: alohaSales.id,
             },
           });
 
           //jika belum ada, assign dia ke sales yang customer nya paling sedikit
-          if (customerAgent === null) {
-            const oldSalesJob = alohaSales.job;
-            if (oldSalesJob.length > 0) {
-              //cari sales dengan job yang sama
-              const userJob = await this.userJobRepository.find({
-                where: {
-                  job: {
-                    id: oldSalesJob[0].id,
-                  },
-                },
-                relations: {
-                  agent: {
-                    customer: true,
-                  },
-                },
-              });
-              //cari sales siapa yang customer nya paling sedikit
-              let userWithMinimumCustomer = 0;
-              const salesWithCurrentJob = userJob.map((value) => value.agent);
-              salesWithCurrentJob.forEach((value, index) => {
-                if (
-                  value.customer.length < salesWithCurrentJob[0].customer.length
-                ) {
-                  userWithMinimumCustomer = index;
-                }
-              });
-              //coba cek apakah customer sudah di assign ke sales dengan job tersebut
-              //dan yang customernya paling sedikit
-              const customerAgent = await this.customerSalesRepository.findOne({
-                where: {
-                  customer: {
-                    id: newCustomer.id,
-                  },
-                  agent: {
-                    id: salesWithCurrentJob[userWithMinimumCustomer].id,
-                  },
-                },
-                relations: {
-                  agent: true,
-                  customer: true,
-                },
-              });
-              //jika belum ada, assign dia ke sales yang sama seperti di crm
-              if (customerAgent === null) {
-                await this.customerSalesRepository.save({
-                  customer: newCustomer,
-                  agent: salesWithCurrentJob[userWithMinimumCustomer],
-                });
+          if (replacementSales === null) {
+            const salesList = await this.userRepository.find({
+              where: {
+                role: Role.agent,
+              },
+            });
+            //cari sales siapa yang customer nya paling sedikit
+            let userWithMinimumCustomer = 0;
+            salesList.forEach((value, index) => {
+              if (value.customer.length < salesList[0].customer.length) {
+                userWithMinimumCustomer = index;
               }
+            });
+            /* coba cek apakah customer sudah di assign ke sales dengan job tersebut
+            dan yang customernya paling sedikit */
+            const customerAgent = await this.customerSalesRepository.findOne({
+              where: {
+                customer: {
+                  id: newCustomer.id,
+                },
+                agent: {
+                  id: salesList[userWithMinimumCustomer].id,
+                },
+              },
+              relations: {
+                agent: true,
+                customer: true,
+              },
+            });
+            //jika belum ada, assign dia ke sales tersebut
+            if (customerAgent === null) {
+              await this.customerSalesRepository.save({
+                customer: newCustomer,
+                agent: salesList[userWithMinimumCustomer],
+              });
             }
+          } else {
+            await this.customerSalesRepository.save({
+              customer: newCustomer,
+              agent: replacementSales,
+            });
           }
         } else if (alohaSales === null) {
           // jika data sales tidak ada di aloha, maka buatkan baru

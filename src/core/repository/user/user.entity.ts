@@ -4,7 +4,9 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -49,6 +51,9 @@ export class UserEntity {
 
   @DeleteDateColumn()
   deleted_at?: Date;
+
+  @Column({ name: 'moved_to', nullable: true })
+  movedTo: number;
 
   @OneToMany(() => CustomerAgent, (customer) => customer.agent)
   customer: CustomerAgent[];
