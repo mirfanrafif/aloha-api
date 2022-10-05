@@ -281,7 +281,7 @@ export class CustomerCrmService {
     for (const customer of customers) {
       const phoneNumber = this.convertPhoneNumber(customer.telephones);
 
-      //jika sudah ada di list, maka continue
+      //jika sudah ada di list, maka lewati
       if (
         newCustomers.find(
           (findCustomer) => findCustomer.phoneNumber === phoneNumber,
@@ -290,8 +290,7 @@ export class CustomerCrmService {
         continue;
       }
 
-      //jika phone numbernya undefined, maka continue
-
+      //jika phone numbernya tidak valid, maka lewati
       if (phoneNumber === undefined) {
         continue;
       }
@@ -342,7 +341,7 @@ export class CustomerCrmService {
           withDeleted: true,
         });
 
-        //jika sales belum dihapus, maka cek apakah sudah di assign ke sales ini apa belum
+        //jika sales aktif, maka cek apakah sudah di assign ke sales ini apa belum
         if (alohaSales !== null && alohaSales.deleted_at === undefined) {
           //cek customer sudah di assign ke sales
           const customerAgent = await this.customerSalesRepository.findOne({
@@ -369,7 +368,7 @@ export class CustomerCrmService {
           //cari sales yang pengganti dari sales yang dihapus
           const replacementSales = await this.userRepository.findOne({
             where: {
-              id: alohaSales.id,
+              id: alohaSales.movedTo,
             },
           });
 
