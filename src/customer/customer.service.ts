@@ -232,7 +232,9 @@ export class CustomerService {
       conditions = {
         ...conditions,
         agent: {
-          id: agent.id,
+          agent: {
+            id: agent.id,
+          },
         },
       };
     }
@@ -324,7 +326,9 @@ export class CustomerService {
       conditions = {
         ...conditions,
         agent: {
-          id: agent.id,
+          agent: {
+            id: agent.id,
+          },
         },
       };
     }
