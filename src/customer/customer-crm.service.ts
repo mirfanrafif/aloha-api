@@ -410,10 +410,24 @@ export class CustomerCrmService {
               });
             }
           } else {
-            await this.customerSalesRepository.save({
-              customer: newCustomer,
-              agent: replacementSales,
-            });
+            const replacementSalesAlreadyAssigned =
+              await this.customerSalesRepository.findOne({
+                where: {
+                  customer: {
+                    id: newCustomer.id,
+                  },
+                  agent: {
+                    id: replacementSales.id,
+                  },
+                },
+              });
+
+            if (replacementSalesAlreadyAssigned === null) {
+              await this.customerSalesRepository.save({
+                customer: newCustomer,
+                agent: replacementSales,
+              });
+            }
           }
         } else if (alohaSales === null) {
           // jika data sales tidak ada di aloha, maka buatkan baru
