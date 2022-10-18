@@ -6,7 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { last, lastValueFrom } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
@@ -384,21 +384,23 @@ export class CustomerService {
       },
     });
 
-    if (existingConversation !== null) {
-      throw new BadRequestException(
-        'Customer already connected to conversation',
-      );
+    if (existingConversation === null) {
+      //create conversation
+      await this.conversationRepository.save({
+        customer: customer,
+        status: ConversationStatus.CONNECTED,
+      });
     }
-    //create conversation
-    await this.conversationRepository.save({
-      customer: customer,
-      status: ConversationStatus.CONNECTED,
-    });
 
-    const customerAgent = await this.customerAgentRepository.save({
-      customer: customer,
-      agent: user,
-    });
+    const customerSales = await this.customerAgentRepository.findOne({});
+
+    const customerAgent =
+      customerSales !== null
+        ? customerSales
+        : await this.customerAgentRepository.save({
+            customer: customer,
+            agent: user,
+          });
 
     return <ApiResponse<CustomerAgent>>{
       success: true,
