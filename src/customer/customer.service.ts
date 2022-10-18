@@ -392,7 +392,16 @@ export class CustomerService {
       });
     }
 
-    const customerSales = await this.customerAgentRepository.findOne({});
+    const customerSales = await this.customerAgentRepository.findOne({
+      where: {
+        agent: {
+          id: user.id,
+        },
+        customer: {
+          id: customerId,
+        },
+      },
+    });
 
     const customerAgent =
       customerSales !== null
