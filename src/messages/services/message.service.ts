@@ -18,29 +18,20 @@ import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
 import { LessThan, Repository } from 'typeorm';
 import {
-  WablasApiResponse,
   MessageRequestDto,
-  SendMessageResponseData,
   TextMessage,
   MessageType,
-  WablasSendMessageRequest,
   MessageResponseDto,
-  WablasSendImageRequest,
-  SendImageVideoResponse,
   DocumentRequestDto,
-  WablasSendDocumentRequest,
   MessageTrackingDto,
-  WablasSendVideoRequest,
   ImageMessageRequestDto,
   SendDocumentViaUrlDto,
-  SendDocumentResponse,
   BulkMessageRequestDto,
-  MessageResponseItem,
 } from '../message.dto';
 import { MessageGateway } from '../message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
-import { ConversationService } from '../conversation.service';
+import { ConversationService } from './conversation.service';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { UserJobService } from 'src/job/user-job.service';
 import {
@@ -49,17 +40,28 @@ import {
 } from 'src/customer/customer.dto';
 import { UserService } from 'src/user/user.service';
 import { isEnum } from 'class-validator';
-import { WablasService } from '../wablas.service';
+import { WablasService } from '../../core/wablas/wablas.service';
 import { response } from 'express';
 import { createWriteStream } from 'fs';
 import { MessageHelper } from '../helper/message.helper';
+
+import {
+  MessageResponseItem,
+  SendDocumentResponse,
+  SendImageVideoResponse,
+  SendMessageResponseData,
+  WablasApiResponse,
+  WablasSendDocumentRequest,
+  WablasSendImageRequest,
+  WablasSendMessageRequest,
+  WablasSendVideoRequest,
+} from 'src/core/wablas/wablas.dto';
 
 const pageSize = 20;
 
 @Injectable()
 export class MessageService {
   constructor(
-    private httpService: HttpService,
     private gateway: MessageGateway,
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
@@ -266,34 +268,12 @@ export class MessageService {
   }) {
     const messageFiltered = /<~ (.*)/gi.exec(message.message);
 
-    let fileUrl = '';
-
     //define file url from wablas
-    switch (message.messageType) {
-      case MessageType.video:
-        fileUrl = 'https://solo.wablas.com/video/' + message.file;
-        break;
-      case MessageType.image:
-        fileUrl = 'https://solo.wablas.com/image/' + message.file;
-        break;
-      case MessageType.document:
-        fileUrl = 'https://solo.wablas.com/document/' + message.file;
-        break;
-      default:
-        break;
-    }
-
-    //save message attachment to storage
-    const file = await this.httpService.axiosRef({
-      method: 'GET',
-      url: fileUrl,
-      responseType: 'stream',
-    });
 
     const timestamp = Date.now().toString();
     let filename = timestamp + '-' + message.file;
 
-    file.data.pipe(createWriteStream(filename));
+    await this.wablasService.getFile(message, filename);
 
     //set file url
     switch (message.message) {

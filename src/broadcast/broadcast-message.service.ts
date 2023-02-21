@@ -21,30 +21,31 @@ import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
 import { Repository } from 'typeorm';
-import { MessageHelper } from '../helper/message.helper';
+import { MessageHelper } from 'src/messages/helper/message.helper';
 import {
   BroadcastMessageRequest,
-  WablasSendMessageRequestData,
-  WablasSendMessageRequest,
-  WablasApiResponse,
-  SendMessageResponseData,
   BroadcastImageMessageRequestDto,
-  WablasSendImageRequestData,
-  WablasSendImageRequest,
-  WablasSendDocumentRequestData,
-  WablasSendDocumentRequest,
   BroadcastDocumentMessageRequestDto,
   MessageType,
-  MessageResponseItem,
-  SendImageVideoResponseItem,
+} from 'src/messages/message.dto';
+
+import {
+  SendDocumentResponse,
+  SendImageVideoResponse,
+  SendMessageResponseData,
+  WablasApiResponse,
+  WablasSendDocumentRequest,
+  WablasSendDocumentRequestData,
+  WablasSendImageRequest,
+  WablasSendImageRequestData,
+  WablasSendMessageRequest,
+  WablasSendMessageRequestData,
   WablasSendVideoRequest,
   WablasSendVideoRequestData,
-  SendImageVideoResponse,
-  SendDocumentResponse,
-} from '../message.dto';
-import { MessageGateway } from '../message.gateway';
-import { MessageService } from '../services/message.service';
-import { WablasService } from '../wablas.service';
+} from 'src/core/wablas/wablas.dto';
+import { MessageGateway } from 'src/messages/message.gateway';
+import { MessageService } from 'src/messages/services/message.service';
+import { WablasService } from 'src/core/wablas/wablas.service';
 
 @Injectable()
 export class BroadcastMessageService {
@@ -187,40 +188,6 @@ export class BroadcastMessageService {
     return messages;
   }
 
-  //mocking broadcast message
-  async mockSendBroadcastMessasge(
-    request: WablasSendMessageRequest,
-    agent: UserEntity,
-  ) {
-    //mocking
-    const messageResponses = request.data.map<MessageResponseItem>((item) => ({
-      id: '123',
-      phone: item.phone,
-      status: MessageStatus.PENDING,
-      message: item.message,
-    }));
-
-    const messageEntities = await this.saveOutgoingBroadcastMessage({
-      messageResponses: {
-        messages: messageResponses,
-      },
-      agent: agent,
-    });
-
-    //kirim ke frontend lewat websocket
-    for (const message of messageEntities) {
-      const response = this.messageHelper.mapMessageEntityToResponse(message);
-      await this.gateway.sendMessage({ data: response });
-    }
-    //return result
-    const result: ApiResponse<MessageEntity[]> = {
-      success: true,
-      data: messageEntities,
-      message: 'Success sending message to Wablas API',
-    };
-    return result;
-  }
-
   //kirim gambar ke customer
   async broadcastImageToCustomer(
     file: Express.Multer.File,
@@ -297,45 +264,6 @@ export class BroadcastMessageService {
         throw new WablasAPIException('Failed to send message to Wablas API.');
       }),
     );
-  }
-
-  //mocking broadcast gambar
-  async sendMockImageWithAttachment(
-    request: WablasSendImageRequest,
-    agent: UserEntity,
-    file: Express.Multer.File,
-  ) {
-    const messageResponses = request.data.map<SendImageVideoResponseItem>(
-      (item) => ({
-        id: '123',
-        phone: item.phone,
-        image: item.image,
-        status: MessageStatus.PENDING,
-        caption: item.caption ?? '',
-      }),
-    );
-
-    const messageEntities = await this.saveImageVideoMessage({
-      messageResponses: {
-        messages: messageResponses,
-      },
-      agent: agent,
-      filename: process.env.BASE_URL + '/message/image/' + file.filename,
-      type: MessageType.image,
-    });
-
-    //kirim ke frontend lewat websocket
-    for (const message of messageEntities) {
-      const response = this.messageHelper.mapMessageEntityToResponse(message);
-      await this.gateway.sendMessage({ data: response });
-    }
-    //return result
-    const result: ApiResponse<MessageEntity[]> = {
-      success: true,
-      data: messageEntities,
-      message: 'Success sending message to Wablas API',
-    };
-    return result;
   }
 
   //kirim gambar ke customer
@@ -465,45 +393,6 @@ export class BroadcastMessageService {
     return messages;
   }
 
-  //mocking kirim video ke customer
-  async sendMockVideoResponseWithAttachment(
-    request: WablasSendVideoRequest,
-    agent: UserEntity,
-    file: Express.Multer.File,
-  ) {
-    const messageResponses = request.data.map<SendImageVideoResponseItem>(
-      (item) => ({
-        id: '123',
-        phone: item.phone,
-        image: item.video,
-        status: MessageStatus.PENDING,
-        caption: item.caption ?? '',
-      }),
-    );
-
-    const messageEntities = await this.saveImageVideoMessage({
-      messageResponses: {
-        messages: messageResponses,
-      },
-      agent: agent,
-      filename: process.env.BASE_URL + '/message/video/' + file.filename,
-      type: MessageType.video,
-    });
-
-    //kirim ke frontend lewat websocket
-    for (const message of messageEntities) {
-      const response = this.messageHelper.mapMessageEntityToResponse(message);
-      await this.gateway.sendMessage({ data: response });
-    }
-    //return result
-    const result: ApiResponse<MessageEntity[]> = {
-      success: true,
-      data: messageEntities,
-      message: 'Success sending message to Wablas API',
-    };
-    return result;
-  }
-
   //validasi array string kategori, minat dan tipe pelanggan
   validateArray(array: string): string[] {
     try {
@@ -593,44 +482,6 @@ export class BroadcastMessageService {
         throw new WablasAPIException('Failed to send message to Wablas API.');
       }),
     );
-  }
-
-  // mocking broadcast dokumen ke customer
-  async sendMockDocumentResponseWithAttachment(
-    request: WablasSendDocumentRequest,
-    agent: UserEntity,
-    file: Express.Multer.File,
-  ) {
-    const messageResponses = request.data.map<SendImageVideoResponseItem>(
-      (item) => ({
-        id: '123',
-        phone: item.phone,
-        status: MessageStatus.PENDING,
-        image: '',
-      }),
-    );
-
-    const messageEntities = await this.saveImageVideoMessage({
-      messageResponses: {
-        messages: messageResponses,
-      },
-      agent: agent,
-      filename: process.env.BASE_URL + '/message/document/' + file.filename,
-      type: MessageType.document,
-    });
-
-    //kirim ke frontend lewat websocket
-    for (const message of messageEntities) {
-      const response = this.messageHelper.mapMessageEntityToResponse(message);
-      await this.gateway.sendMessage({ data: response });
-    }
-    //return result
-    const result: ApiResponse<MessageEntity[]> = {
-      success: true,
-      data: messageEntities,
-      message: 'Success sending message to Wablas API',
-    };
-    return result;
   }
 
   //simpan pesan dokumen keluar

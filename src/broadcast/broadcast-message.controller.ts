@@ -20,7 +20,7 @@ import {
   BroadcastMessageRequest,
   BroadcastImageMessageRequestDto,
   BroadcastDocumentMessageRequestDto,
-} from '../message.dto';
+} from '../messages/message.dto';
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('message/broadcast')
 export class MessageBroadcastController {

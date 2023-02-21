@@ -1,7 +1,9 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
+import { createWriteStream } from 'fs';
 import { Observable } from 'rxjs';
+import { MessageType, TextMessage } from 'src/messages/message.dto';
 import {
   SendDocumentResponse,
   SendImageVideoResponse,
@@ -11,7 +13,7 @@ import {
   WablasSendImageRequest,
   WablasSendMessageRequest,
   WablasSendVideoRequest,
-} from './message.dto';
+} from './wablas.dto';
 
 @Injectable()
 export class WablasService {
@@ -81,5 +83,32 @@ export class WablasService {
         },
       },
     );
+  }
+
+  async getFile(message: TextMessage, filename: string) {
+    let fileUrl = '';
+
+    switch (message.messageType) {
+      case MessageType.video:
+        fileUrl = 'https://solo.wablas.com/video/' + message.file;
+        break;
+      case MessageType.image:
+        fileUrl = 'https://solo.wablas.com/image/' + message.file;
+        break;
+      case MessageType.document:
+        fileUrl = 'https://solo.wablas.com/document/' + message.file;
+        break;
+      default:
+        break;
+    }
+
+    //save message attachment to storage
+    const file = await this.http.axiosRef({
+      method: 'GET',
+      url: fileUrl,
+      responseType: 'stream',
+    });
+
+    file.data.pipe(createWriteStream(filename));
   }
 }
