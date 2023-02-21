@@ -134,14 +134,6 @@ export type MessageTrackingDto = {
   timestamp: Date;
 };
 
-export class MessageTemplateRequestDto {
-  @IsNotEmpty()
-  name: string;
-
-  @IsNotEmpty()
-  template: string;
-}
-
 export class StartConversationDto {
   @IsNotEmpty()
   @IsNumber()

@@ -28,8 +28,8 @@ import {
   MessageTrackingDto,
   SendDocumentViaUrlDto,
   TextMessage,
-} from './message.dto';
-import { MessageService } from './services/message.service';
+} from '../message.dto';
+import { MessageService } from '../services/message.service';
 
 @Controller('message')
 @UseInterceptors(ClassSerializerInterceptor)

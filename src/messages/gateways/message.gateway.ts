@@ -10,7 +10,7 @@ import { Server, Socket } from 'socket.io';
 import { UserJwtPayload } from 'src/auth/auth.dto';
 import { CustomerService } from 'src/customer/customer.service';
 import { UserService } from 'src/user/user.service';
-import { MessageResponseDto } from './message.dto';
+import { MessageResponseDto } from '../message.dto';
 @WebSocketGateway({
   cors: true,
   transports: ['websocket'],

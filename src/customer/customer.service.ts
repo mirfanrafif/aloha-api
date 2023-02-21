@@ -20,7 +20,7 @@ import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Like, Repository } from 'typeorm';
-import { CustomerCrmService } from './customer-crm.service';
+import { CustomerCrmService } from '../core/pukapuka/customer-crm.service';
 import {
   CustomerAgentArrDto,
   DelegateCustomerRequestDto,
@@ -29,7 +29,6 @@ import {
 @Injectable()
 export class CustomerService {
   constructor(
-    private httpService: HttpService,
     @Inject(USER_REPOSITORY)
     private userRepository: Repository<UserEntity>,
     @Inject(CUSTOMER_REPOSITORY)

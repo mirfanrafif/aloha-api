@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { MessageGateway } from './message.gateway';
+import { MessageGateway } from './gateways/message.gateway';
 import { MessageService } from './services/message.service';
-import { MessageController } from './message.controller';
+import { MessageController } from './controller/message.controller';
 import { HttpModule } from '@nestjs/axios';
 import { MessageRepositoryModule } from 'src/core/repository/message/message.module';
 import { CustomerModule } from 'src/customer/customer.module';
@@ -13,27 +13,23 @@ import { MessageBroadcastController } from '../broadcast/broadcast-message.contr
 import { BroadcastMessageService } from 'src/broadcast/broadcast-message.service';
 import { WablasService } from '../core/wablas/wablas.service';
 import { MessageHelper } from './helper/message.helper';
+import { WablasModule } from 'src/core/wablas/wablas.module';
 
 @Module({
   providers: [
     MessageService,
     MessageGateway,
     ConversationService,
-    BroadcastMessageService,
-    WablasService,
     MessageHelper,
   ],
-  controllers: [MessageController, MessageBroadcastController],
+  controllers: [MessageController],
   imports: [
-    HttpModule.register({
-      withCredentials: true,
-      baseURL: 'https://solo.wablas.com',
-    }),
     MessageRepositoryModule,
     CustomerModule,
     UserModule,
     ConversationRepositoryModule,
     UserJobModule,
+    WablasModule,
   ],
 })
 export class MessageModule {}

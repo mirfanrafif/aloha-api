@@ -28,7 +28,7 @@ import {
   SendDocumentViaUrlDto,
   BulkMessageRequestDto,
 } from '../message.dto';
-import { MessageGateway } from '../message.gateway';
+import { MessageGateway } from '../gateways/message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
 import { ConversationService } from './conversation.service';
@@ -273,25 +273,7 @@ export class MessageService {
     const timestamp = Date.now().toString();
     let filename = timestamp + '-' + message.file;
 
-    await this.wablasService.getFile(message, filename);
-
-    //set file url
-    switch (message.message) {
-      case MessageType.image:
-        filename = process.env.BASE_URL + '/message/image/' + filename;
-        break;
-
-      case MessageType.video:
-        filename = process.env.BASE_URL + '/message/video/' + filename;
-        break;
-
-      case MessageType.document:
-        filename = process.env.BASE_URL + '/message/document/' + filename;
-        break;
-
-      default:
-        break;
-    }
+    filename = await this.wablasService.getFile(message, filename);
 
     //create entity
     const messageEntity = this.messageRepository.create({

@@ -17,8 +17,6 @@ import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent
 import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
-import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
@@ -30,7 +28,7 @@ import {
   CustomerInterestsResponse,
   CustomerResponse,
   LoginResponse,
-} from './customer.dto';
+} from './customer-crm.dto';
 
 const pageSize = 20;
 

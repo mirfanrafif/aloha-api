@@ -85,7 +85,7 @@ export class WablasService {
     );
   }
 
-  async getFile(message: TextMessage, filename: string) {
+  async getFile(message: TextMessage, filename: string): Promise<string> {
     let fileUrl = '';
 
     switch (message.messageType) {
@@ -110,5 +110,20 @@ export class WablasService {
     });
 
     file.data.pipe(createWriteStream(filename));
+
+    //set file url
+    switch (message.message) {
+      case MessageType.image:
+        return process.env.BASE_URL + '/message/image/' + filename;
+
+      case MessageType.video:
+        return process.env.BASE_URL + '/message/video/' + filename;
+
+      case MessageType.document:
+        return process.env.BASE_URL + '/message/document/' + filename;
+
+      default:
+        return '';
+    }
   }
 }

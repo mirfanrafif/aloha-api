@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { MessageTemplateService } from './message-template.service';
-import { MessageTemplateRequestDto } from '../messages/message.dto';
+import { MessageTemplateRequestDto } from './message-template.dto';
 
 @Controller('message-template')
 @UseInterceptors(ClassSerializerInterceptor)

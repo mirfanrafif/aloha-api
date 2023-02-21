@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   Inject,
@@ -9,14 +8,11 @@ import { AxiosResponse, AxiosError } from 'axios';
 import { isArray } from 'class-validator';
 import { map, catchError, lastValueFrom } from 'rxjs';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import {
-  MessageEntity,
-  MessageStatus,
-} from 'src/core/repository/message/message.entity';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
 import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
 import { UserEntity } from 'src/core/repository/user/user.entity';
-import { CustomerCrmService } from 'src/customer/customer-crm.service';
-import { CustomerCrmSearchFilter } from 'src/customer/customer.dto';
+import { CustomerCrmService } from 'src/core/pukapuka/customer-crm.service';
+import { CustomerCrmSearchFilter } from 'src/core/pukapuka/customer-crm.dto';
 import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
@@ -43,16 +39,13 @@ import {
   WablasSendVideoRequest,
   WablasSendVideoRequestData,
 } from 'src/core/wablas/wablas.dto';
-import { MessageGateway } from 'src/messages/message.gateway';
-import { MessageService } from 'src/messages/services/message.service';
+import { MessageGateway } from 'src/messages/gateways/message.gateway';
 import { WablasService } from 'src/core/wablas/wablas.service';
 
 @Injectable()
 export class BroadcastMessageService {
   constructor(
     private customerService: CustomerService,
-    private messageService: MessageService,
-    private http: HttpService,
     private customerCrmService: CustomerCrmService,
     private gateway: MessageGateway,
     @Inject(MESSAGE_REPOSITORY)
@@ -300,57 +293,48 @@ export class BroadcastMessageService {
     // return await this.sendMockVideoResponseWithAttachment(request, agent, file);
 
     // buat request ke WABLAS API
-    return this.http
-      .post('/api/v2/send-video', JSON.stringify(request), {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    return this.wablasService.sendVideo(request).pipe(
+      map(
+        async (
+          response: AxiosResponse<WablasApiResponse<SendImageVideoResponse>>,
+        ) => {
+          //save ke database
+          const messages = await this.saveImageVideoMessage({
+            messageResponses: response.data.data,
+            agent: agent,
+            filename: process.env.BASE_URL + '/message/image/' + file.filename,
+            type: MessageType.video,
+          });
+
+          //kirim ke frontend lewat websocket
+          const messageResponse = await Promise.all(
+            messages.map(async (message: MessageEntity) => {
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
+              await this.gateway.sendMessage({ data: response });
+              return response;
+            }),
+          );
+
+          //return result
+          const result: ApiResponse<MessageEntity[]> = {
+            success: true,
+            data: messageResponse,
+            message: 'Success sending message to Wablas API',
+          };
+          return result;
         },
-      })
-      .pipe(
-        map(
-          async (
-            response: AxiosResponse<WablasApiResponse<SendImageVideoResponse>>,
-          ) => {
-            //save ke database
-            const messages = await this.saveImageVideoMessage({
-              messageResponses: response.data.data,
-              agent: agent,
-              filename:
-                process.env.BASE_URL + '/message/image/' + file.filename,
-              type: MessageType.video,
-            });
-
-            //kirim ke frontend lewat websocket
-            const messageResponse = await Promise.all(
-              messages.map(async (message: MessageEntity) => {
-                const response =
-                  this.messageHelper.mapMessageEntityToResponse(message);
-                await this.gateway.sendMessage({ data: response });
-                return response;
-              }),
-            );
-
-            //return result
-            const result: ApiResponse<MessageEntity[]> = {
-              success: true,
-              data: messageResponse,
-              message: 'Success sending message to Wablas API',
-            };
-            return result;
-          },
-        ),
-        catchError((value: AxiosError<WablasApiResponse<any>>) => {
-          if (value.response !== undefined) {
-            throw new WablasAPIException(
-              'Failed to send message to Wablas API. Message : ' +
-                value.response.data.message,
-            );
-          }
-          throw new WablasAPIException('Failed to send message to Wablas API.');
-        }),
-      );
+      ),
+      catchError((value: AxiosError<WablasApiResponse<any>>) => {
+        if (value.response !== undefined) {
+          throw new WablasAPIException(
+            'Failed to send message to Wablas API. Message : ' +
+              value.response.data.message,
+          );
+        }
+        throw new WablasAPIException('Failed to send message to Wablas API.');
+      }),
+    );
   }
 
   //simpan pesan dokumen keluar

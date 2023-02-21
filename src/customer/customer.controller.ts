@@ -15,7 +15,7 @@ import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/role.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/core/repository/user/user.entity';
-import { CustomerCrmService } from './customer-crm.service';
+import { CustomerCrmService } from '../core/pukapuka/customer-crm.service';
 import { DelegateCustomerRequestDto } from './customer.dto';
 import { CustomerService } from './customer.service';
 
