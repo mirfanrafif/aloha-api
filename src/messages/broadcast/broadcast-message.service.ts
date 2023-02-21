@@ -21,6 +21,7 @@ import { CustomerService } from 'src/customer/customer.service';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { WablasAPIException } from 'src/utils/wablas.exception';
 import { Repository } from 'typeorm';
+import { MessageHelper } from '../helper/message.helper';
 import {
   BroadcastMessageRequest,
   WablasSendMessageRequestData,
@@ -42,7 +43,7 @@ import {
   SendDocumentResponse,
 } from '../message.dto';
 import { MessageGateway } from '../message.gateway';
-import { MessageService } from '../message.service';
+import { MessageService } from '../services/message.service';
 import { WablasService } from '../wablas.service';
 
 @Injectable()
@@ -56,6 +57,7 @@ export class BroadcastMessageService {
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
     private wablasService: WablasService,
+    private messageHelper: MessageHelper,
   ) {}
 
   //mencari list customer dari crm
@@ -125,7 +127,7 @@ export class BroadcastMessageService {
           //kirim ke frontend lewat websocket
           for (const message of messages) {
             const response =
-              this.messageService.mapMessageEntityToResponse(message);
+              this.messageHelper.mapMessageEntityToResponse(message);
             await this.gateway.sendMessage({ data: response });
           }
           //return result
@@ -207,7 +209,7 @@ export class BroadcastMessageService {
 
     //kirim ke frontend lewat websocket
     for (const message of messageEntities) {
-      const response = this.messageService.mapMessageEntityToResponse(message);
+      const response = this.messageHelper.mapMessageEntityToResponse(message);
       await this.gateway.sendMessage({ data: response });
     }
     //return result
@@ -270,7 +272,7 @@ export class BroadcastMessageService {
           const messageResponse = await Promise.all(
             messages.map(async (message: MessageEntity) => {
               const response =
-                this.messageService.mapMessageEntityToResponse(message);
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -324,7 +326,7 @@ export class BroadcastMessageService {
 
     //kirim ke frontend lewat websocket
     for (const message of messageEntities) {
-      const response = this.messageService.mapMessageEntityToResponse(message);
+      const response = this.messageHelper.mapMessageEntityToResponse(message);
       await this.gateway.sendMessage({ data: response });
     }
     //return result
@@ -396,7 +398,7 @@ export class BroadcastMessageService {
             const messageResponse = await Promise.all(
               messages.map(async (message: MessageEntity) => {
                 const response =
-                  this.messageService.mapMessageEntityToResponse(message);
+                  this.messageHelper.mapMessageEntityToResponse(message);
                 await this.gateway.sendMessage({ data: response });
                 return response;
               }),
@@ -490,7 +492,7 @@ export class BroadcastMessageService {
 
     //kirim ke frontend lewat websocket
     for (const message of messageEntities) {
-      const response = this.messageService.mapMessageEntityToResponse(message);
+      const response = this.messageHelper.mapMessageEntityToResponse(message);
       await this.gateway.sendMessage({ data: response });
     }
     //return result
@@ -566,7 +568,7 @@ export class BroadcastMessageService {
           const messageResponse = await Promise.all(
             messages.map(async (message: MessageEntity) => {
               const response =
-                this.messageService.mapMessageEntityToResponse(message);
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -619,7 +621,7 @@ export class BroadcastMessageService {
 
     //kirim ke frontend lewat websocket
     for (const message of messageEntities) {
-      const response = this.messageService.mapMessageEntityToResponse(message);
+      const response = this.messageHelper.mapMessageEntityToResponse(message);
       await this.gateway.sendMessage({ data: response });
     }
     //return result

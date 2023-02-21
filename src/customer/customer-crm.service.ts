@@ -47,8 +47,6 @@ export class CustomerCrmService {
     private customerSalesRepository: Repository<CustomerAgent>,
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
-    @Inject(USER_JOB_REPOSITORY)
-    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
   login(): Observable<AxiosResponse<LoginResponse, any>> {

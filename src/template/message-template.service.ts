@@ -4,7 +4,7 @@ import { MESSAGE_TEMPLATE_REPOSITORY } from 'src/core/repository/message-templat
 import { UserEntity } from 'src/core/repository/user/user.entity';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Repository } from 'typeorm';
-import { MessageTemplateRequestDto } from '../message.dto';
+import { MessageTemplateRequestDto } from '../messages/message.dto';
 
 Injectable();
 export class MessageTemplateService {

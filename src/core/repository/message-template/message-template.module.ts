@@ -20,4 +20,4 @@ export const MESSAGE_TEMPLATE_REPOSITORY = 'message_template_repository';
   ],
   exports: [MESSAGE_TEMPLATE_REPOSITORY],
 })
-export class MessageTemplateModule {}
+export class MessageTemplateRepoModule {}

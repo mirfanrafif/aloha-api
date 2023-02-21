@@ -61,6 +61,8 @@ export class UserJobService {
       agent: agent,
       job: job,
       priority: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
 
     const newAgent = await this.userRepository.findOneOrFail({

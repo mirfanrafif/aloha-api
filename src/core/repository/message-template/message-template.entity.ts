@@ -22,10 +22,10 @@ export class MessageTemplateEntity {
   @Column()
   template: string;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', nullable: true })
   created_at: string;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: string;
 
   @ManyToOne(() => UserEntity, (user) => user.templates)

@@ -29,7 +29,7 @@ import {
   SendDocumentViaUrlDto,
   TextMessage,
 } from './message.dto';
-import { MessageService } from './message.service';
+import { MessageService } from './services/message.service';
 
 @Controller('message')
 @UseInterceptors(ClassSerializerInterceptor)

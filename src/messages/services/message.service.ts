@@ -36,11 +36,11 @@ import {
   SendDocumentResponse,
   BulkMessageRequestDto,
   MessageResponseItem,
-} from './message.dto';
-import { MessageGateway } from './message.gateway';
+} from '../message.dto';
+import { MessageGateway } from '../message.gateway';
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
-import { ConversationService } from './conversation.service';
+import { ConversationService } from '../conversation.service';
 import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 import { UserJobService } from 'src/job/user-job.service';
 import {
@@ -49,14 +49,17 @@ import {
 } from 'src/customer/customer.dto';
 import { UserService } from 'src/user/user.service';
 import { isEnum } from 'class-validator';
-import { WablasService } from './wablas.service';
+import { WablasService } from '../wablas.service';
+import { response } from 'express';
+import { createWriteStream } from 'fs';
+import { MessageHelper } from '../helper/message.helper';
 
 const pageSize = 20;
 
 @Injectable()
 export class MessageService {
   constructor(
-    private http: HttpService,
+    private httpService: HttpService,
     private gateway: MessageGateway,
     @Inject(MESSAGE_REPOSITORY)
     private messageRepository: Repository<MessageEntity>,
@@ -65,6 +68,7 @@ export class MessageService {
     private userJobService: UserJobService,
     private userService: UserService,
     private wablasService: WablasService,
+    private messageHelper: MessageHelper,
   ) {}
 
   async handleIncomingMessage(incomingMessage: TextMessage) {
@@ -89,7 +93,7 @@ export class MessageService {
       customer: customer,
     });
 
-    const response = await this.mapMessageEntityToResponse(data);
+    const response = await this.messageHelper.mapMessageEntityToResponse(data);
     await this.gateway.sendMessage({ data: response });
 
     //cek apakah sudah ada percakapan sebelumnya
@@ -228,7 +232,7 @@ export class MessageService {
       },
     });
     message.status = body.status;
-    const response = this.mapMessageEntityToResponse(
+    const response = this.messageHelper.mapMessageEntityToResponse(
       await this.messageRepository.save(message),
     );
 
@@ -240,36 +244,8 @@ export class MessageService {
     };
   }
 
-  mapMessageEntityToResponse(data: MessageEntity) {
-    let sender_name: string;
-    if (!data.fromMe) {
-      sender_name = data.customer.name;
-    } else if (data.agent === undefined || data.agent === null) {
-      sender_name = 'Sistem';
-    } else {
-      sender_name = data.agent.full_name;
-    }
-
-    //send to frontend via websocket
-    const response: MessageResponseDto = {
-      id: data.id,
-      customer: data.customer,
-      fromMe: data.fromMe,
-      file: data.file,
-      message: data.message,
-      agent: data.agent,
-      sender_name: sender_name,
-      messageId: data.messageId,
-      status: data.status,
-      type: data.type,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-    };
-    return response;
-  }
-
-  async sendIncomingMessageResponse(data: MessageEntity) {
-    const response = this.mapMessageEntityToResponse(data);
+  private async sendIncomingMessageResponse(data: MessageEntity) {
+    const response = this.messageHelper.mapMessageEntityToResponse(data);
     const result: ApiResponse<MessageResponseDto> = {
       success: true,
       message: 'Success catch data from Wablas API',
@@ -292,6 +268,7 @@ export class MessageService {
 
     let fileUrl = '';
 
+    //define file url from wablas
     switch (message.messageType) {
       case MessageType.video:
         fileUrl = 'https://solo.wablas.com/video/' + message.file;
@@ -306,6 +283,36 @@ export class MessageService {
         break;
     }
 
+    //save message attachment to storage
+    const file = await this.httpService.axiosRef({
+      method: 'GET',
+      url: fileUrl,
+      responseType: 'stream',
+    });
+
+    const timestamp = Date.now().toString();
+    let filename = timestamp + '-' + message.file;
+
+    file.data.pipe(createWriteStream(filename));
+
+    //set file url
+    switch (message.message) {
+      case MessageType.image:
+        filename = process.env.BASE_URL + '/message/image/' + filename;
+        break;
+
+      case MessageType.video:
+        filename = process.env.BASE_URL + '/message/video/' + filename;
+        break;
+
+      case MessageType.document:
+        filename = process.env.BASE_URL + '/message/document/' + filename;
+        break;
+
+      default:
+        break;
+    }
+
     //create entity
     const messageEntity = this.messageRepository.create({
       customer: customer,
@@ -314,7 +321,7 @@ export class MessageService {
       agent: agent,
       status: MessageStatus.RECEIVED,
       fromMe: false,
-      file: message.file.length > 0 ? fileUrl : undefined,
+      file: message.file.length > 0 ? filename : undefined,
       type: message.messageType,
     });
 
@@ -383,7 +390,8 @@ export class MessageService {
           //kirim ke frontend lewat websocket
           const messageResponses = await Promise.all(
             messages.map(async (message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -461,7 +469,8 @@ export class MessageService {
           //kirim ke frontend lewat websocket
           const messageResponses = await Promise.all(
             messages.map(async (message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -534,7 +543,8 @@ export class MessageService {
           //kirim ke frontend lewat websocket
           const messageResponse = await Promise.all(
             messages.map(async (message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -600,7 +610,8 @@ export class MessageService {
           //kirim ke frontend lewat websocket
           const messageResponse = await Promise.all(
             messages.map(async (message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -669,7 +680,8 @@ export class MessageService {
           //kirim ke frontend lewat websocket
           const messageResponse = await Promise.all(
             messages.map(async (message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -736,7 +748,8 @@ export class MessageService {
           //kirim ke frontend lewat websocket
           const messageResponse = await Promise.all(
             messages.map(async (message: MessageEntity) => {
-              const response = this.mapMessageEntityToResponse(message);
+              const response =
+                this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
               return response;
             }),
@@ -922,7 +935,7 @@ export class MessageService {
     });
 
     const messageResponse = result.map((messageItem) => {
-      return this.mapMessageEntityToResponse(messageItem);
+      return this.messageHelper.mapMessageEntityToResponse(messageItem);
     });
 
     const response: ApiResponse<MessageResponseDto[]> = {
@@ -987,7 +1000,7 @@ export class MessageService {
 
         const lastMessageResponse =
           messages != null && messages.length > 0
-            ? this.mapMessageEntityToResponse(messages[0])
+            ? this.messageHelper.mapMessageEntityToResponse(messages[0])
             : null;
 
         const newCustomer: CustomerAgentResponseDto = {
@@ -1008,7 +1021,7 @@ export class MessageService {
     return result;
   }
 
-  findUnreadMessage(messages: MessageEntity[]) {
+  private findUnreadMessage(messages: MessageEntity[]) {
     let count = 0;
     for (const message of messages) {
       if (!message.fromMe) {

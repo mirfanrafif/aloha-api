@@ -28,9 +28,9 @@ export class UserJobEntity {
   @Column()
   priority: number;
 
-  @CreateDateColumn({ type: 'timestamp', nullable: true, default: 'NOW()' })
+  @CreateDateColumn({ type: 'timestamp', nullable: true })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', nullable: true, default: 'NOW()' })
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
 }
