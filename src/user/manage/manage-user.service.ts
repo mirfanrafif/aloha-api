@@ -14,9 +14,10 @@ import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Between, In, Repository } from 'typeorm';
+import { Between, DeepPartial, In, Repository } from 'typeorm';
 import {
   ChangeSalesPasswordDto,
+  DeleteUserAssignRequest,
   DeleteUserRequest,
   UpdateUserRequestDto,
 } from '../user.dto';
@@ -346,22 +347,29 @@ export class ManageUserService {
       },
     });
 
-    if (request.delegatedSalesId === request.salesId) {
-      throw new BadRequestException(
-        'Sales ID yang dihapus sama dengan yang didelegasi',
-      );
-    }
-
+    //jika sales yang akan dihapus tidak ada, maka request tidak valid
     if (sales === null) {
       throw new NotFoundException(
         'Sales with id ' + request.salesId + ' not found',
       );
     }
 
-    //delegate all customer to new sales
-    const delegatedSales = await this.userRepository.findOne({
+    //jika sales yang di assign ada sales yang akan dihapus, maka request tidak valid
+    if (
+      request.reassignList.filter(
+        (reassignItem: DeleteUserAssignRequest) =>
+          reassignItem.agentId === request.salesId,
+      ).length > 0
+    ) {
+      throw new BadRequestException(
+        'Sales ID yang dihapus sama dengan yang didelegasi',
+      );
+    }
+
+    //ambil data sales yang di delegasikan
+    const delegatedSales = await this.userRepository.find({
       where: {
-        id: request.delegatedSalesId,
+        id: In(request.reassignList.map((value) => value.agentId)),
       },
     });
 
@@ -375,7 +383,7 @@ export class ManageUserService {
     const customers = await this.customerAgentRepository.find({
       where: {
         agent: {
-          id: In([sales.id, delegatedSales.id]),
+          id: In([sales.id, ...delegatedSales.map((value) => value.id)]),
         },
       },
       relations: {
@@ -384,30 +392,37 @@ export class ManageUserService {
       },
     });
 
-    const salesCustomer: CustomerAgent[] = customers.filter(
-      (value) => value.agent.id === sales.id,
-    );
-    const delegatedSalesCustomers: CustomerAgent[] = customers.filter(
-      (value) => value.agent.id === delegatedSales.id,
-    );
+    const newSalesCustomer: DeepPartial<CustomerAgent>[] = [];
 
-    for (const customer of salesCustomer) {
-      //jika delegated sales nya sudah handle si customer itu
+    for (const assignItem of request.reassignList) {
+      //jika customer tersebut sudah di assign ke sales yang baru, maka lewati
       if (
-        delegatedSalesCustomers.find(
-          (value) => value.customer.id === customer.customer.id,
-        ) !== undefined
+        customers.find((customer) => {
+          customer.agent.id === assignItem.agentId &&
+            customer.customer.id === assignItem.customerId;
+        }) !== undefined
       ) {
-        await this.customerAgentRepository.delete(customer.id);
-      } else {
-        customer.agent = delegatedSales;
-        delegatedSalesCustomers.push(customer);
+        continue;
       }
+
+      const newSales = customers.find(
+        (customer) => customer.agent.id === assignItem.agentId,
+      )?.agent;
+      const newCustomer = customers.find(
+        (customer) => customer.agent.id === assignItem.agentId,
+      )?.customer;
+
+      //simpan ke array dulu, dijadikan satu agar tidak terlalu banyak koneksi ke db
+      newSalesCustomer.push({
+        agent: newSales,
+        customer: newCustomer,
+      });
     }
 
-    await this.customerAgentRepository.save(delegatedSalesCustomers);
+    //simpan customer dan sales baru ke db
+    await this.customerAgentRepository.save(newSalesCustomer);
 
-    //hapus job
+    //hapus sales tersebut dari job
     const userJob = await this.userJobRepository.find({
       where: {
         agent: {
@@ -423,17 +438,13 @@ export class ManageUserService {
       await this.userJobRepository.delete(userJob.map((e) => e.id));
     }
 
-    sales.movedTo = request.delegatedSalesId;
-
-    await this.userRepository.save(sales);
-
     await this.userRepository.softDelete(sales.id);
 
     return <ApiResponse<any>>{
       success: true,
-      data: await this.userRepository.findOne({
+      data: await this.userRepository.find({
         where: {
-          id: delegatedSales.id,
+          id: In([...request.reassignList.map((value) => value.agentId)]),
         },
         relations: {
           customer: {
@@ -444,8 +455,7 @@ export class ManageUserService {
       message:
         'Sukses menghapus sales ' +
         sales.full_name +
-        ' dan mendelegasikan semua customer ke sales ' +
-        delegatedSales.full_name,
+        ' dan mendelegasikan semua customer ke sales ke sales yang sesuai',
     };
   }
 

@@ -58,5 +58,13 @@ export class DeleteUserRequest {
   salesId: number;
 
   @IsNotEmpty()
-  delegatedSalesId: number;
+  reassignList: DeleteUserAssignRequest[];
+}
+
+export class DeleteUserAssignRequest {
+  @IsNotEmpty()
+  agentId: number;
+
+  @IsNotEmpty()
+  customerId: number;
 }
