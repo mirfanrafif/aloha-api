@@ -20,7 +20,7 @@ import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.modul
 import { Role, UserEntity } from 'src/core/repository/user/user.entity';
 import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { Like, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import {
   CrmCustomer,
   CustomerCategoriesResponse,
@@ -29,6 +29,7 @@ import {
   CustomerResponse,
   LoginResponse,
 } from './customer-crm.dto';
+import { convertPhoneNumber } from './customer.helper';
 
 const pageSize = 20;
 
@@ -513,5 +514,61 @@ export class CustomerCrmService {
     phoneNumber = phoneNumber.split(' ').join('');
 
     return phoneNumber;
+  }
+
+  findWithPhoneNumberList(phoneNumber: string[]) {
+    const phoneNumberString = phoneNumber.join(',');
+    return this.getCustomerFromCrm({
+      'filter.telephones': '$in:' + phoneNumberString,
+      limit: 1000,
+    }).pipe(
+      map(async (customers) => {
+        let newCustomers = await customers;
+        if (newCustomers.length === 0) {
+          const convertedPhoneNumber = phoneNumber
+            .map((phoneNumber) => {
+              return convertPhoneNumber(phoneNumber);
+            })
+            .filter((item) => item !== undefined);
+          if (convertedPhoneNumber === undefined) {
+            const newCustomers: CustomerEntity[] = [];
+            return newCustomers;
+          }
+
+          newCustomers = await this.customerRepository.find({
+            where: {
+              phoneNumber: In(convertedPhoneNumber),
+            },
+            take: pageSize,
+            order: {
+              name: 'ASC',
+            },
+          });
+          return newCustomers;
+        }
+
+        return customers;
+      }),
+      catchError(async () => {
+        const convertedPhoneNumber = phoneNumber.map((phoneNumber) => {
+          return convertPhoneNumber(phoneNumber);
+        });
+        if (convertedPhoneNumber === undefined) {
+          const newCustomers: CustomerEntity[] = [];
+          return newCustomers;
+        }
+
+        const customers = await this.customerRepository.find({
+          where: {
+            phoneNumber: In(convertedPhoneNumber),
+          },
+          take: pageSize,
+          order: {
+            name: 'ASC',
+          },
+        });
+        return customers;
+      }),
+    );
   }
 }

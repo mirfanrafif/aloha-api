@@ -5,9 +5,10 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { AxiosError, AxiosResponse } from 'axios';
-import { catchError, map } from 'rxjs';
+import { catchError, lastValueFrom, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
@@ -56,6 +57,8 @@ import {
   WablasSendMessageRequest,
   WablasSendVideoRequest,
 } from 'src/core/wablas/wablas.dto';
+import { CustomerCrmService } from 'src/core/pukapuka/customer-crm.service';
+import { convertPhoneNumber } from 'src/core/pukapuka/customer.helper';
 
 const pageSize = 20;
 
@@ -71,6 +74,7 @@ export class MessageService {
     private userService: UserService,
     private wablasService: WablasService,
     private messageHelper: MessageHelper,
+    private customerCrmService: CustomerCrmService,
   ) {}
 
   async handleIncomingMessage(incomingMessage: TextMessage) {
@@ -388,29 +392,47 @@ export class MessageService {
     bulkMessageRequest: BulkMessageRequestDto;
     agent: UserEntity;
   }) {
+    //phone number no duplicate / map
+    const phoneNumberMap = bulkMessageRequest.messages
+      .map((message) => {
+        return message.customerNumber;
+      })
+      .reduce((map, obj) => {
+        map[obj] = obj;
+        return map;
+      }, {} as { [key: string]: string });
+    const phoneNumberList = Object.keys(phoneNumberMap);
+
+    //find customer from crm with those numbers
+    const customerList = await lastValueFrom(
+      this.customerCrmService.findWithPhoneNumberList(phoneNumberList),
+    );
+
     //templating request
     const request: WablasSendMessageRequest = {
       data: await Promise.all(
-        bulkMessageRequest.messages.map(async (message) => {
-          const customer =
-            await this.customerService.searchCustomerWithPhoneNumber(
-              message.customerNumber,
+        bulkMessageRequest.messages
+          .filter((value) => phoneNumberList.includes(value.customerNumber))
+          .map(async (message) => {
+            const customer = customerList.find(
+              (item) =>
+                item.phoneNumber === convertPhoneNumber(message.customerNumber),
             );
-
-          return {
-            message: message.message,
-            isGroup: false,
-            phone: customer.phoneNumber,
-            retry: true,
-            secret: false,
-          };
-        }),
+            if (customer === undefined) {
+              throw new NotFoundException(
+                `Phone number ${message.customerNumber} not found`,
+              );
+            }
+            return {
+              message: message.message,
+              isGroup: false,
+              phone: customer.phoneNumber,
+              retry: true,
+              secret: false,
+            };
+          }),
       ),
     };
-
-    //ambil dulu data2 customer yang di blast dari crm, lalu simpan ke aloha
-    for (const message of bulkMessageRequest.messages) {
-    }
 
     //buat request ke WABLAS API
     return this.wablasService.sendMessage(request).pipe(
@@ -424,6 +446,7 @@ export class MessageService {
               return this.saveOutgoingBulkMessage({
                 messageItem: item,
                 agent: agent,
+                customerList: customerList,
               });
             }),
           );
@@ -771,9 +794,11 @@ export class MessageService {
   //simpan pesan keluar
   private async saveOutgoingBulkMessage({
     messageItem,
+    customerList,
     agent,
   }: {
     messageItem: MessageResponseItem;
+    customerList: CustomerEntity[];
     agent?: UserEntity;
   }): Promise<MessageEntity> {
     const customer = await this.customerService.searchCustomerByPhoneNumberDb(

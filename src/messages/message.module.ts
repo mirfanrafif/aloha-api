@@ -14,6 +14,7 @@ import { BroadcastMessageService } from 'src/broadcast/broadcast-message.service
 import { WablasService } from '../core/wablas/wablas.service';
 import { MessageHelper } from './helper/message.helper';
 import { WablasModule } from 'src/core/wablas/wablas.module';
+import { CustomerCrmModule } from 'src/core/pukapuka/customer-crm.module';
 
 @Module({
   providers: [
@@ -30,6 +31,7 @@ import { WablasModule } from 'src/core/wablas/wablas.module';
     ConversationRepositoryModule,
     UserJobModule,
     WablasModule,
+    CustomerCrmModule,
   ],
 })
 export class MessageModule {}
