@@ -106,8 +106,6 @@ export class WablasService {
         break;
     }
 
-    console.log('File url: ' + fileUrl);
-
     //save message attachment to storage
     const file = await this.http.axiosRef({
       method: 'GET',
@@ -115,21 +113,20 @@ export class WablasService {
       responseType: 'stream',
     });
 
-    console.log(file.data);
-
-    file.data.pipe(createWriteStream(filename));
+    file.data.pipe(
+      createWriteStream(
+        `./uploads/messages/${message.messageType}/incoming-${filename}`,
+      ),
+    );
 
     //set file url
     switch (message.message) {
       case MessageType.image:
-        return process.env.BASE_URL + '/message/image/' + filename;
-
+        return process.env.BASE_URL + '/message/image/incoming-' + filename;
       case MessageType.video:
-        return process.env.BASE_URL + '/message/video/' + filename;
-
+        return process.env.BASE_URL + '/message/video/incoming-' + filename;
       case MessageType.document:
-        return process.env.BASE_URL + '/message/document/' + filename;
-
+        return process.env.BASE_URL + '/message/document/incoming-' + filename;
       default:
         return '';
     }
