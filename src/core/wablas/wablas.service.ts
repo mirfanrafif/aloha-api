@@ -120,7 +120,7 @@ export class WablasService {
     );
 
     //set file url
-    switch (message.message) {
+    switch (message.messageType) {
       case MessageType.image:
         return process.env.BASE_URL + '/message/image/incoming-' + filename;
       case MessageType.video:
