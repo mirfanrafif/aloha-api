@@ -88,7 +88,9 @@ export class WablasService {
   async getFile(message: TextMessage, filename: string): Promise<string> {
     let fileUrl = '';
 
-    console.log('Message type: ' + message.messageType);
+    console.log(
+      `Message type: ${message.messageType} Message file ${message.file}`,
+    );
 
     switch (message.messageType) {
       case MessageType.video:
