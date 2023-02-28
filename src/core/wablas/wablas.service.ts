@@ -115,6 +115,8 @@ export class WablasService {
       responseType: 'stream',
     });
 
+    console.log(file.data);
+
     file.data.pipe(createWriteStream(filename));
 
     //set file url
