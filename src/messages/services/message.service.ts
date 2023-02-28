@@ -270,6 +270,7 @@ export class MessageService {
     agent?: UserEntity;
     customer: CustomerEntity;
   }) {
+    console.log(message);
     const messageFiltered = /<~ (.*)/gi.exec(message.message);
 
     //define file url from wablas
