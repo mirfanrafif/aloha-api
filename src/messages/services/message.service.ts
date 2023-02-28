@@ -280,6 +280,8 @@ export class MessageService {
 
     filename = await this.wablasService.getFile(message, filename);
 
+    console.log(filename);
+
     //create entity
     const messageEntity = this.messageRepository.create({
       customer: customer,
