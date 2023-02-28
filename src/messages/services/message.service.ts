@@ -420,7 +420,7 @@ export class MessageService {
             );
             if (customer === undefined) {
               throw new NotFoundException(
-                `Phone number ${message.customerNumber} not found`,
+                `Nomor handphone ${message.customerNumber} tidak ditemukan`,
               );
             }
             return {
