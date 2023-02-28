@@ -102,6 +102,8 @@ export class WablasService {
         break;
     }
 
+    console.log('File url: ' + fileUrl);
+
     //save message attachment to storage
     const file = await this.http.axiosRef({
       method: 'GET',
