@@ -10,10 +10,10 @@ import { UserJobModule } from './job/user-job.module';
 import { MessageModule } from './messages/message.module';
 import { MessageTemplateRepoModule } from './core/repository/message-template/message-template.module';
 import { MessageTemplateModule } from './template/message-template.module';
+import { BroadcastMessageModule } from './broadcast/broadcast.module';
 @Module({
   imports: [
-    DatabaseModule,
-    UserModule,
+    BroadcastMessageModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -23,6 +23,7 @@ import { MessageTemplateModule } from './template/message-template.module';
     MessageModule,
     MessageTemplateRepoModule,
     MessageTemplateModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
