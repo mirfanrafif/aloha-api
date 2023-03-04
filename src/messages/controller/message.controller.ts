@@ -38,7 +38,7 @@ export class MessageController {
 
   @Post('webhook')
   handleIncomingMessage(@Body() message: TextMessage) {
-    console.log('Incoming message: ' + message);
+    console.log('Incoming message: ' + JSON.stringify(message));
     return this.service.handleIncomingMessage(message);
   }
 
