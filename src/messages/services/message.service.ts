@@ -272,12 +272,14 @@ export class MessageService {
   }) {
     const messageFiltered = /<~ (.*)/gi.exec(message.message);
 
+    let filename = '';
     //define file url from wablas
+    if (message.messageType != MessageType.text) {
+      const timestamp = Date.now().toString();
+      filename = timestamp + '-' + message.file;
 
-    const timestamp = Date.now().toString();
-    let filename = timestamp + '-' + message.file;
-
-    filename = await this.wablasService.getFile(message, filename);
+      filename = await this.wablasService.getFile(message, filename);
+    }
 
     //create entity
     const messageEntity = this.messageRepository.create({
