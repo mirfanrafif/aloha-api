@@ -12,8 +12,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { JwtAuthGuard } from '../../auth/auth.guard';
+import { UserEntity } from '../../core/repository/user/user.entity';
 import { EditProfileRequestDto } from '../user.dto';
 import { UserProfileService } from './user-profile.service';
 

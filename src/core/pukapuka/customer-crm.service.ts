@@ -19,7 +19,7 @@ import { CustomerEntity } from '../repository/customer/customer.entity';
 import { CUSTOMER_REPOSITORY } from '../repository/customer/customer.module';
 import { Role, UserEntity } from '../repository/user/user.entity';
 import { USER_REPOSITORY } from '../repository/user/user.module';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { ApiResponse } from '../../utils/apiresponse.dto';
 import { In, Like, Repository } from 'typeorm';
 import {
   CrmCustomer,

@@ -4,14 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobEntity } from 'src/core/repository/job/job.entity';
-import { JOB_REPOSITORY } from 'src/core/repository/job/job.module';
-import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
-import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
-import { UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { AddJobRequest, JobAssignRequestDto } from 'src/user/user.dto';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { JobEntity } from '../core/repository/job/job.entity';
+import { JOB_REPOSITORY } from '../core/repository/job/job.module';
+import { UserJobEntity } from '../core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from '../core/repository/user-job/user-job.module';
+import { UserEntity } from '../core/repository/user/user.entity';
+import { USER_REPOSITORY } from '../core/repository/user/user.module';
+import { AddJobRequest, JobAssignRequestDto } from '../user/user.dto';
+import { ApiResponse } from '../utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 
 @Injectable()

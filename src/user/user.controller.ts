@@ -12,13 +12,13 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Role } from 'src/core/repository/user/user.entity';
-import { Roles } from 'src/auth/role.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
+import { JwtAuthGuard } from '../auth/auth.guard';
+import { Role } from '../core/repository/user/user.entity';
+import { Roles } from '../auth/role.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { ChangePasswordDto } from './user.dto';
 import { UserService } from './user.service';
-import { RegisterRequestDto } from 'src/auth/auth.dto';
+import { RegisterRequestDto } from '../auth/auth.dto';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)

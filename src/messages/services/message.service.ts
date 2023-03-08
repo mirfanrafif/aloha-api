@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   HttpException,
@@ -12,11 +11,11 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 import {
   MessageEntity,
   MessageStatus,
-} from 'src/core/repository/message/message.entity';
-import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
-import { CustomerService } from 'src/customer/customer.service';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
-import { WablasAPIException } from 'src/utils/wablas.exception';
+} from '../../core/repository/message/message.entity';
+import { MESSAGE_REPOSITORY } from '../../core/repository/message/message.module';
+import { CustomerService } from '../../customer/customer.service';
+import { ApiResponse } from '../../utils/apiresponse.dto';
+import { WablasAPIException } from '../../utils/wablas.exception';
 import { LessThan, Repository } from 'typeorm';
 import {
   MessageRequestDto,
@@ -30,20 +29,18 @@ import {
   BulkMessageRequestDto,
 } from '../message.dto';
 import { MessageGateway } from '../gateways/message.gateway';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { ConversationStatus } from 'src/core/repository/conversation/conversation.entity';
+import { Role, UserEntity } from '../../core/repository/user/user.entity';
+import { ConversationStatus } from '../../core/repository/conversation/conversation.entity';
 import { ConversationService } from './conversation.service';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { UserJobService } from 'src/job/user-job.service';
+import { CustomerEntity } from '../../core/repository/customer/customer.entity';
+import { UserJobService } from '../../job/user-job.service';
 import {
   CustomerAgentArrDto,
   CustomerAgentResponseDto,
 } from 'src/customer/customer.dto';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../../user/user.service';
 import { isEnum } from 'class-validator';
 import { WablasService } from '../../core/wablas/wablas.service';
-import { response } from 'express';
-import { createWriteStream } from 'fs';
 import { MessageHelper } from '../helper/message.helper';
 
 import {
@@ -56,9 +53,9 @@ import {
   WablasSendImageRequest,
   WablasSendMessageRequest,
   WablasSendVideoRequest,
-} from 'src/core/wablas/wablas.dto';
-import { CustomerCrmService } from 'src/core/pukapuka/customer-crm.service';
-import { convertPhoneNumber } from 'src/core/pukapuka/customer.helper';
+} from '../../core/wablas/wablas.dto';
+import { CustomerCrmService } from '../../core/pukapuka/customer-crm.service';
+import { convertPhoneNumber } from '../../core/pukapuka/customer.helper';
 
 const pageSize = 20;
 

@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import { CONVERSATION_REPOSITORY } from '../../core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
   ConversationStatus,
-} from 'src/core/repository/conversation/conversation.entity';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+} from '../../core/repository/conversation/conversation.entity';
+import { CustomerEntity } from '../../core/repository/customer/customer.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

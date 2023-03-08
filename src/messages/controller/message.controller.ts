@@ -16,9 +16,9 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { UserEntity } from 'src/core/repository/user/user.entity';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { JwtAuthGuard } from '../../auth/auth.guard';
+import { UserEntity } from '../../core/repository/user/user.entity';
+import { ApiResponse } from '../../utils/apiresponse.dto';
 import {
   BulkMessageRequestDto,
   DocumentRequestDto,

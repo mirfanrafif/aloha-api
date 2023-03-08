@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
-import { Role } from 'src/core/repository/user/user.entity';
+import { Role } from '../core/repository/user/user.entity';
 
 export class AddJobRequest {
   @IsNotEmpty()

@@ -7,9 +7,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UserJwtPayload } from 'src/auth/auth.dto';
-import { CustomerService } from 'src/customer/customer.service';
-import { UserService } from 'src/user/user.service';
+import { UserJwtPayload } from '../../auth/auth.dto';
+import { CustomerService } from '../../customer/customer.service';
+import { UserService } from '../../user/user.service';
 import { MessageResponseDto } from '../message.dto';
 @WebSocketGateway({
   cors: true,

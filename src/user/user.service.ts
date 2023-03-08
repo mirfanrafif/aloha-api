@@ -1,8 +1,8 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { CustomerService } from 'src/customer/customer.service';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { Role, UserEntity } from '../core/repository/user/user.entity';
+import { USER_REPOSITORY } from '../core/repository/user/user.module';
+import { CustomerService } from '../customer/customer.service';
+import { ApiResponse } from '../utils/apiresponse.dto';
 import { Not, Repository } from 'typeorm';
 import { ChangePasswordDto } from './user.dto';
 import { compare, hash } from 'bcrypt';

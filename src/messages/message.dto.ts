@@ -7,9 +7,9 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { MessageStatus } from 'src/core/repository/message/message.entity';
-import { UserEntity } from 'src/core/repository/user/user.entity';
+import { CustomerEntity } from '../core/repository/customer/customer.entity';
+import { MessageStatus } from '../core/repository/message/message.entity';
+import { UserEntity } from '../core/repository/user/user.entity';
 
 export enum MessageType {
   text = 'text',

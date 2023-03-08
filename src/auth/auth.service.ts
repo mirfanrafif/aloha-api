@@ -5,9 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { UserEntity } from '../core/repository/user/user.entity';
+import { USER_REPOSITORY } from '../core/repository/user/user.module';
+import { ApiResponse } from '../utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import { LoginRequestDto } from './auth.dto';
 import { compare } from 'bcrypt';

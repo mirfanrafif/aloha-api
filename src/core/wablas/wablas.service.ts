@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { createWriteStream } from 'fs';
 import { Observable } from 'rxjs';
-import { MessageType, TextMessage } from 'src/messages/message.dto';
+import { MessageType, TextMessage } from '../../messages/message.dto';
 import {
   SendDocumentResponse,
   SendImageVideoResponse,

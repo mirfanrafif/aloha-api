@@ -5,15 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { hash } from 'bcrypt';
-import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
-import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { MessageEntity } from 'src/core/repository/message/message.entity';
-import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
-import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { CustomerAgent } from '../../core/repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from '../../core/repository/customer-agent/customer-agent.module';
+import { CustomerEntity } from '../../core/repository/customer/customer.entity';
+import { MessageEntity } from '../../core/repository/message/message.entity';
+import { UserJobEntity } from '../../core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from '../../core/repository/user-job/user-job.module';
+import { Role, UserEntity } from '../../core/repository/user/user.entity';
+import { USER_REPOSITORY } from '../../core/repository/user/user.module';
+import { ApiResponse } from '../../utils/apiresponse.dto';
 import { Between, In, Repository } from 'typeorm';
 import {
   ChangeSalesPasswordDto,
