@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   DatabaseModule,
   DATABASE_CONNECTION,
-} from 'src/core/database/database.module';
+} from '../../database/database.module';
 import { Connection } from 'typeorm';
 import { JobEntity } from './job.entity';
 

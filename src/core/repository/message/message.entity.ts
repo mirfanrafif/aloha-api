@@ -1,4 +1,4 @@
-import { MessageType } from 'src/messages/message.dto';
+import { MessageType } from '../../../messages/message.dto';
 import {
   Column,
   CreateDateColumn,

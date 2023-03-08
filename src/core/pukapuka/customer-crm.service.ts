@@ -8,17 +8,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable, switchMap } from 'rxjs';
-import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import { CONVERSATION_REPOSITORY } from '../repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
   ConversationStatus,
-} from 'src/core/repository/conversation/conversation.entity';
-import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
-import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+} from '../repository/conversation/conversation.entity';
+import { CustomerAgent } from '../repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from '../repository/customer-agent/customer-agent.module';
+import { CustomerEntity } from '../repository/customer/customer.entity';
+import { CUSTOMER_REPOSITORY } from '../repository/customer/customer.module';
+import { Role, UserEntity } from '../repository/user/user.entity';
+import { USER_REPOSITORY } from '../repository/user/user.module';
 import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { In, Like, Repository } from 'typeorm';
 import {
@@ -550,8 +550,8 @@ export class CustomerCrmService {
         return customers;
       }),
       catchError(async () => {
-        const convertedPhoneNumber = phoneNumber.map((phoneNumber) => {
-          return convertPhoneNumber(phoneNumber);
+        const convertedPhoneNumber = phoneNumber.map((item) => {
+          return convertPhoneNumber(item);
         });
         if (convertedPhoneNumber === undefined) {
           const newCustomers: CustomerEntity[] = [];
