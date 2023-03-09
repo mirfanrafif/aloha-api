@@ -172,35 +172,10 @@ export class CustomerCrmService {
   }
 
   findWithPhoneNumber(phoneNumber: string) {
-    return this.login().pipe(
-      map((response) => response.data.access_token),
-      switchMap((accessToken) =>
-        this.http.get<CustomerResponse>('/customers', {
-          params: {
-            'filter.telephones': '$eq:' + phoneNumber,
-            limit: 1,
-          },
-          headers: {
-            Authorization: 'Bearer ' + accessToken,
-          },
-        }),
-      ),
-      //simpan ke database jika ada isinya, kalo gaada return array kosong
-      map(async (response) => {
-        if (response.status > 400) {
-          const customers: CustomerEntity[] = [];
-          return customers;
-        }
-
-        if (response.data.data.length === 0) {
-          const customers: CustomerEntity[] = [];
-          return customers;
-        }
-
-        const customers = response.data.data;
-        const newCustomers = await this.saveCustomerFromCrm(customers);
-        return newCustomers;
-      }),
+    return this.getCustomerFromCrm({
+      'filter.telephones': '$eq:' + phoneNumber,
+      limit: 1,
+    }).pipe(
       //cari di db kalo hasil search di crm kosong
       map(async (customers) => {
         let newCustomers = await customers;
