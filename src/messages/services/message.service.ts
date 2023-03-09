@@ -411,7 +411,13 @@ export class MessageService {
     const request: WablasSendMessageRequest = {
       data: await Promise.all(
         bulkMessageRequest.messages
-          .filter((value) => phoneNumberList.includes(value.customerNumber))
+          .filter(
+            (value) =>
+              customerList.findIndex(
+                (item) =>
+                  item.phoneNumber === convertPhoneNumber(value.customerNumber),
+              ) !== -1,
+          )
           .map(async (message) => {
             const customer = customerList.find(
               (item) =>
