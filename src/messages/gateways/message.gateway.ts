@@ -28,10 +28,14 @@ export class MessageGateway {
     const agents = await this.customerService.findAgentByCustomer({
       customer: customer,
     });
-    const agentIds = agents.map((item) => item.agent.id.toString());
+    const agentIds = agents
+      .filter((item) => item.agent !== null)
+      .map((item) => item.agent.id.toString());
+
     agentIds.push('admin');
+
     agentIds.forEach((item) => {
-      this.server.to('message:' + item).emit('message', JSON.stringify(data));
+      this.server.to(`message:${item}`).emit('message', JSON.stringify(data));
     });
   }
 

@@ -77,5 +77,7 @@ describe('Customer CRM Service', () => {
         },
       }),
     );
+    console.log(result);
+    expect(result.success).toBe(true);
   });
 });
