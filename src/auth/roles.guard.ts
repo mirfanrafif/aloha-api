@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { JwtAuthGuard } from './auth.guard';
+import { Role, UserEntity } from '../core/repository/user/user.entity';
 import { ROLES_KEY } from './role.decorator';
 
 @Injectable()

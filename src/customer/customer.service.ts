@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   Inject,
@@ -7,18 +6,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import { CONVERSATION_REPOSITORY } from '../core/repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
   ConversationStatus,
-} from 'src/core/repository/conversation/conversation.entity';
-import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
-import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+} from '../core/repository/conversation/conversation.entity';
+import { CustomerAgent } from '../core/repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from '../core/repository/customer-agent/customer-agent.module';
+import { CustomerEntity } from '../core/repository/customer/customer.entity';
+import { CUSTOMER_REPOSITORY } from '../core/repository/customer/customer.module';
+import { Role, UserEntity } from '../core/repository/user/user.entity';
+import { USER_REPOSITORY } from '../core/repository/user/user.module';
+import { ApiResponse } from '../utils/apiresponse.dto';
 import { Like, Repository } from 'typeorm';
 import { CustomerCrmService } from '../core/pukapuka/customer-crm.service';
 import {

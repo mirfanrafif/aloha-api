@@ -11,10 +11,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Roles } from 'src/auth/role.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { JwtAuthGuard } from '../auth/auth.guard';
+import { Roles } from '../auth/role.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Role, UserEntity } from '../core/repository/user/user.entity';
 import { BroadcastMessageService } from './broadcast-message.service';
 import {
   BroadcastMessageRequest,

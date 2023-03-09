@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { MessageTemplateEntity } from 'src/core/repository/message-template/message-template.entity';
-import { MESSAGE_TEMPLATE_REPOSITORY } from 'src/core/repository/message-template/message-template.module';
-import { UserEntity } from 'src/core/repository/user/user.entity';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { MessageTemplateEntity } from '../core/repository/message-template/message-template.entity';
+import { MESSAGE_TEMPLATE_REPOSITORY } from '../core/repository/message-template/message-template.module';
+import { UserEntity } from '../core/repository/user/user.entity';
+import { ApiResponse } from '../utils/apiresponse.dto';
 import { Repository } from 'typeorm';
 import { MessageTemplateRequestDto } from './message-template.dto';
 

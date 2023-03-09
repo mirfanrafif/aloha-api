@@ -8,18 +8,18 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable, switchMap } from 'rxjs';
-import { CONVERSATION_REPOSITORY } from 'src/core/repository/conversation/conversation-repository.module';
+import { CONVERSATION_REPOSITORY } from '../repository/conversation/conversation-repository.module';
 import {
   ConversationEntity,
   ConversationStatus,
-} from 'src/core/repository/conversation/conversation.entity';
-import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
-import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
-import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
-import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
-import { Role, UserEntity } from 'src/core/repository/user/user.entity';
-import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
-import { ApiResponse } from 'src/utils/apiresponse.dto';
+} from '../repository/conversation/conversation.entity';
+import { CustomerAgent } from '../repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from '../repository/customer-agent/customer-agent.module';
+import { CustomerEntity } from '../repository/customer/customer.entity';
+import { CUSTOMER_REPOSITORY } from '../repository/customer/customer.module';
+import { Role, UserEntity } from '../repository/user/user.entity';
+import { USER_REPOSITORY } from '../repository/user/user.module';
+import { ApiResponse } from '../../utils/apiresponse.dto';
 import { In, Like, Repository } from 'typeorm';
 import {
   CrmCustomer,
@@ -172,35 +172,10 @@ export class CustomerCrmService {
   }
 
   findWithPhoneNumber(phoneNumber: string) {
-    return this.login().pipe(
-      map((response) => response.data.access_token),
-      switchMap((accessToken) =>
-        this.http.get<CustomerResponse>('/customers', {
-          params: {
-            'filter.telephones': '$eq:' + phoneNumber,
-            limit: 1,
-          },
-          headers: {
-            Authorization: 'Bearer ' + accessToken,
-          },
-        }),
-      ),
-      //simpan ke database jika ada isinya, kalo gaada return array kosong
-      map(async (response) => {
-        if (response.status > 400) {
-          const customers: CustomerEntity[] = [];
-          return customers;
-        }
-
-        if (response.data.data.length === 0) {
-          const customers: CustomerEntity[] = [];
-          return customers;
-        }
-
-        const customers = response.data.data;
-        const newCustomers = await this.saveCustomerFromCrm(customers);
-        return newCustomers;
-      }),
+    return this.getCustomerFromCrm({
+      'filter.telephones': '$eq:' + phoneNumber,
+      limit: 1,
+    }).pipe(
       //cari di db kalo hasil search di crm kosong
       map(async (customers) => {
         let newCustomers = await customers;
@@ -550,8 +525,8 @@ export class CustomerCrmService {
         return customers;
       }),
       catchError(async () => {
-        const convertedPhoneNumber = phoneNumber.map((phoneNumber) => {
-          return convertPhoneNumber(phoneNumber);
+        const convertedPhoneNumber = phoneNumber.map((item) => {
+          return convertPhoneNumber(item);
         });
         if (convertedPhoneNumber === undefined) {
           const newCustomers: CustomerEntity[] = [];

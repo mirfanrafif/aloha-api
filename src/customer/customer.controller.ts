@@ -11,10 +11,10 @@ import {
   UseInterceptors,
   Param,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
-import { Roles } from 'src/auth/role.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Role } from 'src/core/repository/user/user.entity';
+import { JwtAuthGuard } from '../auth/auth.guard';
+import { Roles } from '../auth/role.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Role } from '../core/repository/user/user.entity';
 import { CustomerCrmService } from '../core/pukapuka/customer-crm.service';
 import { DelegateCustomerRequestDto } from './customer.dto';
 import { CustomerService } from './customer.service';
