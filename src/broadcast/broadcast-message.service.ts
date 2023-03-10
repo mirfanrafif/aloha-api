@@ -117,11 +117,6 @@ export class BroadcastMessageService {
     // return await this.mockSendBroadcastMessasge(request, agent);
 
     //buat request ke WABLAS API
-    return <ApiResponse<any[]>>{
-      success: true,
-      data: [],
-      message: '',
-    };
     return this.wablasService.sendMessage(request).pipe(
       map(
         async (
@@ -231,11 +226,6 @@ export class BroadcastMessageService {
     // return await this.sendMockImageWithAttachment(request, agent, file);
 
     //buat request ke WABLAS API
-    return <ApiResponse<any[]>>{
-      success: true,
-      data: [],
-      message: '',
-    };
     return this.wablasService.sendImage(request).pipe(
       map(
         async (
@@ -320,11 +310,6 @@ export class BroadcastMessageService {
     // return await this.sendMockVideoResponseWithAttachment(request, agent, file);
 
     // buat request ke WABLAS API
-    return <ApiResponse<any[]>>{
-      success: true,
-      data: [],
-      message: '',
-    };
     return this.wablasService.sendVideo(request).pipe(
       map(
         async (
