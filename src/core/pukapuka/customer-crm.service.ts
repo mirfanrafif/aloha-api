@@ -136,6 +136,63 @@ export class CustomerCrmService {
     );
   }
 
+  findWithPhoneNumberList(phoneNumber: string[]) {
+    const phoneNumberString = phoneNumber.join(',');
+    return this.getCustomerFromCrm({
+      'filter.telephones': '$in:' + phoneNumberString,
+      limit: 1000,
+    }).pipe(
+      map(async (customers) => {
+        let newCustomers = await customers;
+        //jika customer dari crm kosong, maka ambil dari db
+        if (newCustomers.length === 0) {
+          const convertedPhoneNumber = phoneNumber
+            .map((phoneNumber) => {
+              return convertPhoneNumber(phoneNumber);
+            })
+            .filter((item) => item !== undefined);
+          if (convertedPhoneNumber === undefined) {
+            const newCustomers: CustomerEntity[] = [];
+            return newCustomers;
+          }
+
+          newCustomers = await this.customerRepository.find({
+            where: {
+              phoneNumber: In(convertedPhoneNumber),
+            },
+            take: pageSize,
+            order: {
+              name: 'ASC',
+            },
+          });
+          return newCustomers;
+        }
+
+        return customers;
+      }),
+      catchError(async () => {
+        const convertedPhoneNumber = phoneNumber.map((phoneNumber) => {
+          return convertPhoneNumber(phoneNumber);
+        });
+        if (convertedPhoneNumber === undefined) {
+          const newCustomers: CustomerEntity[] = [];
+          return newCustomers;
+        }
+
+        const customers = await this.customerRepository.find({
+          where: {
+            phoneNumber: In(convertedPhoneNumber),
+          },
+          take: pageSize,
+          order: {
+            name: 'ASC',
+          },
+        });
+        return customers;
+      }),
+    );
+  }
+
   async findCustomerByName(search: string, page?: number) {
     if (search === undefined) {
       throw new BadRequestException('Search not defined');
@@ -176,11 +233,12 @@ export class CustomerCrmService {
       'filter.telephones': '$eq:' + phoneNumber,
       limit: 1,
     }).pipe(
-      //cari di db kalo hasil search di crm kosong
       map(async (customers) => {
         let newCustomers = await customers;
+        //jika customer dari crm kosong, maka ambil dari db
         if (newCustomers.length === 0) {
-          const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
+          const convertedPhoneNumber = convertPhoneNumber(phoneNumber);
+
           if (convertedPhoneNumber === undefined) {
             const newCustomers: CustomerEntity[] = [];
             return newCustomers;
@@ -188,7 +246,7 @@ export class CustomerCrmService {
 
           newCustomers = await this.customerRepository.find({
             where: {
-              phoneNumber: Like(convertedPhoneNumber),
+              phoneNumber: convertedPhoneNumber,
             },
             take: pageSize,
             order: {
@@ -201,7 +259,7 @@ export class CustomerCrmService {
         return customers;
       }),
       catchError(async () => {
-        const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
+        const convertedPhoneNumber = convertPhoneNumber(phoneNumber);
         if (convertedPhoneNumber === undefined) {
           const newCustomers: CustomerEntity[] = [];
           return newCustomers;
@@ -209,7 +267,7 @@ export class CustomerCrmService {
 
         const customers = await this.customerRepository.find({
           where: {
-            phoneNumber: Like(convertedPhoneNumber),
+            phoneNumber: convertedPhoneNumber,
           },
           take: pageSize,
           order: {
@@ -247,7 +305,7 @@ export class CustomerCrmService {
     );
   }
 
-  async saveCustomerFromCrm(customers: CrmCustomer[]) {
+  private async saveCustomerFromCrm(customers: CrmCustomer[]) {
     const newCustomers: CustomerEntity[] = [];
 
     for (const customer of customers) {
@@ -469,7 +527,7 @@ export class CustomerCrmService {
     return newCustomers;
   }
 
-  convertPhoneNumber(telephones: string): string | undefined {
+  private convertPhoneNumber(telephones: string): string | undefined {
     let phoneNumber = '';
 
     const telephonesArray = telephones.split(',');
@@ -489,61 +547,5 @@ export class CustomerCrmService {
     phoneNumber = phoneNumber.split(' ').join('');
 
     return phoneNumber;
-  }
-
-  findWithPhoneNumberList(phoneNumber: string[]) {
-    const phoneNumberString = phoneNumber.join(',');
-    return this.getCustomerFromCrm({
-      'filter.telephones': '$in:' + phoneNumberString,
-      limit: 1000,
-    }).pipe(
-      map(async (customers) => {
-        let newCustomers = await customers;
-        if (newCustomers.length === 0) {
-          const convertedPhoneNumber = phoneNumber
-            .map((phoneNumber) => {
-              return convertPhoneNumber(phoneNumber);
-            })
-            .filter((item) => item !== undefined);
-          if (convertedPhoneNumber === undefined) {
-            const newCustomers: CustomerEntity[] = [];
-            return newCustomers;
-          }
-
-          newCustomers = await this.customerRepository.find({
-            where: {
-              phoneNumber: In(convertedPhoneNumber),
-            },
-            take: pageSize,
-            order: {
-              name: 'ASC',
-            },
-          });
-          return newCustomers;
-        }
-
-        return customers;
-      }),
-      catchError(async () => {
-        const convertedPhoneNumber = phoneNumber.map((item) => {
-          return convertPhoneNumber(item);
-        });
-        if (convertedPhoneNumber === undefined) {
-          const newCustomers: CustomerEntity[] = [];
-          return newCustomers;
-        }
-
-        const customers = await this.customerRepository.find({
-          where: {
-            phoneNumber: In(convertedPhoneNumber),
-          },
-          take: pageSize,
-          order: {
-            name: 'ASC',
-          },
-        });
-        return customers;
-      }),
-    );
   }
 }

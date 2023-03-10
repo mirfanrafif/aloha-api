@@ -7,9 +7,10 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { CustomerEntity } from '../core/repository/customer/customer.entity';
-import { MessageStatus } from '../core/repository/message/message.entity';
-import { UserEntity } from '../core/repository/user/user.entity';
+import { CustomerStatus } from 'src/core/pukapuka/customer-crm.dto';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { MessageStatus } from 'src/core/repository/message/message.entity';
+import { UserEntity } from 'src/core/repository/user/user.entity';
 
 export enum MessageType {
   text = 'text',
@@ -74,6 +75,9 @@ export class BroadcastImageMessageRequestDto {
   @IsNotEmpty()
   interests: string;
 
+  @IsEnum(CustomerStatus)
+  status: CustomerStatus;
+
   @IsNotEmpty()
   types: string;
 }
@@ -87,6 +91,9 @@ export class BroadcastDocumentMessageRequestDto {
 
   @IsNotEmpty()
   types: string;
+
+  @IsEnum(CustomerStatus)
+  status: CustomerStatus;
 }
 
 export class DocumentRequestDto {
@@ -106,6 +113,9 @@ export class BroadcastMessageRequest {
 
   @IsArray()
   types: string[];
+
+  @IsEnum(CustomerStatus)
+  status: CustomerStatus;
 }
 
 export class MessageResponseDto {
