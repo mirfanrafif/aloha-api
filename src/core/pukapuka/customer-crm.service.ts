@@ -21,6 +21,8 @@ import { Role, UserEntity } from '../repository/user/user.entity';
 import { USER_REPOSITORY } from '../repository/user/user.module';
 import { ApiResponse } from '../../utils/apiresponse.dto';
 import { In, Like, Repository } from 'typeorm';
+import { UserJobEntity } from '../repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from '../repository/user-job/user-job.module';
 import {
   CrmCustomer,
   CustomerCategoriesResponse,
@@ -46,6 +48,8 @@ export class CustomerCrmService {
     private customerSalesRepository: Repository<CustomerAgent>,
     @Inject(CONVERSATION_REPOSITORY)
     private conversationRepository: Repository<ConversationEntity>,
+    @Inject(USER_JOB_REPOSITORY)
+    private userJobRepository: Repository<UserJobEntity>,
   ) {}
 
   login(): Observable<AxiosResponse<LoginResponse, any>> {
@@ -221,7 +225,7 @@ export class CustomerCrmService {
     );
   }
 
-  getCustomerFromCrm(params) {
+  private getCustomerFromCrm(params) {
     return this.login().pipe(
       map((response) => {
         return response.data.access_token;
@@ -251,7 +255,7 @@ export class CustomerCrmService {
     const newCustomers: CustomerEntity[] = [];
 
     for (const customer of customers) {
-      const phoneNumber = this.convertPhoneNumber(customer.telephones);
+      const phoneNumber = convertPhoneNumber(customer.telephones);
 
       //jika sudah ada di list, maka lewati
       if (
@@ -273,7 +277,7 @@ export class CustomerCrmService {
         },
       });
 
-      //buat data customer
+      //cari customer berdasarkan id di crm
       const findCustomerWithCrmId =
         findCustomerWithPhone !== null
           ? findCustomerWithPhone
@@ -337,69 +341,51 @@ export class CustomerCrmService {
           }
           //jika sales dihapus, maka assign ke sales penggantis
         } else if (alohaSales !== null && alohaSales.deleted_at !== null) {
-          //cari sales yang pengganti dari sales yang dihapus
-          const replacementSales = await this.userRepository.findOne({
+          const userJob = alohaSales.job;
+          const jobList = userJob.map((job) => job.job);
+
+          //cek apakah sales ini memiliki job pengganti
+          const replacementSales = await this.userJobRepository.find({
             where: {
-              id: alohaSales.movedTo,
+              job: {
+                id: In(jobList.map((job) => job.id)),
+              },
+            },
+            relations: {
+              agent: {
+                customer: true,
+              },
+              job: true,
             },
           });
 
-          //jika belum ada, assign dia ke sales yang customer nya paling sedikit
-          if (replacementSales === null) {
-            const salesList = await this.userRepository.find({
-              where: {
-                role: Role.agent,
-              },
-            });
-            //cari sales siapa yang customer nya paling sedikit
-            let userWithMinimumCustomer = 0;
-            salesList.forEach((value, index) => {
-              if (value.customer.length < salesList[0].customer.length) {
-                userWithMinimumCustomer = index;
-              }
-            });
-            /* coba cek apakah customer sudah di assign ke sales dengan job tersebut
-            dan yang customernya paling sedikit */
-            const customerAgent = await this.customerSalesRepository.findOne({
-              where: {
-                customer: {
-                  id: newCustomer.id,
-                },
-                agent: {
-                  id: salesList[userWithMinimumCustomer].id,
-                },
-              },
-              relations: {
-                agent: true,
-                customer: true,
-              },
-            });
-            //jika belum ada, assign dia ke sales tersebut
-            if (customerAgent === null) {
-              await this.customerSalesRepository.save({
-                customer: newCustomer,
-                agent: salesList[userWithMinimumCustomer],
-              });
-            }
-          } else {
-            const replacementSalesAlreadyAssigned =
-              await this.customerSalesRepository.findOne({
-                where: {
-                  customer: {
-                    id: newCustomer.id,
-                  },
-                  agent: {
-                    id: replacementSales.id,
-                  },
-                },
-              });
+          //find sales pengganti yang memiliki customer paling sedikit
+          const replacementSalesWithLeastCustomer = replacementSales.reduce(
+            (prev, current) =>
+              prev.agent.customer.length < current.agent.customer.length
+                ? prev
+                : current,
+          );
 
-            if (replacementSalesAlreadyAssigned === null) {
-              await this.customerSalesRepository.save({
-                customer: newCustomer,
-                agent: replacementSales,
-              });
-            }
+          //cek customer sudah di assign ke sales
+          const customerAgent = await this.customerSalesRepository.findOne({
+            where: {
+              customer: {
+                id: newCustomer.id,
+              },
+            },
+            relations: {
+              agent: true,
+              customer: true,
+            },
+          });
+
+          //jika belum ada, assign dia ke sales yang sama seperti di crm
+          if (customerAgent === null) {
+            await this.customerSalesRepository.save({
+              customer: newCustomer,
+              agent: replacementSalesWithLeastCustomer.agent,
+            });
           }
         } else if (alohaSales === null) {
           // jika data sales tidak ada di aloha, maka buatkan baru
