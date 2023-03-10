@@ -173,7 +173,10 @@ export class MessageService {
       }
 
       //cek apakah ada cs yang bekerja di layanan itu
-      if (pilihanSesuai.job.agents.length == 0) {
+      if (
+        pilihanSesuai.job.agents.filter((item) => item.agent !== null).length ==
+        0
+      ) {
         await this.sendMessageToCustomer({
           messageRequest: {
             customerNumber: data.customer.phoneNumber,

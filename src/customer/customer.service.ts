@@ -113,26 +113,17 @@ export class CustomerService {
       },
     });
 
-    //cari agent yang melayani customer paling sedikit agar seimbang
-    //mohon maaf algorithm nya jelek hehehe
-    const agentCustomersCount = agent.map(
-      (agentItem) => agentItem.customer.length,
+    const agentWithMinimumCustomer = agent.reduce(
+      (prev, current) =>
+        prev.customer.length < current.customer.length ? prev : current,
+      agent[0],
     );
 
-    let agentWithMinimumCustomerIndex = 0;
-    let agentWithMinimumCustomerCount = agentCustomersCount[0];
-
-    agentCustomersCount.forEach((item, index) => {
-      if (item < agentWithMinimumCustomerCount) {
-        agentWithMinimumCustomerIndex = index;
-        agentWithMinimumCustomerCount = item;
-      }
-    });
-
     const customerAgent = this.customerAgentRepository.create({
-      agent: agent[agentWithMinimumCustomerIndex],
+      agent: agentWithMinimumCustomer,
       customer: customer,
     });
+
     const result = await this.customerAgentRepository.save(customerAgent);
     return result;
   }

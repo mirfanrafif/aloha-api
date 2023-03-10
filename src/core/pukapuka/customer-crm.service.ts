@@ -359,33 +359,38 @@ export class CustomerCrmService {
             },
           });
 
-          //find sales pengganti yang memiliki customer paling sedikit
-          const replacementSalesWithLeastCustomer = replacementSales.reduce(
-            (prev, current) =>
-              prev.agent.customer.length < current.agent.customer.length
-                ? prev
-                : current,
-          );
+          if (replacementSales.length > 0) {
+            //find sales pengganti yang memiliki customer paling sedikit
+            const replacementSalesWithLeastCustomer = replacementSales.reduce(
+              (prev, current) =>
+                prev.agent.customer.length < current.agent.customer.length
+                  ? prev
+                  : current,
+            );
 
-          //cek customer sudah di assign ke sales
-          const customerAgent = await this.customerSalesRepository.findOne({
-            where: {
-              customer: {
-                id: newCustomer.id,
+            //cek customer sudah di assign ke sales
+            const customerAgent = await this.customerSalesRepository.findOne({
+              where: {
+                customer: {
+                  id: newCustomer.id,
+                },
               },
-            },
-            relations: {
-              agent: true,
-              customer: true,
-            },
-          });
-
-          //jika belum ada, assign dia ke sales yang sama seperti di crm
-          if (customerAgent === null) {
-            await this.customerSalesRepository.save({
-              customer: newCustomer,
-              agent: replacementSalesWithLeastCustomer.agent,
+              relations: {
+                agent: true,
+                customer: true,
+              },
             });
+
+            //jika belum ada, assign dia ke sales yang sama seperti di crm
+            if (customerAgent === null) {
+              await this.customerSalesRepository.save({
+                customer: newCustomer,
+                agent: replacementSalesWithLeastCustomer.agent,
+              });
+            }
+          } else {
+            //
+            // TODO: jika tidak ada sales pengganti, maka
           }
         } else if (alohaSales === null) {
           // jika data sales tidak ada di aloha, maka buatkan baru
