@@ -5,21 +5,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { hash } from 'bcrypt';
-import { CustomerAgent } from '../../core/repository/customer-agent/customer-agent.entity';
-import { CUSTOMER_AGENT_REPOSITORY } from '../../core/repository/customer-agent/customer-agent.module';
-import { CustomerEntity } from '../../core/repository/customer/customer.entity';
-import { MessageEntity } from '../../core/repository/message/message.entity';
-import { UserJobEntity } from '../../core/repository/user-job/user-job.entity';
-import { USER_JOB_REPOSITORY } from '../../core/repository/user-job/user-job.module';
-import { Role, UserEntity } from '../../core/repository/user/user.entity';
-import { USER_REPOSITORY } from '../../core/repository/user/user.module';
-import { ApiResponse } from '../../utils/apiresponse.dto';
+import { CustomerAgent } from 'src/core/repository/customer-agent/customer-agent.entity';
+import { CUSTOMER_AGENT_REPOSITORY } from 'src/core/repository/customer-agent/customer-agent.module';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { UserJobEntity } from 'src/core/repository/user-job/user-job.entity';
+import { USER_JOB_REPOSITORY } from 'src/core/repository/user-job/user-job.module';
+import { Role, UserEntity } from 'src/core/repository/user/user.entity';
+import { USER_REPOSITORY } from 'src/core/repository/user/user.module';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
 import { Between, In, Repository } from 'typeorm';
-import {
-  ChangeSalesPasswordDto,
-  DeleteUserRequest,
-  UpdateUserRequestDto,
-} from '../user.dto';
+import { ChangeSalesPasswordDto, UpdateUserRequestDto } from '../user/user.dto';
+import { DeleteUserRequest } from './ManageUser.dto';
 
 @Injectable()
 export class ManageUserService {
@@ -29,6 +27,8 @@ export class ManageUserService {
     private customerAgentRepository: Repository<CustomerAgent>,
     @Inject(USER_JOB_REPOSITORY)
     private userJobRepository: Repository<UserJobEntity>,
+    @Inject(CUSTOMER_REPOSITORY)
+    private customerRepo: Repository<CustomerEntity>,
   ) {}
 
   async updateUser(agentId: number, newData: UpdateUserRequestDto) {
@@ -344,13 +344,10 @@ export class ManageUserService {
       where: {
         id: request.salesId,
       },
+      relations: {
+        customer: true,
+      },
     });
-
-    if (request.delegatedSalesId === request.salesId) {
-      throw new BadRequestException(
-        'Sales ID yang dihapus sama dengan yang didelegasi',
-      );
-    }
 
     if (sales === null) {
       throw new NotFoundException(
@@ -358,94 +355,110 @@ export class ManageUserService {
       );
     }
 
-    //delegate all customer to new sales
-    const delegatedSales = await this.userRepository.findOne({
+    const customerIdList = request.delegatedSales
+      .map((item) => item.customerId)
+      .filter((item) => item !== undefined && item !== null)
+      .reduce((prev, next) => {
+        prev[next] = next;
+        return prev;
+      }, {} as { [key: number]: number });
+
+    const customerList = await this.customerRepo.find({
       where: {
-        id: request.delegatedSalesId,
+        id: In(Object.keys(customerIdList)),
+      },
+      relations: {
+        agent: {
+          agent: true,
+        },
       },
     });
 
-    if (delegatedSales === null) {
-      throw new NotFoundException(
-        'Delegated sales with id ' + request.salesId + ' not found',
+    if (customerList.length !== Object.keys(customerIdList).length) {
+      throw new BadRequestException('Salah satu customer tidak ditemukan');
+    }
+
+    const delegatedSalesIdList = request.delegatedSales
+      .map((item) => item.salesId)
+      .filter((item) => item !== undefined && item !== null)
+      .reduce((prev, next) => {
+        prev[next] = next;
+        return prev;
+      }, {} as { [key: number]: number });
+
+    const delegatedSalesList = await this.userRepository.find({
+      where: {
+        id: In(Object.keys(delegatedSalesIdList)),
+      },
+    });
+
+    if (
+      delegatedSalesList.length !== Object.keys(delegatedSalesIdList).length
+    ) {
+      throw new BadRequestException('Salah satu sales tidak ditemukan');
+    }
+
+    const customerDelegationList: CustomerAgent[] = [];
+
+    for (const delegatedCustomer of request.delegatedSales) {
+      const customer = customerList.find((item) => {
+        return item.id === delegatedCustomer.customerId;
+      });
+      if (customer === undefined) {
+        continue;
+      }
+
+      const sales = delegatedSalesList.find(
+        (item) => item.id === delegatedCustomer.salesId,
+      );
+      if (sales === undefined) {
+        continue;
+      }
+
+      if (
+        customer.agent.findIndex(
+          (item) => item.agent.id === delegatedCustomer.salesId,
+        ) > -1
+      ) {
+        //sales sudah di delegasikan ke sales tersbut
+        continue;
+      }
+
+      const newCustomerSales = this.customerAgentRepository.create({
+        customer: customer,
+        agent: sales,
+      });
+      customerDelegationList.push(newCustomerSales);
+    }
+
+    //hapus hubungan sales yang dihapus dengan customer
+    if (sales.customer.length > 0) {
+      await this.customerAgentRepository.delete(
+        sales.customer.map((item) => item.id),
       );
     }
 
-    //ambil customer yang ada di sales yang akan dihapus dan yang akan didelegasikan
-    const customers = await this.customerAgentRepository.find({
-      where: {
-        agent: {
-          id: In([sales.id, delegatedSales.id]),
-        },
-      },
-      relations: {
-        agent: true,
-        customer: true,
-      },
-    });
-
-    const salesCustomer: CustomerAgent[] = customers.filter(
-      (value) => value.agent.id === sales.id,
-    );
-    const delegatedSalesCustomers: CustomerAgent[] = customers.filter(
-      (value) => value.agent.id === delegatedSales.id,
-    );
-
-    for (const customer of salesCustomer) {
-      //jika delegated sales nya sudah handle si customer itu
-      if (
-        delegatedSalesCustomers.find(
-          (value) => value.customer.id === customer.customer.id,
-        ) !== undefined
-      ) {
-        await this.customerAgentRepository.delete(customer.id);
-      } else {
-        customer.agent = delegatedSales;
-        delegatedSalesCustomers.push(customer);
-      }
-    }
-
-    await this.customerAgentRepository.save(delegatedSalesCustomers);
-
-    //hapus job
-    const userJob = await this.userJobRepository.find({
-      where: {
-        agent: {
-          id: sales.id,
-        },
-      },
-      relations: {
-        agent: true,
-      },
-    });
-
-    if (userJob.length > 0) {
-      await this.userJobRepository.delete(userJob.map((e) => e.id));
-    }
-
-    sales.movedTo = request.delegatedSalesId;
-
-    await this.userRepository.save(sales);
+    //simpan list hubungan sales dan customer yang baru
+    await this.customerAgentRepository.save(customerDelegationList);
 
     await this.userRepository.softDelete(sales.id);
 
-    return <ApiResponse<any>>{
+    return <ApiResponse<CustomerEntity[]>>{
       success: true,
-      data: await this.userRepository.findOne({
+      data: await this.customerRepo.find({
         where: {
-          id: delegatedSales.id,
+          id: In(Object.keys(customerIdList)),
         },
         relations: {
-          customer: {
-            customer: true,
+          agent: {
+            agent: true,
           },
         },
       }),
       message:
         'Sukses menghapus sales ' +
         sales.full_name +
-        ' dan mendelegasikan semua customer ke sales ' +
-        delegatedSales.full_name,
+        ' dan mendelegasikan semua customer ke sales',
     };
   }
 

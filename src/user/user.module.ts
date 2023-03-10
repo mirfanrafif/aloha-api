@@ -4,11 +4,9 @@ import { CustomerModule } from '../customer/customer.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { UserProfileController } from './profile/user-profile.controller';
-import { UserManageController } from './manage/manage-user.controller';
 import { UserProfileService } from './profile/user-profile.service';
-import { ManageUserService } from './manage/manage-user.service';
-import { CustomerAgentRepositoryModule } from '../core/repository/customer-agent/customer-agent.module';
-import { UserJobRepositoryModule } from '../core/repository/user-job/user-job.module';
+import { CustomerAgentRepositoryModule } from 'src/core/repository/customer-agent/customer-agent.module';
+import { UserJobRepositoryModule } from 'src/core/repository/user-job/user-job.module';
 
 @Module({
   imports: [
@@ -17,8 +15,8 @@ import { UserJobRepositoryModule } from '../core/repository/user-job/user-job.mo
     CustomerAgentRepositoryModule,
     UserJobRepositoryModule,
   ],
-  controllers: [UserController, UserProfileController, UserManageController],
-  providers: [UserService, UserProfileService, ManageUserService],
+  controllers: [UserController, UserProfileController],
+  providers: [UserService, UserProfileService],
   exports: [UserService],
 })
 export class UserModule {}
