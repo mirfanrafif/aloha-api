@@ -806,11 +806,11 @@ export class MessageService {
     customerList: CustomerEntity[];
     agent?: UserEntity;
   }): Promise<MessageEntity> {
-    const customer = await this.customerService.searchCustomerByPhoneNumberDb(
-      messageItem.phone,
+    const customer = customerList.find(
+      (item) => item.phoneNumber === messageItem.phone,
     );
 
-    if (customer === null) {
+    if (customer === undefined) {
       throw new BadRequestException(
         'Customer with number ' + messageItem.phone,
       );
