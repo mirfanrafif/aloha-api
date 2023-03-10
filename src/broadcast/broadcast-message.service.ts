@@ -166,7 +166,7 @@ export class BroadcastMessageService {
               phoneNumber: messageItem.phone,
             });
       let message = this.messageRepository.create({
-        messageId: messageItem.id,
+        messageId: messageItem.id ?? '',
         message: messageItem.message,
         customer: newCustomer,
         agent: agent,
@@ -362,7 +362,7 @@ export class BroadcastMessageService {
               phoneNumber: messageItem.phone,
             });
       const message = await this.messageRepository.save({
-        messageId: messageItem.id,
+        messageId: messageItem.id ?? '',
         message: messageItem.caption ?? '',
         customer: newCustomer,
         file: filename,
@@ -493,7 +493,7 @@ export class BroadcastMessageService {
               phoneNumber: messageItem.phone,
             });
       const message = await this.messageRepository.save({
-        messageId: messageItem.id,
+        messageId: messageItem.id ?? '',
         message: '',
         customer: newCustomer,
         file: filename,

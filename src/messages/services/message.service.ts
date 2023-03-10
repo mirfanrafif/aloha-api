@@ -781,7 +781,7 @@ export class MessageService {
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
       let message = this.messageRepository.create({
-        messageId: messageItem.id,
+        messageId: messageItem.id ?? '',
         message: messageItem.message,
         customer: customer,
         agent: agent,
@@ -806,18 +806,18 @@ export class MessageService {
     customerList: CustomerEntity[];
     agent?: UserEntity;
   }): Promise<MessageEntity> {
-    const customer = await this.customerService.searchCustomerByPhoneNumberDb(
-      messageItem.phone,
+    const customer = customerList.find(
+      (item) => item.phoneNumber === messageItem.phone,
     );
 
-    if (customer === null) {
+    if (customer === undefined) {
       throw new BadRequestException(
         'Customer with number ' + messageItem.phone,
       );
     }
 
     const message = this.messageRepository.save({
-      messageId: messageItem.id,
+      messageId: messageItem.id ?? '' ?? '',
       message: messageItem.message,
       customer: customer,
       agent: agent,
@@ -847,7 +847,7 @@ export class MessageService {
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
       const message = await this.messageRepository.save({
-        messageId: messageItem.id,
+        messageId: messageItem.id ?? '',
         message: messageItem.caption ?? '',
         customer: customer,
         file: filename,
@@ -881,7 +881,7 @@ export class MessageService {
     //for loop insert data
     for (const messageItem of messageResponses.messages) {
       const message = await this.messageRepository.save({
-        messageId: messageItem.id,
+        messageId: messageItem.id ?? '',
         message: '',
         customer: customer,
         file: filename,
