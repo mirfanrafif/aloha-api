@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -18,7 +19,9 @@ import { Roles } from '../auth/role.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ChangePasswordDto } from './user.dto';
 import { UserService } from './user.service';
-import { RegisterRequestDto } from '../auth/auth.dto';
+import { RegisterRequestDto } from 'src/auth/auth.dto';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -48,5 +51,14 @@ export class UserController {
   @Get('profile_image/:file_name')
   getProfilePhoto(@Param('file_name') filename: string, @Res() res) {
     res.sendFile(filename, { root: 'uploads/profile_pictures' });
+  }
+
+  @Get(':id/customer')
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.admin)
+  async getCustomerById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ApiResponse<CustomerEntity[]>> {
+    return this.userService.getCustomerByAgentId(id);
   }
 }

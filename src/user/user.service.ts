@@ -8,12 +8,15 @@ import { ChangePasswordDto } from './user.dto';
 import { compare, hash } from 'bcrypt';
 // import {} from 'bcrypt';
 import { RegisterRequestDto } from 'src/auth/auth.dto';
+import { CUSTOMER_REPOSITORY } from 'src/core/repository/customer/customer.module';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: Repository<UserEntity>,
-    private customerService: CustomerService,
+    @Inject(CUSTOMER_REPOSITORY)
+    private customerRepo: Repository<CustomerEntity>,
   ) {}
 
   async findUser(id: number) {
@@ -24,14 +27,27 @@ export class UserService {
     });
   }
 
-  async getCustomerByAgentId(user: UserEntity) {
-    const messages = await this.customerService.getCustomerByAgent({
-      agent: user,
+  async getCustomerByAgentId(
+    salesId: number,
+  ): Promise<ApiResponse<CustomerEntity[]>> {
+    const customerList = await this.customerRepo.find({
+      where: {
+        agent: {
+          agent: {
+            id: salesId,
+          },
+        },
+      },
+      relations: {
+        agent: {
+          agent: true,
+        },
+      },
     });
     const result = {
       success: true,
-      data: messages,
-      message: `Success getting customer list by agent id ${user.id}`,
+      data: customerList,
+      message: `Success getting customer list by agent id ${salesId}`,
     };
     return result;
   }
