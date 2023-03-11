@@ -2,7 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { createWriteStream } from 'fs';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
+import { WablasAPIException } from 'src/utils/wablas.exception';
 import { MessageType, TextMessage } from '../../messages/message.dto';
 import {
   SendDocumentResponse,
@@ -24,65 +25,101 @@ export class WablasService {
   ): Observable<
     AxiosResponse<WablasApiResponse<SendMessageResponseData>, any>
   > {
-    return this.http.post<WablasApiResponse<SendMessageResponseData>>(
-      '/api/v2/send-message',
-      JSON.stringify(request),
-      {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    return this.http
+      .post<WablasApiResponse<SendMessageResponseData>>(
+        '/api/v2/send-message',
+        JSON.stringify(request),
+        {
+          headers: {
+            Authorization: `${process.env.WABLAS_TOKEN}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
         },
-      },
-    );
+      )
+      .pipe(
+        map((response) => {
+          if (!response.data.status) {
+            throw new WablasAPIException(response.data.message);
+          }
+          return response;
+        }),
+      );
   }
 
   sendImage(
     request: WablasSendImageRequest,
   ): Observable<AxiosResponse<WablasApiResponse<SendImageVideoResponse>, any>> {
-    return this.http.post<WablasApiResponse<SendImageVideoResponse>>(
-      '/api/v2/send-image',
-      JSON.stringify(request),
-      {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    return this.http
+      .post<WablasApiResponse<SendImageVideoResponse>>(
+        '/api/v2/send-image',
+        JSON.stringify(request),
+        {
+          headers: {
+            Authorization: `${process.env.WABLAS_TOKEN}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
         },
-      },
-    );
+      )
+      .pipe(
+        map((response) => {
+          if (!response.data.status) {
+            throw new WablasAPIException(response.data.message);
+          }
+          return response;
+        }),
+      );
   }
 
   sendDocument(
     request: WablasSendDocumentRequest,
   ): Observable<AxiosResponse<WablasApiResponse<SendDocumentResponse>, any>> {
-    return this.http.post<WablasApiResponse<SendDocumentResponse>>(
-      '/api/v2/send-document',
-      JSON.stringify(request),
-      {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    return this.http
+      .post<WablasApiResponse<SendDocumentResponse>>(
+        '/api/v2/send-document',
+        JSON.stringify(request),
+        {
+          headers: {
+            Authorization: `${process.env.WABLAS_TOKEN}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
         },
-      },
-    );
+      )
+      .pipe(
+        map((response) => {
+          if (!response.data.status) {
+            throw new WablasAPIException(response.data.message);
+          }
+          return response;
+        }),
+      );
   }
 
   sendVideo(
     request: WablasSendVideoRequest,
   ): Observable<AxiosResponse<WablasApiResponse<SendImageVideoResponse>, any>> {
-    return this.http.post<WablasApiResponse<SendImageVideoResponse>>(
-      '/api/v2/send-video',
-      JSON.stringify(request),
-      {
-        headers: {
-          Authorization: `${process.env.WABLAS_TOKEN}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+    return this.http
+      .post<WablasApiResponse<SendImageVideoResponse>>(
+        '/api/v2/send-video',
+        JSON.stringify(request),
+        {
+          headers: {
+            Authorization: `${process.env.WABLAS_TOKEN}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
         },
-      },
-    );
+      )
+      .pipe(
+        map((response) => {
+          if (!response.data.status) {
+            throw new WablasAPIException(response.data.message);
+          }
+          return response;
+        }),
+      );
   }
 
   async getFile(message: TextMessage, filename: string): Promise<string> {
