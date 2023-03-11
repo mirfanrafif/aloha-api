@@ -179,29 +179,29 @@ export class CustomerCrmService {
       //cari di db kalo hasil search di crm kosong
       map(async (customers) => {
         let newCustomers = await customers;
-        if (newCustomers.length === 0) {
-          const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
-          if (convertedPhoneNumber === undefined) {
-            const newCustomers: CustomerEntity[] = [];
-            return newCustomers;
-          }
-
-          newCustomers = await this.customerRepository.find({
-            where: {
-              phoneNumber: Like(convertedPhoneNumber),
-            },
-            take: pageSize,
-            order: {
-              name: 'ASC',
-            },
-          });
+        if (newCustomers.length > 0) {
           return newCustomers;
         }
 
-        return customers;
+        const convertedPhoneNumber = convertPhoneNumber(phoneNumber);
+        if (convertedPhoneNumber === undefined) {
+          const newCustomers: CustomerEntity[] = [];
+          return newCustomers;
+        }
+
+        newCustomers = await this.customerRepository.find({
+          where: {
+            phoneNumber: Like(convertedPhoneNumber),
+          },
+          take: pageSize,
+          order: {
+            name: 'ASC',
+          },
+        });
+        return newCustomers;
       }),
       catchError(async () => {
-        const convertedPhoneNumber = this.convertPhoneNumber(phoneNumber);
+        const convertedPhoneNumber = convertPhoneNumber(phoneNumber);
         if (convertedPhoneNumber === undefined) {
           const newCustomers: CustomerEntity[] = [];
           return newCustomers;
@@ -251,7 +251,7 @@ export class CustomerCrmService {
     const newCustomers: CustomerEntity[] = [];
 
     for (const customer of customers) {
-      const phoneNumber = this.convertPhoneNumber(customer.telephones);
+      const phoneNumber = convertPhoneNumber(customer.telephones);
 
       //jika sudah ada di list, maka lewati
       if (
@@ -267,37 +267,39 @@ export class CustomerCrmService {
         continue;
       }
 
-      const findCustomerWithPhone = await this.customerRepository.findOne({
-        where: {
-          phoneNumber: phoneNumber,
-        },
-      });
+      const getCustomerFromLocal = async (): Promise<CustomerEntity> => {
+        let customerLocal = await this.customerRepository.findOne({
+          where: {
+            phoneNumber: phoneNumber,
+          },
+        });
 
-      //buat data customer
-      const findCustomerWithCrmId =
-        findCustomerWithPhone !== null
-          ? findCustomerWithPhone
-          : await this.customerRepository.findOne({
-              where: {
-                customerCrmId: customer.id,
-              },
-            });
+        //buat data customer
 
-      if (findCustomerWithCrmId !== null) {
-        findCustomerWithCrmId.name = customer.full_name;
-        findCustomerWithCrmId.phoneNumber = phoneNumber;
-        await this.customerRepository.save(findCustomerWithCrmId);
-      }
-
-      //jika belum ada data customer ini di database, maka tambahkan
-      const newCustomer =
-        findCustomerWithCrmId !== null
-          ? findCustomerWithCrmId
-          : await this.customerRepository.save({
-              name: customer.full_name,
-              phoneNumber: phoneNumber,
+        if (customerLocal === null) {
+          customerLocal = await this.customerRepository.findOne({
+            where: {
               customerCrmId: customer.id,
-            });
+            },
+          });
+        }
+
+        if (customerLocal !== null) {
+          customerLocal.name = customer.full_name;
+          customerLocal.phoneNumber = phoneNumber;
+          await this.customerRepository.save(customerLocal);
+        } else {
+          customerLocal = await this.customerRepository.save({
+            name: customer.full_name,
+            phoneNumber: phoneNumber,
+            customerCrmId: customer.id,
+          });
+        }
+
+        return customerLocal;
+      };
+
+      const newCustomer = await getCustomerFromLocal();
 
       for (const sales of customer.users) {
         //cari sales yang bersangkutan dari crm di aloha
@@ -469,33 +471,11 @@ export class CustomerCrmService {
     return newCustomers;
   }
 
-  convertPhoneNumber(telephones: string): string | undefined {
-    let phoneNumber = '';
-
-    const telephonesArray = telephones.split(',');
-
-    if (telephonesArray.length == 0) {
-      return;
-    }
-
-    if (telephonesArray[0].startsWith('0')) {
-      phoneNumber = '62' + telephonesArray[0].slice(1);
-    } else {
-      phoneNumber = telephonesArray[0];
-    }
-
-    if (phoneNumber.length === 0) return;
-    phoneNumber = phoneNumber.split('-').join('');
-    phoneNumber = phoneNumber.split(' ').join('');
-
-    return phoneNumber;
-  }
-
   findWithPhoneNumberList(phoneNumber: string[]) {
     const phoneNumberString = phoneNumber.join(',');
     return this.getCustomerFromCrm({
       'filter.telephones': '$in:' + phoneNumberString,
-      limit: 1000,
+      limit: 100000,
     }).pipe(
       map(async (customers) => {
         let newCustomers = await customers;
@@ -505,10 +485,6 @@ export class CustomerCrmService {
               return convertPhoneNumber(phoneNumber);
             })
             .filter((item) => item !== undefined);
-          if (convertedPhoneNumber === undefined) {
-            const newCustomers: CustomerEntity[] = [];
-            return newCustomers;
-          }
 
           newCustomers = await this.customerRepository.find({
             where: {
@@ -525,13 +501,11 @@ export class CustomerCrmService {
         return customers;
       }),
       catchError(async () => {
-        const convertedPhoneNumber = phoneNumber.map((item) => {
-          return convertPhoneNumber(item);
-        });
-        if (convertedPhoneNumber === undefined) {
-          const newCustomers: CustomerEntity[] = [];
-          return newCustomers;
-        }
+        const convertedPhoneNumber = phoneNumber
+          .map((item) => {
+            return convertPhoneNumber(item);
+          })
+          .filter((item) => item !== undefined);
 
         const customers = await this.customerRepository.find({
           where: {

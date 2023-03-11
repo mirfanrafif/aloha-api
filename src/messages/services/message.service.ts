@@ -458,7 +458,10 @@ export class MessageService {
 
           //kirim ke frontend lewat websocket
           const messageResponses = await Promise.all(
-            messages.map(async (message: MessageEntity) => {
+            messages.map(async (message: MessageEntity | undefined) => {
+              if (message === undefined) {
+                return undefined;
+              }
               const response =
                 this.messageHelper.mapMessageEntityToResponse(message);
               await this.gateway.sendMessage({ data: response });
@@ -467,7 +470,7 @@ export class MessageService {
           );
 
           //return result
-          const result: ApiResponse<MessageResponseDto[]> = {
+          const result: ApiResponse<(MessageResponseDto | undefined)[]> = {
             success: true,
             data: messageResponses,
             message: 'Success sending message to Wablas API',
@@ -805,19 +808,17 @@ export class MessageService {
     messageItem: MessageResponseItem;
     customerList: CustomerEntity[];
     agent?: UserEntity;
-  }): Promise<MessageEntity> {
+  }): Promise<MessageEntity | undefined> {
     const customer = customerList.find(
       (item) => item.phoneNumber === messageItem.phone,
     );
 
     if (customer === undefined) {
-      throw new BadRequestException(
-        'Customer with number ' + messageItem.phone,
-      );
+      return;
     }
 
     const message = this.messageRepository.save({
-      messageId: messageItem.id ?? '' ?? '',
+      messageId: messageItem.id ?? '',
       message: messageItem.message,
       customer: customer,
       agent: agent,
