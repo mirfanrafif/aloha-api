@@ -8,8 +8,8 @@ export class AppService {
 
   getVersion(): any {
     return {
-      version: '1.2.1',
-      lastUpdate: '1 Mar 2023',
+      version: '1.2.3',
+      lastUpdate: '11 Mar 2023',
     };
   }
 }
