@@ -39,6 +39,10 @@ export class WablasService {
       )
       .pipe(
         map((response) => {
+          console.log(`
+          Wablas Request: ${JSON.stringify(request)}
+          Wablas Response: ${JSON.stringify(response.data)}
+          `);
           if (!response.data.status) {
             console.log('Wablas Error', response.data.message);
             throw new WablasAPIException(response.data.message);
@@ -65,6 +69,10 @@ export class WablasService {
       )
       .pipe(
         map((response) => {
+          console.log(`
+          Wablas Request: ${JSON.stringify(request)}
+          Wablas Response: ${JSON.stringify(response.data)}
+          `);
           if (!response.data.status) {
             console.log('Wablas Error', response.data.message);
             throw new WablasAPIException(response.data.message);
@@ -91,6 +99,10 @@ export class WablasService {
       )
       .pipe(
         map((response) => {
+          console.log(`
+          Wablas Request: ${JSON.stringify(request)}
+          Wablas Response: ${JSON.stringify(response.data)}
+          `);
           if (!response.data.status) {
             console.log('Wablas Error', response.data.message);
             throw new WablasAPIException(response.data.message);
@@ -117,6 +129,10 @@ export class WablasService {
       )
       .pipe(
         map((response) => {
+          console.log(`
+          Wablas Request: ${JSON.stringify(request)}
+          Wablas Response: ${JSON.stringify(response.data)}
+          `);
           if (!response.data.status) {
             console.log('Wablas Error', response.data.message);
             throw new WablasAPIException(response.data.message);
