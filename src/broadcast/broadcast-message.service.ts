@@ -7,15 +7,18 @@ import {
 import { AxiosResponse, AxiosError } from 'axios';
 import { isArray } from 'class-validator';
 import { map, catchError, lastValueFrom } from 'rxjs';
-import { CustomerEntity } from '../core/repository/customer/customer.entity';
-import { MessageEntity } from '../core/repository/message/message.entity';
-import { MESSAGE_REPOSITORY } from '../core/repository/message/message.module';
-import { UserEntity } from '../core/repository/user/user.entity';
-import { CustomerCrmService } from '../core/pukapuka/customer-crm.service';
-import { CustomerCrmSearchFilter } from '../core/pukapuka/customer-crm.dto';
-import { CustomerService } from '../customer/customer.service';
-import { ApiResponse } from '../utils/apiresponse.dto';
-import { WablasAPIException } from '../utils/wablas.exception';
+import { CustomerEntity } from 'src/core/repository/customer/customer.entity';
+import { MessageEntity } from 'src/core/repository/message/message.entity';
+import { MESSAGE_REPOSITORY } from 'src/core/repository/message/message.module';
+import { UserEntity } from 'src/core/repository/user/user.entity';
+import { CustomerCrmService } from 'src/core/pukapuka/customer-crm.service';
+import {
+  CustomerCrmSearchFilter,
+  CustomerStatus,
+} from 'src/core/pukapuka/customer-crm.dto';
+import { CustomerService } from 'src/customer/customer.service';
+import { ApiResponse } from 'src/utils/apiresponse.dto';
+import { WablasAPIException } from 'src/utils/wablas.exception';
 import { Repository } from 'typeorm';
 import { MessageHelper } from '../messages/helper/message.helper';
 import {
@@ -59,6 +62,7 @@ export class BroadcastMessageService {
     categories: string[],
     interests: string[],
     types: string[],
+    status: CustomerStatus,
   ) {
     const filter: CustomerCrmSearchFilter = {
       'filter.categories.name':
@@ -67,8 +71,11 @@ export class BroadcastMessageService {
         interests.length > 0 ? '$in:' + interests.join(',') : undefined,
       'filter.types.name':
         types.length > 0 ? '$in:' + types.join(',') : undefined,
+      'filter.status': status,
       // 'filter.users.email': '$eq:' + email,
     };
+
+    console.log('Broadcast params: ', filter);
 
     const customer: CustomerEntity[] = await lastValueFrom(
       this.customerCrmService.getCustomerWithFilters(filter),
@@ -92,7 +99,9 @@ export class BroadcastMessageService {
       body.categories,
       body.interests,
       body.types,
+      body.status,
     );
+
     //mapping request
     const messages = customer.map<WablasSendMessageRequestData>((item) => ({
       phone: item.phoneNumber,
@@ -187,15 +196,17 @@ export class BroadcastMessageService {
     body: BroadcastImageMessageRequestDto,
     agent: UserEntity,
   ) {
-    // const categories = this.validateArray(body.categories);
-    // const interests = this.validateArray(body.interests);
-    // const types = this.validateArray(body.types);
-
     const categories = JSON.parse(body.categories);
     const interests = JSON.parse(body.interests);
     const types = JSON.parse(body.types);
+    const status = JSON.parse(body.status);
 
-    const customers = await this.getCustomers(categories, interests, types);
+    const customers = await this.getCustomers(
+      categories,
+      interests,
+      types,
+      status,
+    );
 
     const sendImageData: WablasSendImageRequestData[] = customers.map(
       (item) => ({
@@ -272,8 +283,14 @@ export class BroadcastMessageService {
     const categories = JSON.parse(body.categories);
     const interests = JSON.parse(body.interests);
     const types = JSON.parse(body.types);
+    const status = JSON.parse(body.status);
 
-    const customers = await this.getCustomers(categories, interests, types);
+    const customers = await this.getCustomers(
+      categories,
+      interests,
+      types,
+      status,
+    );
 
     const sendImageData: WablasSendVideoRequestData[] = customers.map(
       (item) => ({
@@ -399,8 +416,14 @@ export class BroadcastMessageService {
     const categories = JSON.parse(body.categories);
     const interests = JSON.parse(body.interests);
     const types = JSON.parse(body.types);
+    const status = JSON.parse(body.status);
 
-    const customers = await this.getCustomers(categories, interests, types);
+    const customers = await this.getCustomers(
+      categories,
+      interests,
+      types,
+      status,
+    );
 
     const requestData: WablasSendDocumentRequestData[] = customers.map(
       (customer) => ({
