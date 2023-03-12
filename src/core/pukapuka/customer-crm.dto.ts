@@ -110,9 +110,16 @@ export class CustomerCrmSearchFilter {
   'filter.interests.name'?: string;
   'filter.users.email'?: string;
   'filter.types.name'?: string;
+  'filter.status'?: string;
 }
 
 export type LoginResponse = {
   access_token: string;
   user: CrmUser;
 };
+
+export enum CustomerStatus {
+  Kontak = 'Kontak',
+  ProspekKontak = 'Prospek Kontak',
+  BlackListKontak = 'Blacklist Kontak',
+}
