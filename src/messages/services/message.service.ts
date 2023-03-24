@@ -961,17 +961,41 @@ export class MessageService {
   }
 
   sortCustomerByLastMessage(
-    listCustomer: CustomerAgentResponseDto[],
+    messageList: CustomerAgentResponseDto[],
   ): CustomerAgentResponseDto[] {
-    return listCustomer.sort((a, b) => {
-      if (a.lastMessage === null) {
-        return 1;
-      }
-      if (b.lastMessage === null) {
-        return -1;
-      }
-      return b.lastMessage.id - a.lastMessage.id;
-    });
+    const messageWithLastMessage = messageList.filter(
+      (el) => el.lastMessage !== null,
+    );
+    const messageWithUnread = messageWithLastMessage.filter(
+      (el) => el.unread > 0,
+    );
+    const messsageWithoutUnread = messageWithLastMessage.filter(
+      (el) => el.unread === 0,
+    );
+    const messageWithoutLastMessage = messageList.filter(
+      (el) => el.lastMessage === null,
+    );
+
+    const sortedMessage = [
+      ...messageWithUnread.sort((a, b) => {
+        if (a.lastMessage && b.lastMessage) {
+          return (
+            new Date(b.lastMessage?.created_at).getTime() -
+            new Date(a.lastMessage?.created_at).getTime()
+          );
+        } else return -Infinity;
+      }),
+      ...messsageWithoutUnread.sort((a, b) => {
+        if (a.lastMessage && b.lastMessage) {
+          return (
+            new Date(b.lastMessage?.created_at).getTime() -
+            new Date(a.lastMessage?.created_at).getTime()
+          );
+        } else return -Infinity;
+      }),
+      ...messageWithoutLastMessage,
+    ];
+    return sortedMessage;
   }
 
   async searchCustomer(name: string, user: UserEntity) {
