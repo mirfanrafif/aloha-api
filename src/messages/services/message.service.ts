@@ -16,7 +16,7 @@ import { MESSAGE_REPOSITORY } from '../../core/repository/message/message.module
 import { CustomerService } from '../../customer/customer.service';
 import { ApiResponse } from '../../utils/apiresponse.dto';
 import { WablasAPIException } from '../../utils/wablas.exception';
-import { LessThan, Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import {
   MessageRequestDto,
   TextMessage,
@@ -941,18 +941,37 @@ export class MessageService {
 
   //cari customer by user id / list pesan
   async getMessageByAgentId(user: UserEntity) {
+    console.log('time start', new Date().toISOString());
     const messages = await this.customerService.getCustomerByAgent({
       agent: user,
     });
 
+    console.log('time after get customer', new Date().toISOString());
+
     const customerWithLastMessage = await this.findLastMessage(messages);
+
+    console.log('time after get last message', new Date().toISOString());
 
     const result = {
       success: true,
-      data: customerWithLastMessage,
+      data: this.sortCustomerByLastMessage(customerWithLastMessage),
       message: `Success getting customer list by agent id ${user.id}`,
     };
     return result;
+  }
+
+  sortCustomerByLastMessage(
+    listCustomer: CustomerAgentResponseDto[],
+  ): CustomerAgentResponseDto[] {
+    return listCustomer.sort((a, b) => {
+      if (a.lastMessage === null) {
+        return 1;
+      }
+      if (b.lastMessage === null) {
+        return -1;
+      }
+      return b.lastMessage.id - a.lastMessage.id;
+    });
   }
 
   async searchCustomer(name: string, user: UserEntity) {
@@ -963,7 +982,7 @@ export class MessageService {
     const customerWithLastMessage = await this.findLastMessage(customer);
     const result = {
       success: true,
-      data: customerWithLastMessage,
+      data: this.sortCustomerByLastMessage(customerWithLastMessage),
       message: `Success searching customer with phone number ${name}`,
     };
     return result;
@@ -973,56 +992,62 @@ export class MessageService {
   async findLastMessage(
     listCustomer: CustomerAgentArrDto[],
   ): Promise<CustomerAgentResponseDto[]> {
-    const result = await Promise.all(
-      listCustomer.map(async (customerAgent) => {
-        const messages = await this.messageRepository.find({
-          where: {
-            customer: {
-              id: customerAgent.customer.id,
+    const result = new Promise<CustomerAgentResponseDto[]>(
+      async (resolve, reject) => {
+        try {
+          //write a query to get last message grouped by customer id
+          const query = `
+SELECT MAX(m.id) as lastId, m.customerId as customerId FROM message m
+WHERE m.message <> '' AND m.message IS NOT NULL
+GROUP BY m.customerId
+          `.trim();
+
+          const lastMessageId = (await this.messageRepository.query(query)) as {
+            lastId: number;
+            customerId: number;
+          }[];
+
+          const lastMessage = await this.messageRepository.find({
+            where: {
+              id: In(lastMessageId.map((item) => item.lastId)),
             },
-          },
-          order: {
-            id: 'DESC',
-          },
-          relations: {
-            customer: true,
-            agent: true,
-          },
-          take: 10,
-        });
+            relations: {
+              customer: true,
+              agent: true,
+            },
+          });
 
-        const lastMessageResponse =
-          messages != null && messages.length > 0
-            ? this.messageHelper.mapMessageEntityToResponse(messages[0])
-            : null;
+          const lastMessageResponse = lastMessage.map((item) => {
+            return this.messageHelper.mapMessageEntityToResponse(item);
+          });
 
-        const newCustomer: CustomerAgentResponseDto = {
-          id: customerAgent.id,
-          customer: customerAgent.customer,
-          agent: customerAgent.agent,
-          unread: this.findUnreadMessage(messages),
-          lastMessage: lastMessageResponse,
-          created_at: customerAgent.created_at,
-          updated_at: customerAgent.updated_at,
-        };
-        return newCustomer;
-      }),
-    ).catch((err) => {
-      console.log(err);
-      return [];
-    });
+          const result = listCustomer.map((customerAgent) => {
+            const lastMessage = lastMessageResponse.find(
+              (item) => item.customer.id === customerAgent.customer.id,
+            );
+            const unread =
+              lastMessage === undefined || lastMessage.fromMe === true ? 0 : 1;
+
+            const newCustomer: CustomerAgentResponseDto = {
+              id: customerAgent.id,
+              customer: customerAgent.customer,
+              agent: customerAgent.agent,
+              unread: unread,
+              lastMessage: lastMessage ?? null,
+              created_at: customerAgent.created_at,
+              updated_at: customerAgent.updated_at,
+            };
+            return newCustomer;
+          });
+
+          resolve(result);
+        } catch (err) {
+          console.log(err);
+          reject(err);
+        }
+      },
+    );
+
     return result;
-  }
-
-  private findUnreadMessage(messages: MessageEntity[]) {
-    let count = 0;
-    for (const message of messages) {
-      if (!message.fromMe) {
-        count++;
-      } else {
-        break;
-      }
-    }
-    return count;
   }
 }
