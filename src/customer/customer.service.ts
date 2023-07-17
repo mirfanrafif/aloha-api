@@ -412,7 +412,7 @@ export class CustomerService {
     return <ApiResponse<CustomerAgent>>{
       success: true,
       data: customerAgent,
-      message: 'Success starting conversation with customer ' + customer.name,
+      message: 'Sukses memulai percakapan dengan customer ' + customer.name,
     };
   }
 
